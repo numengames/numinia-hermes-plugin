@@ -1,5 +1,8 @@
-name: hermes-mundo
-version: 0.0.1
-description: "Hermes as an explorable 3D world (dashboard tab, three.js bundled). Spike skeleton."
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
+name: numinia-hermes-plugin
+version: 0.1.0
+description: "Hermes as an explorable 3D world (dashboard tab, three.js bundled)."
 author: "numen"
 requires_hermes: ">=0.22.0"

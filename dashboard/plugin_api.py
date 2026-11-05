@@ -1,4 +1,7 @@
-"""hermes-mundo backend routes, mounted at /api/plugins/hermes-mundo/.
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
+"""numinia-hermes-plugin backend routes, mounted at /api/plugins/numinia-hermes-plugin/.
 
 Thin aggregator over Hermes' own public dashboard endpoints. It never edits
 files: reads call GET routes, writes (cron pause/resume) call Hermes' own POST
@@ -194,7 +197,7 @@ ZONES = {
 
 @router.get("/health")
 async def health():
-    return {"ok": True, "plugin": "hermes-mundo", "version": VERSION}
+    return {"ok": True, "plugin": "numinia-hermes-plugin", "version": VERSION}
 
 
 @router.get("/world")
