@@ -1,6 +1,11 @@
+<!--
+SPDX-FileCopyrightText: 2026 Numen Games S.L.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Working in this repository
 
-- **What it is:** hermes-mundo, a Hermes dashboard plugin that shows Hermes as a 3D world you walk through (cron, profiles, MCP, skills, sessions). Repository: numengames/numinia-hermes-plugin (provisional name).
+- **What it is:** numinia-hermes-plugin, a Hermes dashboard plugin that shows Hermes as a 3D world you walk through (cron, profiles, MCP, skills, sessions). The plugin id, the repository and the install folder all carry the same name; the tab is labelled "Mundo".
 - **Project:** Hackathon (temporary, until 2026-11-11 22:00 UTC; Hermes plugins hackathon).
 - **Human owner:** Pablo (@PabloFMM). He merges; agents open pull requests.
 - **Published at:** not yet; the entry is a PR to NousResearch/hermes-agent `plugin-catalog/`.

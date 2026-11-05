@@ -1,5 +1,10 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 import importlib.util
+import json
 import pathlib
+import re
 
 import httpx
 import pytest
@@ -60,6 +65,23 @@ def make_client(monkeypatch, fixtures=None, fail=None, calls=None):
 def test_health(monkeypatch):
     c = make_client(monkeypatch)
     assert c.get("/health").json()["ok"] is True
+
+
+def test_plugin_identity_is_consistent(monkeypatch):
+    """One id and one version everywhere: Hermes names the route after the manifest."""
+    root = SRC.parents[1]
+    yaml_text = (root / "plugin.yaml").read_text()
+    manifest = json.loads((root / "dashboard" / "manifest.json").read_text())
+    name = re.search(r"^name:\s*(\S+)", yaml_text, re.M).group(1)
+    version = re.search(r"^version:\s*(\S+)", yaml_text, re.M).group(1)
+    assert name == manifest["name"] == "numinia-hermes-plugin"
+    assert manifest["tab"]["path"] == "/" + name
+    assert version == manifest["version"] == api.VERSION
+    health = make_client(monkeypatch).get("/health").json()
+    assert health["plugin"] == name
+    bundle = (root / "dashboard" / "dist" / "index.js").read_text()
+    assert f'register("{name}"' in bundle and f"/api/plugins/{name}/world" in bundle
+    assert "hermes-mundo" not in bundle
 
 
 def test_world_has_six_zones(monkeypatch):

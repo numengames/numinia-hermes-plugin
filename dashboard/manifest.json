@@ -1,11 +1,11 @@
 {
-  "name": "hermes-mundo",
+  "name": "numinia-hermes-plugin",
   "label": "Mundo",
   "description": "Hermes as an explorable 3D world: low-poly plaza with six zones.",
   "icon": "Globe",
   "version": "0.1.0",
   "tab": {
-    "path": "/hermes-mundo",
+    "path": "/numinia-hermes-plugin",
     "position": "after:skills"
   },
   "entry": "dist/index.js",

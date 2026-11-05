@@ -1,0 +1,20 @@
+version = 1
+
+# Every text file states its own licence in its first lines (STD-010: the
+# licence is the file's, never the folder's). This file lists only what cannot
+# say it itself, one exact path each: no folder globs.
+
+# JSON cannot hold a comment.
+[[annotations]]
+path = "dashboard/manifest.json"
+SPDX-FileCopyrightText = "2026 Numen Games S.L."
+SPDX-License-Identifier = "MIT"
+
+# The committed bundle: the plugin's own code plus three.js, both MIT. The
+# three.js licence comment inside the file ("Copyright 2010-2025 Three.js
+# Authors", MIT) stays untouched and is aggregated with this entry.
+[[annotations]]
+path = "dashboard/dist/index.js"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Numen Games S.L."
+SPDX-License-Identifier = "MIT"

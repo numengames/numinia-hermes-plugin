@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 # The redaction test needs a string that looks like a key, to prove the
 # backend never shows it. It is fake. Only that value is allowed, never a path.
 [extend]
