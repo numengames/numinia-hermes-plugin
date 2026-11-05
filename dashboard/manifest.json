@@ -1,0 +1,13 @@
+{
+  "name": "hermes-mundo",
+  "label": "Mundo",
+  "description": "Hermes as an explorable 3D world: low-poly plaza with six zones.",
+  "icon": "Globe",
+  "version": "0.1.0",
+  "tab": {
+    "path": "/hermes-mundo",
+    "position": "after:skills"
+  },
+  "entry": "dist/index.js",
+  "api": "plugin_api.py"
+}

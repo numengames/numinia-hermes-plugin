@@ -1,0 +1,5 @@
+name: hermes-mundo
+version: 0.0.1
+description: "Hermes as an explorable 3D world (dashboard tab, three.js bundled). Spike skeleton."
+author: "numen"
+requires_hermes: ">=0.22.0"
