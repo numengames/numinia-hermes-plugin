@@ -1,0 +1,8 @@
+# The redaction test needs a string that looks like a key, to prove the
+# backend never shows it. It is fake. Only that value is allowed, never a path.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "fake key in the redaction test (tests/test_plugin_api.py)"
+regexes = ['''^sk-abc[0-9a-f]+SECRET$''']
