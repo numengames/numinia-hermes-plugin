@@ -1,0 +1,4 @@
+get_session_list_row: has_body=False bytes=183
+  row: {"id": "sess-0", "source": "cli", "title": "Title 0", "started_at": 1793856130.4395006, "ended_at": 1793856141.2569387, "message_count": 2, "model": "m-x", "hidden": 0, "archived": 0}
+  missing: None
+  active/ended: None

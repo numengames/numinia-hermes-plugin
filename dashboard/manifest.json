@@ -1,13 +1,7 @@
 {
-  "name": "numinia-hermes-plugin",
-  "label": "Mundo",
-  "description": "Hermes as an explorable 3D world: low-poly plaza with six zones.",
-  "icon": "Globe",
+  "name": "hermes-palace",
+  "label": "Hermes Palace",
+  "description": "Status and switches for the local Hermes Palace world bridge.",
   "version": "0.1.0",
-  "tab": {
-    "path": "/numinia-hermes-plugin",
-    "position": "after:skills"
-  },
-  "entry": "dist/index.js",
   "api": "plugin_api.py"
 }
