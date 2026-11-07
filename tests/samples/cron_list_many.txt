@@ -1,0 +1,45 @@
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Scheduled Jobs (profile: default)               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  8bc0eecea9b5 [active]
+    Name:      mundo-demo
+    Schedule:  every 60m
+    Repeat:    ∞
+    Next run:  2026-11-05T00:45:05.555835+01:00
+    Deliver:   local
+
+  e6c4d06884ec [active]
+    Name:      resumen diario
+    Schedule:  every 120m
+    Repeat:    ∞
+    Next run:  2026-11-05T02:23:58.812193+01:00
+    Deliver:   local
+
+  e4c43140efbc [paused]
+    Name:      informe semanal
+    Schedule:  0 9 * * *
+    Repeat:    ∞
+    Next run:  None
+    Deliver:   local
+    Skills:    claude-code
+
+  da4a429b66c8 [active]
+    Name:      tarea única
+    Schedule:  every 30m
+    Repeat:    0/1
+    Next run:  2026-11-05T00:54:00.234850+01:00
+    Deliver:   local
+
+  41a60d9a4541 [active]
+    Name:      nombre con [31mcolor[0m [corchetes]: dos puntos
+    Schedule:  every 60m
+    Repeat:    ∞
+    Next run:  2026-11-05T01:24:00.923558+01:00
+    Deliver:   local
+
+  ⚠  Scheduler is not ready for profile 'default': no gateway serves it and no fresh ticker heartbeat.
+     If no gateway is running: hermes gateway install
+                    sudo hermes gateway install --system  # Linux servers
+     Check status:  hermes cron status

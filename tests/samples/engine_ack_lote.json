@@ -1,0 +1,4 @@
+{"v": 1, "t": "ack", "en": "lote", "puestas": 5, "quitadas": 1, "descartadas": [
+  {"tipo": "cron", "id": "8bc0eecea9b5", "motivo": "zona desconocida «z9»"},
+  {"tipo": "agente", "id": "ursa", "motivo": "la zona «z3» no admite el tipo «agente» token=abcdef123456789"}
+], "mas": 3}

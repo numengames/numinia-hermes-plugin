@@ -1,8 +1,154 @@
-# SPDX-FileCopyrightText: 2026 Numen Games S.L.
-# SPDX-License-Identifier: MIT
+name: hermes-palace
+version: 0.7.2-rc1
+description: "Bridge between Hermes and a local Numinia Engine 'hermes' world: cron, sessions and health as places you can walk through."
+author: "Numen (numengames)"
+license: MIT
+homepage: "https://numen.games"
+tags: [numinia, 3d, cron, visualization]
+manifest_version: 2
+api_version: 1
+# Tested on the 0.22 line (0.22.7). The bound is the range the catalog accepts; raise it only after running the gates on the new line.
+requires_hermes: ">=0.22.0, <0.24"
 
-name: numinia-hermes-plugin
-version: 0.1.0
-description: "Hermes as an explorable 3D world (dashboard tab, three.js bundled)."
-author: "numen"
-requires_hermes: ">=0.22.0"
+# Everything this plugin registers (kept equal to the code; the validator checks it).
+provides_tools:
+  - palace_state
+  - palace_cron_action
+provides_hooks:
+  - pre_tool_call
+  - post_tool_call
+  - pre_llm_call
+  - pre_api_request
+  - subagent_start
+  - subagent_stop
+  - on_session_start
+  - on_session_end
+  - on_session_finalize
+
+# Privileged host surfaces: none. No tool override, no ctx.llm, no platform actions.
+capabilities: []
+
+# Settings (Settings -> Plugins in Desktop; plugins.entries.hermes-palace.settings in config.yaml).
+# Only `salud` is on by default, as in the world's function table.
+config_schema:
+  engine_path:
+    type: str
+    default: ""
+    label: "Numinia Engine folder"
+    description: "Folder of a Numinia Engine checkout (contains packages/server/src/main.ts). Needed for `hermes palace up`; the built page is expected at <folder>/dist/plaza."
+  world_path:
+    type: str
+    default: ""
+    label: "World folder"
+    description: "Where the world lives. Empty = <HERMES_HOME>/hermes-palace/mundo. Must be an absolute path without symlinks."
+  engine_port:
+    type: int
+    default: 8790
+    label: "Engine game port"
+    description: "HTTP/game port the engine is started on (1024-65535, loopback only)."
+  link_port:
+    type: int
+    default: 0
+    label: "Engine link port"
+    description: "0 = read it from the world's entorno/espejo.json, else 8791."
+  world_url:
+    type: str
+    default: ""
+    label: "World page URL"
+    description: "Page the Desktop button opens. Empty = http://127.0.0.1:<engine_port>/. Must be loopback http."
+  publish_health:
+    type: bool
+    default: true
+    label: "Health"
+    description: "Publish Hermes' own health (bridge, gateway, scheduler) as a place in the world."
+  publish_cron:
+    type: bool
+    default: false
+    label: "Cron"
+    description: "Publish scheduled jobs to the world and accept pause/resume from it (each action needs your approval in Hermes)."
+  publish_sessions:
+    type: bool
+    default: false
+    label: "Sessions"
+    description: "Publish each session as a place (id, model and platform only, never message text)."
+  publish_agents:
+    type: bool
+    default: false
+    label: "Agents"
+    description: "Publish every Hermes profile (name, model, gateway, cron counts) as an agent thing. Read-only."
+  publish_spend:
+    type: bool
+    default: false
+    label: "Spend"
+    description: "Publish tokens and estimated cost per profile (numbers only, never message text). Read-only."
+  publish_skills:
+    type: bool
+    default: false
+    label: "Skills"
+    description: "Publish the skills of every profile (name, group, on/off, first 140 characters of the description) as things in the workshop. Read-only."
+  publish_kanban:
+    type: bool
+    default: false
+    label: "Kanban"
+    description: "Publish the work board as one thing: cards per column (to do, in progress, done) and up to 3 redacted titles each. Read-only."
+  publish_projects:
+    type: bool
+    default: false
+    label: "Projects"
+    description: "Publish the Hermes project tree (project names, active or archived, folder labels; never paths or descriptions) as folders in the Projects zone. Read-only; needs allow_direct_db_read."
+  publish_docs:
+    type: bool
+    default: false
+    label: "Documentation"
+    description: "Publish a short curated list of documentation pages (title and address on the local docs viewer) as things in the library."
+  docs_viewer_path:
+    type: str
+    default: ""
+    label: "Docs viewer folder"
+    description: "Folder of the docs-visor repo (build-docs.sh, serve.mjs) for `hermes palace docs`. Empty = the folder docs-visor next to this plugin."
+  docs_viewer_port:
+    type: int
+    default: 8791
+    label: "Docs viewer port"
+    description: "Port of the local docs viewer (127.0.0.1 only). Its origin must be in the world's documentos.origenes and must not be the engine link port."
+  scan_days:
+    type: int
+    default: 30
+    label: "Scan window (days)"
+    description: "Window for the spend and session counts of `hermes palace scan` (1-365)."
+  read_only:
+    type: bool
+    default: false
+    label: "Read-only"
+    description: "The world can look but never change anything in Hermes: every world request is refused and no verb is offered."
+  allow_direct_db_read:
+    type: bool
+    default: false
+    label: "Read Hermes' databases directly"
+    description: "Spend (tokens, cost) has no public Hermes API, so the plugin reads state.db itself, read-only, numbers only, never message text, and only when it changed. The work board comes from `hermes kanban list --json` first; the database is the fallback for it. Off = Spend publishes nothing."
+  embed_credential_ttl_s:
+    type: int
+    default: 3600
+    label: "World credential lifetime (seconds)"
+    description: "How long the credential that opens the world inside Desktop stays valid (60-86400; the engine refuses more than 24 h). A fresh one is made every time the page opens."
+  cron_poll_seconds:
+    type: int
+    default: 15
+    label: "Cron poll seconds"
+    description: "How often `hermes cron list --all` is read while publish_cron is on (3-600)."
+  engine_link:
+    type: bool
+    default: true
+    label: "Open the engine link"
+    description: "Keep on for hosted worlds. Turn off when the world lives inside Hermes Desktop (Palace page): an open link would displace the embedded page."
+  link_key:
+    type: secret
+    env: HERMES_PALACE_LINK_KEY
+    label: "Engine link key"
+    description: "Only needed to join an engine you started yourself: that engine's MOTOR_ENLACE_CLAVE. Stored in .env, never in config.yaml. Empty = the plugin generates and uses its own key."
+
+# Not `requires_env`: Hermes asks for those at install time and the plugin does not need any. It makes its own link key.
+optional_env:
+  - name: HERMES_PALACE_LINK_KEY
+    secret: true
+    description: "Engine link key (see link_key)."
