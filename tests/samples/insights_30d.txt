@@ -1,0 +1,31 @@
+
+  ╔══════════════════════════════════════════════════════════╗
+  ║                    📊 Hermes Insights                    ║
+  ║                       Last 30 days                       ║
+  ╚══════════════════════════════════════════════════════════╝
+
+  Period: Oct 06, 2026 — Nov 05, 2026
+
+  📋 Overview
+  ─────────────────────────
+  Sessions:          120           Messages:        4,200
+  Tool calls:        1,800         User messages:   900
+  Input tokens:      2,000,000     Output tokens:   300,000
+  Total tokens:      2,300,000
+  Active time:       ~12h 30m      Avg session:     ~6m
+  Avg msgs/session:  35.0
+
+  💰 Cost
+  ─────────────────────────
+  Estimated:          $41.25
+
+  🤖 Models Used
+  ─────────────────────────
+  Model                          Sessions       Tokens
+  claude-sonnet-5-5                    90    1,900,000
+  claude-opus-5-5                      30      400,000
+
+  🔧 Top Tools
+  ─────────────────────────
+  Tool                              Calls        %
+  terminal                          900     50.0%

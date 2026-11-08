@@ -1,0 +1,10 @@
+
+ Profile          Model                        Gateway      Alias        Distribution
+ ───────────────    ───────────────────────────    ───────────    ───────────    ────────────────────
+  default         claude-sonnet-5-5            running      —            —
+  anacarquide     claude-sonnet-5-5            running      anacarquide  —
+  byblos          claude-sonnet-5-5            running      byblos       —
+  lexa            claude-sonnet-5-5            running      lexa         —
+ ◆ursa            anthropic/claude-opus-5      running      ursa         —
+  zephyr          claude-opus-5-5              stopped      zephyr       demo@1.0
+

@@ -1,0 +1,16 @@
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Scheduled Jobs (profile: default)               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  8bc0eecea9b5 [active]
+    Name:      mundo-demo
+    Schedule:  every 60m
+    Repeat:    ∞
+    Next run:  2026-11-05T00:45:05.555835+01:00
+    Deliver:   local
+
+  ⚠  Scheduler is not ready for profile 'default': no gateway serves it and no fresh ticker heartbeat.
+     If no gateway is running: hermes gateway install
+                    sudo hermes gateway install --system  # Linux servers
+     Check status:  hermes cron status
