@@ -1,4 +1,4 @@
-"""``palace scan``: the FIRST thing the plugin does when the world opens — a full READ-ONLY scan of the
+"""``hermes 3d scan``: the FIRST thing the plugin does when the world opens — a full READ-ONLY scan of the
 user's Hermes (HISTORIA-DE-USUARIO §4): profiles/agents, cron jobs, sessions, skills, MCP servers,
 kanban, projects, documents and spend.
 
@@ -18,7 +18,7 @@ Hard rules (the scan is the one place that touches the user's real data):
 
 ``scan_hermes(root)`` returns a plain dict (JSON-serialisable)::
 
-    {"schema": "hermes-palace/scan@1", "at": ..., "root_name": ".hermes", "took_ms": ...,
+    {"schema": "hermes-3d/scan@1", "at": ..., "root_name": ".hermes", "took_ms": ...,
      "sections": {"agentes": {...}, "cron": {...}, "sesiones": {...}, "skills": {...}, "mcp": {...},
                   "kanban": {...}, "proyectos": {...}, "documentos": {...}, "gasto": {...}}}
 """
@@ -41,7 +41,7 @@ from typing import Any
 from .crontable import clean_text
 from .logsafe import fit_title, redact_title
 
-logger = logging.getLogger("hermes_palace.scan")
+logger = logging.getLogger("hermes_3d.scan")
 
 try:
     import yaml as _yaml
@@ -64,7 +64,7 @@ _EXPECTED: tuple[type[BaseException], ...] = (
 )
 _EXPECTED_YAML: tuple[type[BaseException], ...] = (*_EXPECTED, ImportError)
 
-SCHEMA = "hermes-palace/scan@1"
+SCHEMA = "hermes-3d/scan@1"
 SECTIONS = (
     "agentes",
     "cron",
@@ -726,7 +726,7 @@ def scan_hermes(
     database section be reused while its files' :func:`db_signature` and the window are unchanged and the entry is younger
     than :data:`CACHE_MAX_AGE`.
 
-    ``api`` (default None = off, so tests and ``palace scan`` never start a process by accident) is the first layer for the
+    ``api`` (default None = off, so tests and ``hermes 3d scan`` never start a process by accident) is the first layer for the
     ``kanban`` and ``sesiones`` sections: the module ``hermes_api`` (or a stand-in with the same two functions
     ``kanban_via_cli(days)`` and ``sessions_via_api(profiles, ids)``). It uses Hermes' own CLI / ``SessionDB``; only when it cannot
     answer, and only with ``allow_direct_db``, does the direct SQL read below run."""

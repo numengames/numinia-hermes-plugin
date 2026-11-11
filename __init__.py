@@ -1,10 +1,10 @@
-"""hermes-palace — Hermes plugin entry point (MIT).
+"""hermes-3d — Hermes plugin entry point (MIT).
 
 Registers, and nothing more (the manifest declares exactly this):
-  tools  : palace_state (read-only), palace_cron_action (pause/resume a cron job after approval)
-  hooks  : pre_tool_call (escalates palace_cron_action to Hermes' own approval),
+  tools  : hermes3d_state (read-only), hermes3d_cron_action (pause/resume a cron job after approval)
+  hooks  : pre_tool_call (escalates hermes3d_cron_action to Hermes' own approval),
            on_session_start / on_session_end / on_session_finalize (publish `sesion` places)
-  CLI    : `hermes palace up|status|down`
+  CLI    : `hermes 3d up|status|down`
 
 It never edits Hermes files, never imports Hermes internals, never opens a port to the network
 (the loopback bridge binds 127.0.0.1 only and lives in its own process, see bridge_main.py).
@@ -25,18 +25,18 @@ _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:  # the plugin dir is not a package on sys.path when Hermes loads it
     sys.path.insert(0, str(_HERE))
 
-from hermes_palace_lib import actions, client, config, docsviewer, events, installer, linkkey, setup_cmd, supervisor
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.crontable import clean_text
-from hermes_palace_lib.errors import PalaceError
-from hermes_palace_lib.worldtext import say
+from hermes_3d_lib import actions, client, config, docsviewer, events, installer, linkkey, setup_cmd, supervisor
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.crontable import clean_text
+from hermes_3d_lib.errors import Hermes3DError
+from hermes_3d_lib.worldtext import say
 
-logger = logging.getLogger("hermes_palace")
+logger = logging.getLogger("hermes_3d")
 
 STATE_SCHEMA = {
-    "name": "palace_state",
+    "name": "hermes3d_state",
     "description": (
-        "Read-only snapshot of this Hermes profile as the Hermes Palace world sees it: "
+        "Read-only snapshot of this Hermes profile as the Hermes 3D world sees it: "
         "cron jobs, installed skills, plugin switches and the bridge state. Changes nothing."
     ),
     "parameters": {
@@ -50,7 +50,7 @@ def _home() -> Path:
     return config.hermes_home()
 
 
-# `ctx.get_config` is the documented reader of plugins.entries.hermes-palace.settings; it is bound at
+# `ctx.get_config` is the documented reader of plugins.entries.hermes-3d.settings; it is bound at
 # register() time. Before that (tests, tools) the same file is read directly: one source, one precedence.
 _GETTER: S.Getter | None = None
 
@@ -59,8 +59,8 @@ def _getter() -> S.Getter:
     return _GETTER or S.yaml_getter(_home())
 
 
-def _settings() -> S.PalaceSettings:
-    return S.PalaceSettings.from_getter(_getter(), _home())
+def _settings() -> S.Hermes3DSettings:
+    return S.Hermes3DSettings.from_getter(_getter(), _home())
 
 
 # ---- tools ---------------------------------------------------------------------------
@@ -74,8 +74,8 @@ def make_state_tool(ctx: Any):
         if what in ("all", "config"):
             out["switches"] = S.switches(ctx.get_config)
         if what in ("all", "cron"):
-            from hermes_palace_lib.bridge_main import run_cron_list
-            from hermes_palace_lib.crontable import parse_cron_list, read_jobs_file
+            from hermes_3d_lib.bridge_main import run_cron_list
+            from hermes_3d_lib.crontable import parse_cron_list, read_jobs_file
 
             parsed = read_jobs_file(_home())  # Hermes' own jobs.json first, the printed table only as fallback
             if parsed is None:
@@ -142,7 +142,7 @@ def _observer(name: str):
     def hook(**kw: Any) -> None:
         _activity(name, **kw)
 
-    hook.__name__ = f"palace_{name}"
+    hook.__name__ = f"hermes3d_{name}"
     return hook
 
 
@@ -153,7 +153,7 @@ def make_session_hooks(ctx: Any):
         try:  # a dead bridge must never slow or break a session
             client.call("POST", "/event", {"kind": kind, **fields}, timeout=0.5)
         except Exception:
-            logger.debug("palace: session event dropped", exc_info=True)
+            logger.debug("hermes-3d: session event dropped", exc_info=True)
 
     def on_session_start(session_id: str = "", model: str = "", platform: str = "", **_kw: Any) -> None:
         _activity("on_session_start", session_id=session_id, platform=platform)
@@ -169,9 +169,9 @@ def make_session_hooks(ctx: Any):
     return on_session_start, on_session_end, on_session_finalize
 
 
-# ---- CLI: hermes palace up|status|down ---------------------------------------------------------
+# ---- CLI: hermes 3d up|status|down ---------------------------------------------------------
 def _setup_cli(parser: Any) -> None:
-    sub = parser.add_subparsers(dest="palace_cmd")
+    sub = parser.add_subparsers(dest="hermes3d_cmd")
     up = sub.add_parser("up", help="locate the engine, start or reuse the hermes world, start the bridge")
     up.add_argument("--read-only", action="store_true", help="the world can look but never change anything in Hermes")
     sub.add_parser(
@@ -213,11 +213,11 @@ def _setup_cli(parser: Any) -> None:
         action="store_true",
         help="read state.db / kanban.db for this run (else only if allow_direct_db_read is on)",
     )
-    parser.set_defaults(palace_cmd=None)
+    parser.set_defaults(hermes3d_cmd=None)
 
 
 def _cli(args: Any) -> int:
-    cmd = getattr(args, "palace_cmd", None)
+    cmd = getattr(args, "hermes3d_cmd", None)
     fn = {
         "up": lambda: cmd_up(read_only=bool(getattr(args, "read_only", False))),
         "demo": cmd_demo,
@@ -231,16 +231,16 @@ def _cli(args: Any) -> int:
         ),
     }.get(cmd or "")
     if fn is None:
-        print("usage: hermes palace setup|up|demo|status|down|scan|docs")
+        print("usage: hermes 3d setup|up|demo|status|down|scan|docs")
         return 2
     try:
         return fn()
-    except (supervisor.SupervisorError, S.SettingsError, PalaceError, setup_cmd.SetupError) as exc:
-        print(f"hermes palace: {exc}", file=sys.stderr)
+    except (supervisor.SupervisorError, S.SettingsError, Hermes3DError, setup_cmd.SetupError) as exc:
+        print(f"hermes 3d: {exc}", file=sys.stderr)
         return 1
 
 
-def cmd_up(read_only: bool = False, demo: bool = False, cfg: S.PalaceSettings | None = None) -> int:
+def cmd_up(read_only: bool = False, demo: bool = False, cfg: S.Hermes3DSettings | None = None) -> int:
     home = _home()
     cfg = cfg or _settings()
     read_only = read_only or cfg.read_only or demo
@@ -290,13 +290,13 @@ def _up_rest(
         running = client.call("GET", "/status", home=home).get("data", {})
         if (read_only and not running.get("read_only")) or (demo and not running.get("demo")):
             raise supervisor.SupervisorError(
-                "a bridge is already running in another mode; run `hermes palace down` and then start it again "
-                f"(`hermes palace {'demo' if demo else 'up --read-only'}`)"
+                "a bridge is already running in another mode; run `hermes 3d down` and then start it again "
+                f"(`hermes 3d {'demo' if demo else 'up --read-only'}`)"
             )
         print(f"bridge already running (pid {rt['pid']})")
     else:
         pid = supervisor.spawn_bridge(home, read_only=read_only, demo=demo, hold_fd=stdin_fd)
-        print(f"bridge started (pid {pid}); log: {config.palace_dir(home) / 'bridge.log'}")
+        print(f"bridge started (pid {pid}); log: {config.plugin_data_dir(home) / 'bridge.log'}")
     if demo:
         _require_read_only(home)
     if read_only:
@@ -336,7 +336,7 @@ def _ask(prompt: str) -> bool:
 
 
 def cmd_install_engine(args: Any) -> int:
-    """``hermes palace install-engine``: user-initiated; see :mod:`hermes_palace_lib.installer`."""
+    """``hermes 3d install-engine``: user-initiated; see :mod:`hermes_3d_lib.installer`."""
     res = installer.install_engine(
         _home(),
         lock_path=installer.default_lock_path(),
@@ -345,13 +345,13 @@ def cmd_install_engine(args: Any) -> int:
         confirm=_ask,
         no_shortcut=bool(getattr(args, "no_shortcut", False)),
     )
-    print(f"installed {res['tag']} ({res['sha256'][:12]}); start the world with: hermes palace up")
+    print(f"installed {res['tag']} ({res['sha256'][:12]}); start the world with: hermes 3d up")
     return 0
 
 
 def cmd_demo() -> int:
-    """``hermes palace demo``: your real Hermes as a world, read-only, agents + spend + cron on, counts only."""
-    from hermes_palace_lib import scan
+    """``hermes 3d demo``: your real Hermes as a world, read-only, agents + spend + cron on, counts only."""
+    from hermes_3d_lib import scan
 
     home = _home()
     snap = scan.scan_hermes(days=_settings().scan_days, allow_direct_db=True)  # the demo is the explicit, read-only look at spend
@@ -367,11 +367,11 @@ def cmd_demo() -> int:
 
 
 def cmd_scan(as_json: bool, days: int, direct_db: bool = False) -> int:
-    """``hermes palace scan [--json] [--direct-db]``: read-only; never starts anything, never calls the engine.
+    """``hermes 3d scan [--json] [--direct-db]``: read-only; never starts anything, never calls the engine.
 
     Spend, sessions, kanban and projects come from Hermes' private SQLite files, so they are read only when the setting
     ``allow_direct_db_read`` is on or you pass ``--direct-db`` for this one run."""
-    from hermes_palace_lib import scan
+    from hermes_3d_lib import scan
 
     allow = direct_db or _settings().allow_direct_db_read
     snap = scan.scan_hermes(days=days, allow_direct_db=allow)
@@ -413,7 +413,7 @@ def cmd_status() -> int:
             f"running (pid {dv['pid']}) at {dv['url']}"
             if dv["running"]
             else f"{'port in use by another program' if dv['listening'] else 'not running'} "
-            f"(`hermes palace docs`; {'built' if dv['built'] else 'not built yet'})"
+            f"(`hermes 3d docs`; {'built' if dv['built'] else 'not built yet'})"
         )
     )
     res = client.call("GET", "/status", home=home)
@@ -433,13 +433,13 @@ def cmd_status() -> int:
     else:
         print(f"bridge        : not running ({res.get('error')})")
         print(
-            f"mode          : {_mode_text(cfg.read_only)}{' (setting, applied at the next `palace up`)' if cfg.read_only else ''}"
+            f"mode          : {_mode_text(cfg.read_only)}{' (setting, applied at the next `hermes 3d up`)' if cfg.read_only else ''}"
         )
     return 0
 
 
 def cmd_docs(stop: bool = False) -> int:
-    """``hermes palace docs [--stop]``: the local docs viewer (lite build) on 127.0.0.1 for the world's library."""
+    """``hermes 3d docs [--stop]``: the local docs viewer (lite build) on 127.0.0.1 for the world's library."""
     home = _home()
     cfg = _settings()
     if stop:
@@ -479,16 +479,16 @@ def register(ctx: Any) -> None:
     global _GETTER
     _GETTER = ctx.get_config
     ctx.register_tool(
-        name="palace_state",
-        toolset="hermes-palace",
+        name="hermes3d_state",
+        toolset="hermes-3d",
         schema=STATE_SCHEMA,
         handler=make_state_tool(ctx),
-        description="Read-only Hermes Palace snapshot",
+        description="Read-only Hermes 3D snapshot",
         emoji="🏛",
     )
     ctx.register_tool(
         name=actions.TOOL_NAME,
-        toolset="hermes-palace",
+        toolset="hermes-3d",
         schema=actions.tool_schema(),
         handler=make_action_tool(ctx),
         description="Pause/resume a cron job asked for from the world (needs approval)",
@@ -504,8 +504,8 @@ def register(ctx: Any) -> None:
     ctx.register_hook("on_session_end", end)
     ctx.register_hook("on_session_finalize", finalize)
     ctx.register_cli_command(
-        "palace",
-        "Hermes Palace world: up | status | down",
+        "3d",
+        "Hermes 3D world: up | status | down",
         _setup_cli,
         _cli,
         description="Run the local Numinia 'hermes' world and its bridge",

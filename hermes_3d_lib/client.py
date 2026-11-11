@@ -1,6 +1,6 @@
-"""Tiny client for the loopback bridge, used by the dashboard router and by `hermes palace status`.
+"""Tiny client for the loopback bridge, used by the dashboard router and by `hermes 3d status`.
 
-It reads ``<HERMES_HOME>/hermes-palace/runtime.json`` (0600, written by the bridge at start) and
+It reads ``<HERMES_HOME>/hermes-3d/runtime.json`` (0600, written by the bridge at start) and
 talks to ``127.0.0.1:<port>`` with the per-start bearer token. Synchronous and dependency-free
 (stdlib ``http.client``) so it also works when the router runs in another process
 (``plugins.isolation: host``) or the bridge is not running (every call degrades to an error dict,

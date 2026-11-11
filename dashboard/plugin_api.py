@@ -1,4 +1,4 @@
-"""Dashboard/desktop backend routes of hermes-palace, mounted at /api/plugins/hermes-palace/.
+"""Dashboard/desktop backend routes of hermes-3d, mounted at /api/plugins/hermes-3d/.
 
 Loaded by Hermes as a separate module by file path (and possibly in another process), so it
 shares NO Python state with ``__init__.register``: it reads the bridge through its loopback
@@ -20,9 +20,9 @@ from fastapi import APIRouter, Body
 
 
 def _lib():
-    """Import the sibling ``hermes_palace_lib`` package without depending on sys.path."""
+    """Import the sibling ``hermes_3d_lib`` package without depending on sys.path."""
     root = Path(__file__).resolve().parents[1]
-    name = "hermes_palace_lib"
+    name = "hermes_3d_lib"
     if name in sys.modules:
         return sys.modules[name]
     spec = importlib.util.spec_from_file_location(
@@ -37,8 +37,8 @@ def _lib():
 def _read_switches() -> dict[str, bool]:
     """Switches from the same ``config.yaml`` section ``ctx.get_config`` reads (no private Hermes import)."""
     _lib()
-    from hermes_palace_lib import config as cfg
-    from hermes_palace_lib import settings as S
+    from hermes_3d_lib import config as cfg
+    from hermes_3d_lib import settings as S
 
     return S.switches(S.yaml_getter(cfg.hermes_home()))
 
@@ -50,7 +50,7 @@ _BODY = Body(default=None)
 @router.get("/status")
 async def status() -> dict[str, Any]:
     """Bridge state for the status-bar chip. Always 200; ``bridge`` says whether it is up."""
-    from hermes_palace_lib import client
+    from hermes_3d_lib import client
 
     _lib()
     res = client.call("GET", "/status")
@@ -71,7 +71,7 @@ async def status() -> dict[str, Any]:
 @router.get("/switches")
 async def switches() -> dict[str, Any]:
     """Local on/off per function; ``engine`` is what the world itself says (``bienvenida``)."""
-    from hermes_palace_lib import client
+    from hermes_3d_lib import client
 
     _lib()
     local = _read_switches()
@@ -87,13 +87,13 @@ async def switches() -> dict[str, Any]:
 @router.get("/world")
 async def world() -> dict[str, Any]:
     """URL of the local world page, for the 'open world' button. Loopback only, built here."""
-    from hermes_palace_lib import config as cfg
+    from hermes_3d_lib import config as cfg
 
     _lib()
     info = cfg.read_runtime()
     if not info or not cfg.pid_alive(info.get("pid", 0)):
         return {"url": None, "reason": "bridge-not-running"}
-    from hermes_palace_lib import settings as S
+    from hermes_3d_lib import settings as S
 
     try:
         url = S.loopback_url("world_url", info.get("world_url"))
@@ -109,8 +109,8 @@ async def events(since: int = 0, limit: int = 100) -> dict[str, Any]:
     Fed by Hermes observer hooks into a bounded spool; empty and ``enabled: false`` while the ``sesiones`` switch is off.
     Poll with ``since=<next>`` to get only what is new."""
     _lib()
-    from hermes_palace_lib import config as cfg
-    from hermes_palace_lib import events as ev
+    from hermes_3d_lib import config as cfg
+    from hermes_3d_lib import events as ev
 
     if not _read_switches().get("sesiones"):
         return {"enabled": False, "events": [], "next": since}
@@ -124,9 +124,9 @@ async def state() -> dict[str, Any]:
     runs, the bridge's last scan sections (counts, titles, states), and the newest activity events.
     Never message bodies; ``scan`` is empty while the bridge is down."""
     _lib()
-    from hermes_palace_lib import client
-    from hermes_palace_lib import config as cfg
-    from hermes_palace_lib import events as ev
+    from hermes_3d_lib import client
+    from hermes_3d_lib import config as cfg
+    from hermes_3d_lib import events as ev
 
     sw = _read_switches()
     got = client.call("GET", "/scan")
@@ -154,19 +154,19 @@ async def embed_credential() -> dict[str, Any]:
     a refusal says why (``engine-down``, ``no-link-key``, ``embed-off``) and the exact command to run.
     """
     _lib()
-    from hermes_palace_lib import config as cfg
-    from hermes_palace_lib import embed, linkkey
-    from hermes_palace_lib import settings as S
+    from hermes_3d_lib import config as cfg
+    from hermes_3d_lib import embed, linkkey
+    from hermes_3d_lib import settings as S
 
     home = cfg.hermes_home()
     try:
-        conf = S.PalaceSettings.from_yaml(home)
+        conf = S.Hermes3DSettings.from_yaml(home)
     except S.SettingsError as exc:
         return {
             "ok": False,
             "error": "bad-settings",
             "message": str(exc)[:200],
-            "hint": "Fix the hermes-palace section of config.yaml",
+            "hint": "Fix the hermes-3d section of config.yaml",
         }
     out = embed.issue(conf, linkkey.resolve(home))
     return out
@@ -175,12 +175,12 @@ async def embed_credential() -> dict[str, Any]:
 @router.get("/world-snapshot")
 async def world_snapshot() -> dict[str, Any]:
     """What the world should show right now, built by the SAME serializers as the HMAC link (``objetos``, ``extra``, ``funciones``)."""
-    from hermes_palace_lib import client
+    from hermes_3d_lib import client
 
     _lib()
     res = client.call("GET", "/snapshot", timeout=8.0)
     if not res.get("ok") or not isinstance(res.get("data"), dict):
-        return {"ok": False, "error": res.get("error", "bridge-down"), "hint": "Run `hermes palace up`"}
+        return {"ok": False, "error": res.get("error", "bridge-down"), "hint": "Run `hermes 3d up`"}
     return {"ok": True, **res["data"]}
 
 
@@ -191,8 +191,8 @@ async def action(body: Any = _BODY) -> dict[str, Any]:
     With nobody to approve it fails closed. The answer is ``{ok, code?, texto}``, ready to go back to the frame as ``resultado``."""
     import json as _json
 
-    from hermes_palace_lib import client
-    from hermes_palace_lib.worldtext import say
+    from hermes_3d_lib import client
+    from hermes_3d_lib.worldtext import say
 
     _lib()
     if not isinstance(body, dict) or len(_json.dumps(body, ensure_ascii=False).encode("utf-8")) > MAX_ACTION_BYTES:

@@ -11,14 +11,14 @@ from types import SimpleNamespace
 import pytest
 from conftest import LOOP, ROOT
 
-from hermes_palace_lib import actions, client, config, supervisor
-from hermes_palace_lib import settings as S
+from hermes_3d_lib import actions, client, config, supervisor
+from hermes_3d_lib import settings as S
 
 
 def load_entry():
-    spec = importlib.util.spec_from_file_location("hermes_palace_entry", ROOT / "__init__.py")
+    spec = importlib.util.spec_from_file_location("hermes_3d_entry", ROOT / "__init__.py")
     mod = importlib.util.module_from_spec(spec)
-    sys.modules["hermes_palace_entry"] = mod
+    sys.modules["hermes_3d_entry"] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -55,7 +55,7 @@ def test_register_matches_manifest(hermes_home):
     load_entry().register(ctx)
     assert sorted(ctx.tools) == sorted(manifest["provides_tools"])
     assert sorted(ctx.hooks) == sorted(manifest["provides_hooks"])
-    assert "palace" in ctx.cli
+    assert "3d" in ctx.cli
     assert manifest["capabilities"] == []
     assert manifest["requires_hermes"].startswith(">=")
 
@@ -82,7 +82,7 @@ def test_pre_tool_call_escalates_only_our_tool():
     assert actions.approval_directive("terminal", {"command": "ls"}) is None
     d = actions.approval_directive(actions.TOOL_NAME, {"job_id": "8bc0eecea9b5", "verb": "cron.pausar"})
     assert d["action"] == "approve" and "hermes cron pause 8bc0eecea9b5" in d["message"]
-    assert d["rule_key"] == "hermes-palace:cron:pause"
+    assert d["rule_key"] == "hermes-3d:cron:pause"
 
 
 def test_approval_message_cannot_be_forged_by_job_text():
@@ -163,7 +163,7 @@ def test_hermes_missing_is_reported(monkeypatch):
 
 
 def test_no_shell_anywhere_in_the_code():
-    for path in [ROOT / "__init__.py", ROOT / "dashboard/plugin_api.py", *(ROOT / "hermes_palace_lib").glob("*.py")]:
+    for path in [ROOT / "__init__.py", ROOT / "dashboard/plugin_api.py", *(ROOT / "hermes_3d_lib").glob("*.py")]:
         text = path.read_text(encoding="utf-8")
         for needle in ("shell=True", "os.system", "os.popen", 'dispatch_tool("terminal"', "commands.getoutput"):
             assert needle not in text, f"{path.name}: {needle}"
@@ -173,7 +173,7 @@ def test_action_tool_without_pending_request_does_nothing(hermes_home):
     ctx = FakeCtx()
     mod = load_entry()
     mod.register(ctx)
-    out = json.loads(ctx.tools["palace_cron_action"].handler({"job_id": "8bc0eecea9b5", "verb": "cron.pausar"}))
+    out = json.loads(ctx.tools["hermes3d_cron_action"].handler({"job_id": "8bc0eecea9b5", "verb": "cron.pausar"}))
     assert out["ok"] is False and ctx.dispatched == []
 
 
@@ -183,10 +183,10 @@ def test_state_tool_is_read_only_and_degrades(hermes_home, monkeypatch):
     ctx = FakeCtx()
     mod = load_entry()
     mod.register(ctx)
-    import hermes_palace_lib.bridge_main as bm
+    import hermes_3d_lib.bridge_main as bm
 
     monkeypatch.setattr(bm, "run_cron_list", lambda timeout=20: (ROOT / "tests/samples/cron_list_many.txt").read_text())
-    out = json.loads(ctx.tools["palace_state"].handler({"what": "all"}))
+    out = json.loads(ctx.tools["hermes3d_state"].handler({"what": "all"}))
     assert out["bridge"]["running"] is False
     assert out["switches"]["salud"] is True and out["switches"]["cron"] is False
     assert len(out["cron"]["jobs"]) == 5 and out["skills"] == {"count": 1, "names": ["demo"]}
@@ -242,7 +242,7 @@ def test_signature_matches_the_engines_firmarReto():
 
     key, nonce = "k" * 16, "ab" * 24
     want = hmac.new(key.encode(), ("numinia-enlace@1\n" + nonce).encode(), hashlib.sha256).hexdigest()
-    from hermes_palace_lib import protocol
+    from hermes_3d_lib import protocol
 
     assert protocol.sign_nonce(key, nonce) == want
     assert protocol.sign_nonce(key, nonce) != hmac.new(key.encode(), nonce.encode(), hashlib.sha256).hexdigest()
@@ -262,7 +262,7 @@ def test_link_listening_is_a_plain_tcp_probe():
 def test_no_hardcoded_paths_in_sources():
     bad = ("/var/home", "/home/", "/Users/", "arkhitektonian", "\\.hermes/profiles")
     for p in [
-        *list((ROOT / "hermes_palace_lib").glob("*.py")),
+        *list((ROOT / "hermes_3d_lib").glob("*.py")),
         ROOT / "__init__.py",
         ROOT / "dashboard/plugin_api.py",
         ROOT / "desktop/plugin.js",
@@ -273,7 +273,7 @@ def test_no_hardcoded_paths_in_sources():
 
 
 def test_bind_address_is_not_configurable():
-    src = (ROOT / "hermes_palace_lib/hub.py").read_text()
+    src = (ROOT / "hermes_3d_lib/hub.py").read_text()
     assert "0.0.0.0" not in src and 'P_HOST = "127.0.0.1"' in src
     assert config.HOST == "127.0.0.1"
 
@@ -286,8 +286,8 @@ def test_client_degrades_without_bridge(hermes_home):
 
 def test_cli_status_and_usage(hermes_home, capsys):
     mod = load_entry()
-    assert mod._cli(SimpleNamespace(palace_cmd=None)) == 2
-    assert mod._cli(SimpleNamespace(palace_cmd="status")) == 0
+    assert mod._cli(SimpleNamespace(hermes3d_cmd=None)) == 2
+    assert mod._cli(SimpleNamespace(hermes3d_cmd="status")) == 0
     out = capsys.readouterr().out
     assert "NOT SET (setting engine_path)" in out and "bridge        : not running" in out
     assert f"engine link   : not listening on {LOOP}:8791" in out and "link key      : missing" in out
@@ -295,13 +295,13 @@ def test_cli_status_and_usage(hermes_home, capsys):
 
 def test_cli_up_without_engine_is_clean_error(hermes_home, capsys):
     mod = load_entry()
-    assert mod._cli(SimpleNamespace(palace_cmd="up")) == 1
+    assert mod._cli(SimpleNamespace(hermes3d_cmd="up")) == 1
     assert "engine_path" in capsys.readouterr().err
 
 
 # ---- dashboard router ---------------------------------------------------------------------------------
 def load_router():
-    spec = importlib.util.spec_from_file_location("hermes_dashboard_plugin_hermes-palace", ROOT / "dashboard/plugin_api.py")
+    spec = importlib.util.spec_from_file_location("hermes_dashboard_plugin_hermes-3d", ROOT / "dashboard/plugin_api.py")
     mod = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)

@@ -21,7 +21,7 @@ from .protocol import MAX_OBJECTS_PER_BATCH, make_object
 from .worldtext import say
 from .zones import FALLBACK_ZONES
 
-logger = logging.getLogger("hermes_palace.habilidades")
+logger = logging.getLogger("hermes_3d.habilidades")
 
 TYPE_HABILIDAD = "habilidad"
 ZONE_HABILIDADES = FALLBACK_ZONES[TYPE_HABILIDAD]

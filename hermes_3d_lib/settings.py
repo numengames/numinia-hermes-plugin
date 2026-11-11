@@ -1,13 +1,13 @@
-"""Plugin settings: the one place that turns ``plugins.entries.hermes-palace.settings`` into typed values.
+"""Plugin settings: the one place that turns ``plugins.entries.hermes-3d.settings`` into typed values.
 
 Precedence (highest first), identical in every process that needs a setting:
 
-1. ``config.yaml`` -> ``plugins.entries.hermes-palace.settings.<key>`` (what Settings -> Plugins in the
+1. ``config.yaml`` -> ``plugins.entries.hermes-3d.settings.<key>`` (what Settings -> Plugins in the
    Desktop and ``hermes config set`` write; inside Hermes it is read with ``ctx.get_config``).
 2. The default in ``plugin.yaml`` ``config_schema`` (repeated in :data:`DEFAULTS`).
 
 There are no environment variables for settings. The only environment variable the plugin reads is the
-secret ``HERMES_PALACE_LINK_KEY`` (see :mod:`hermes_palace_lib.linkkey`).
+secret ``HERMES_3D_LINK_KEY`` (see :mod:`hermes_3d_lib.linkkey`).
 
 The module is pure (no Hermes import): the Hermes process hands it ``ctx.get_config``; the bridge and the
 dashboard router, which have no ``ctx``, hand it :func:`yaml_getter`, which reads the same file.
@@ -26,9 +26,9 @@ from urllib.parse import urlsplit
 
 from . import config
 
-PLUGIN_ID = "hermes-palace"
+PLUGIN_ID = "hermes-3d"
 Getter = Callable[[str, Any], Any]
-logger = logging.getLogger("hermes_palace.settings")
+logger = logging.getLogger("hermes_3d.settings")
 
 # Engine function name -> the setting that switches it on or off (flat keys: one shape, no nesting).
 FUNCTIONS = ("salud", "cron", "sesiones", "agentes", "gasto", "habilidades", "kanban", "proyectos", "documentos")
@@ -59,7 +59,7 @@ SCAN_DAYS_DEFAULT = 30
 LOOPBACK_NAMES = ("127.0.0.1", "localhost")
 ENGINE_MAIN = Path("packages") / "server" / "src" / "main.ts"
 ENGINE_WWW = Path("dist") / "plaza"
-ENGINE_MARKER = ".palace-engine.json"  # written by install-engine; names the entry file inside app/
+ENGINE_MARKER = ".hermes-3d-engine.json"  # written by install-engine; names the entry file inside app/
 
 DEFAULTS: dict[str, Any] = {
     "engine_path": "",
@@ -177,7 +177,7 @@ def checked_folder(key: str, raw: Any, *, home: Path) -> Path | None:
 
 
 @dataclass(frozen=True)
-class PalaceSettings:
+class Hermes3DSettings:
     home: Path
     engine_path: Path | None = None
     world_path: Path = field(default=Path("."))
@@ -195,8 +195,7 @@ class PalaceSettings:
     embed_ttl_s: int = EMBED_TTL_DEFAULT_S  # life of the credential that opens the world inside Desktop (60 s .. 24 h)
 
     @classmethod
-    def from_getter(cls, get: Getter, home: Path) -> PalaceSettings:
-        config.migrate_legacy_dir(home)  # the default world moved with the data folder (idempotent, never overwrites)
+    def from_getter(cls, get: Getter, home: Path) -> Hermes3DSettings:
         world = checked_folder("world_path", get("world_path", ""), home=home) or (config.data_dir_path(home) / "mundo")
         try:
             poll = float(get("cron_poll_seconds", POLL_SECONDS_DEFAULT))
@@ -225,7 +224,7 @@ class PalaceSettings:
         )
 
     @classmethod
-    def from_yaml(cls, home: Path) -> PalaceSettings:
+    def from_yaml(cls, home: Path) -> Hermes3DSettings:
         return cls.from_getter(yaml_getter(home), home)
 
     # ---- derived ---------------------------------------------------------------------------------------
@@ -283,8 +282,8 @@ def read_only(get: Getter) -> bool:
 
 
 ENGINE_HINT = (
-    "Run `hermes palace setup --engine-path /path/to/engine` (the folder with packages/server/src/main.ts), or "
-    "`hermes palace install-engine` to download a pinned one. Nothing else needs an engine: `hermes palace scan` "
+    "Run `hermes 3d setup --engine-path /path/to/engine` (the folder with packages/server/src/main.ts), or "
+    "`hermes 3d install-engine` to download a pinned one. Nothing else needs an engine: `hermes 3d scan` "
     "shows what the world would mirror without one. You can also set the plugin setting `engine_path` yourself "
-    "(`hermes config set plugins.entries.hermes-palace.settings.engine_path /path/to/engine`)."
+    "(`hermes config set plugins.entries.hermes-3d.settings.engine_path /path/to/engine`)."
 )

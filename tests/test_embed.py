@@ -12,8 +12,8 @@ import pytest
 from conftest import ROOT, run
 from test_entry import load_router
 
-from hermes_palace_lib import embed, linkkey
-from hermes_palace_lib import settings as S
+from hermes_3d_lib import embed, linkkey
+from hermes_3d_lib import settings as S
 
 KEY = "k" * 40
 
@@ -59,12 +59,12 @@ def test_frame_url_puts_the_credential_in_the_fragment_only():
 
 
 def conf(home, **kw):
-    return S.PalaceSettings(home=home, **kw)
+    return S.Hermes3DSettings(home=home, **kw)
 
 
 def test_issue_engine_down_gives_a_clear_error_with_the_command(hermes_home):
     out = embed.issue(conf(hermes_home), KEY, probe=lambda base: {"up": False})
-    assert out["ok"] is False and out["error"] == "engine-down" and "hermes palace" in out["hint"]
+    assert out["ok"] is False and out["error"] == "engine-down" and "hermes 3d" in out["hint"]
     assert "url" not in out
 
 
@@ -122,7 +122,7 @@ def test_probe_reads_embed_flag_from_status(monkeypatch):
 def test_route_credential_when_engine_is_down(hermes_home):
     api = load_router()
     out = run(api.embed_credential())
-    assert out["ok"] is False and out["error"] in ("engine-down",) and "hermes palace" in out["hint"]
+    assert out["ok"] is False and out["error"] in ("engine-down",) and "hermes 3d" in out["hint"]
 
 
 def test_route_credential_ok_with_a_probe_and_key(hermes_home, monkeypatch):
@@ -137,7 +137,7 @@ def test_route_credential_ok_with_a_probe_and_key(hermes_home, monkeypatch):
 
 
 def test_route_credential_bad_settings(hermes_home):
-    (hermes_home / "config.yaml").write_text("plugins:\n  hermes-palace:\n    engine_port: 99999999\n")
+    (hermes_home / "config.yaml").write_text("plugins:\n  hermes-3d:\n    engine_port: 99999999\n")
     out = run(load_router().embed_credential())
     assert out["ok"] is False
 
@@ -145,7 +145,7 @@ def test_route_credential_bad_settings(hermes_home):
 def test_route_snapshot_without_bridge(hermes_home):
     api = load_router()
     out = run(api.world_snapshot())
-    assert out["ok"] is False and "hermes palace up" in out["hint"]
+    assert out["ok"] is False and "hermes 3d up" in out["hint"]
 
 
 def test_route_action_refuses_junk_and_oversize(hermes_home):
@@ -162,7 +162,7 @@ def test_route_action_without_bridge_fails_closed(hermes_home):
 
 
 def test_shipped_tree_has_no_forbidden_constructs():
-    for p in ["desktop/plugin.js", "hermes_palace_lib/embed.py", "dashboard/plugin_api.py"]:
+    for p in ["desktop/plugin.js", "hermes_3d_lib/embed.py", "dashboard/plugin_api.py"]:
         text = (ROOT / p).read_text()
         for bad in ("eval(", "new Function", "import(", "document.write"):
             assert bad not in text, (p, bad)
@@ -170,7 +170,7 @@ def test_shipped_tree_has_no_forbidden_constructs():
 
 def test_engine_link_can_be_switched_off_for_path_a(hermes_home):
     """An engine takes one source and a local link displaces the embedded page: path A needs the link off, path B keeps it on."""
-    from hermes_palace_lib import bridge_main
+    from hermes_3d_lib import bridge_main
 
     on, off = conf(hermes_home), conf(hermes_home, engine_link=False)
     assert on.engine_link is True and off.engine_link is False

@@ -26,7 +26,7 @@ from typing import Any
 from .errors import NodeMissing
 
 NODE_RECOMMENDED = (22, 18, 0)
-FIX = "Run `hermes pm doctor`, then `hermes palace setup` again."
+FIX = "Run `hermes pm doctor`, then `hermes 3d setup` again."
 _VERSION = re.compile(r"v?(\d+)\.(\d+)\.(\d+)")
 _ENV_KEEP = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "XDG_RUNTIME_DIR", "NODE_OPTIONS")
 

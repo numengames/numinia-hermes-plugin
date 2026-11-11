@@ -1,4 +1,4 @@
-"""``hermes palace setup --first-run`` end to end: fake release server -> installer -> stub engine, with Node mocked (no real pm)."""
+"""``hermes 3d setup --first-run`` end to end: fake release server -> installer -> stub engine, with Node mocked (no real pm)."""
 
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ from conftest import ROOT
 from fake_release import FakeRelease, as_script, tar_gz
 from test_entry import load_entry
 
-from hermes_palace_lib import config, installer, nodebin, setup_cmd, supervisor
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.errors import NodeMissing
+from hermes_3d_lib import config, installer, nodebin, setup_cmd, supervisor
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.errors import NodeMissing
 
 PYNODE = nodebin.NodeRuntime(sys.executable, (26, 12, 1), "pm", "")
 STUB_ENTRY = "stub.py"
@@ -95,7 +95,7 @@ def env(hermes_home, tmp_path, monkeypatch):
     monkeypatch.setattr(supervisor, "spawn_bridge", spawn)
     mod = load_entry()
     monkeypatch.setattr(mod, "_home", lambda: hermes_home)
-    monkeypatch.setattr(mod, "_settings", lambda: S.PalaceSettings.from_yaml(hermes_home))
+    monkeypatch.setattr(mod, "_settings", lambda: S.Hermes3DSettings.from_yaml(hermes_home))
     yield SimpleNamespace(home=hermes_home, port=port, mod=mod, holders=holders, pids=pids, tmp=tmp_path)
     for fd in holders:
         with contextlib.suppress(OSError):
@@ -134,16 +134,16 @@ def test_the_whole_path_works_against_the_fake_release_and_is_fast(env, monkeypa
         rc, text, setter = run(env, rel)
     seconds = time.monotonic() - t0
     assert rc == 0, text
-    assert "ready: open the Palace page in Hermes Desktop." in text
+    assert "ready: open the Hermes 3D page in Hermes Desktop." in text
     assert "1/4 Node" in text and "2/4 engine" in text and "3/4 settings" in text and "4/4 start" in text
-    cfg = S.PalaceSettings.from_yaml(env.home)
+    cfg = S.Hermes3DSettings.from_yaml(env.home)
     assert cfg.engine_link is False and cfg.engine_main() is not None and cfg.engine_path.name == rel.sha256[:12]
-    assert [c for c in setter.calls] == [("plugins.entries.hermes-palace.settings.engine_link", "false")]
+    assert [c for c in setter.calls] == [("plugins.entries.hermes-3d.settings.engine_link", "false")]
     assert supervisor.engine_healthy(env.port)
     with capsys.disabled():
         print(f"FIRST_RUN_SECONDS={seconds:.2f}")
     assert seconds < 60
-    keys = (config.palace_dir(env.home) / "engine-keys.json").read_text()
+    keys = (config.plugin_data_dir(env.home) / "engine-keys.json").read_text()
     assert json.loads(keys)["secret"] not in text and json.loads(keys)["secret"] not in capsys.readouterr().out
 
 
@@ -183,7 +183,7 @@ def test_declining_the_node_download_stops_before_anything_else(env, monkeypatch
 
 def test_pm_failing_to_install_node_is_a_typed_stop(env, monkeypatch):
     def resolve(ensure=True, **kw):
-        raise NodeMissing("Hermes could not provide Node (offline). Run `hermes pm doctor`, then `hermes palace setup` again.")
+        raise NodeMissing("Hermes could not provide Node (offline). Run `hermes pm doctor`, then `hermes 3d setup` again.")
 
     monkeypatch.setattr(nodebin, "resolve_node", resolve)
     with FakeRelease(stub_asset()) as rel:

@@ -16,7 +16,7 @@ from pathlib import Path
 REDACTED = "[redacted]"
 _SHAPES = (
     re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]{8,}"),
-    re.compile(r"(?i)\b((?:token|key|secret|firma|password|clave|MOTOR_ENLACE_CLAVE|HERMES_PALACE_LINK_KEY)\s*[=:]\s*)\S{6,}"),
+    re.compile(r"(?i)\b((?:token|key|secret|firma|password|clave|MOTOR_ENLACE_CLAVE|HERMES_3D_LINK_KEY)\s*[=:]\s*)\S{6,}"),
 )
 
 

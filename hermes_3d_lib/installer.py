@@ -1,7 +1,7 @@
-"""``hermes palace install-engine``: a USER-initiated, pinned, checksum-verified download of the Numinia Engine release.
+"""``hermes 3d install-engine``: a USER-initiated, pinned, checksum-verified download of the Numinia Engine release.
 
 The plugin catalog forbids bundling the engine, so nothing here runs unless the user types the command (or answers yes inside
-``hermes palace setup``). The flow:
+``hermes 3d setup``). The flow:
 
 1. refuse to run as root (the engine refuses too; an install under root would also leave root-owned files in the user's home);
 2. read ``engine.lock.json``: release ``tag``, ``asset`` name, URL template, ``sha256`` of the asset, expected ``size_bytes`` and the
@@ -14,7 +14,7 @@ The plugin catalog forbids bundling the engine, so nothing here runs unless the 
    ``instalar-motor.sh``, whose payload (a base64 ``tar.gz`` of ``app/`` and ``www/``) sits under the marker line
    ``__CARGA_DEBAJO__``; a plain ``.tar.gz`` or ``.zip`` with the same two folders works too. Only ``app/`` and ``www/`` are
    written, as the current user, with no setuid/setgid bit, no device, no path outside the folder and no link that leaves it;
-7. check ``app/<entry>``, write the marker ``.palace-engine.json`` and move the folder into place; ``engine_path`` is saved.
+7. check ``app/<entry>``, write the marker ``.hermes-3d-engine.json`` and move the folder into place; ``engine_path`` is saved.
 
 Why not run ``instalar-motor.sh --solo-extraer``: it is a root-oriented bash script; executing a 14 MB script just to unpack a tar
 adds an interpreter, an environment and a privilege question for nothing. The payload format is one line marker + base64 + tar.gz,
@@ -50,11 +50,11 @@ from urllib.parse import urlsplit
 
 from . import config
 from . import settings as S
-from .errors import PalaceError
+from .errors import Hermes3DError
 
 LOCK_NAME = "engine.lock.json"
 UNPINNED = "TODO-PUBLISH"
-MARKER = ".palace-engine.json"
+MARKER = ".hermes-3d-engine.json"
 PAYLOAD_MARK = b"__CARGA_DEBAJO__\n"
 KEEP_TOP = ("app", "www")  # the only folders of the asset that are written
 DEFAULT_URL = "https://github.com/numengames/numinia-engine/releases/download/{tag}/{asset}"
@@ -84,7 +84,7 @@ LOOPBACK = ("127.0.0.1", "localhost", "::1")
 Out = Callable[..., None]
 
 
-class InstallError(PalaceError):
+class InstallError(Hermes3DError):
     """Something the user can act on; the message says what. ``code`` tells a machine which kind."""
 
     code = "INSTALL_FAILED"
@@ -190,7 +190,7 @@ def refuse_root(euid: int | None = None) -> None:
         raise fail(
             "ROOT_REFUSED",
             "refusing to run as root: the engine runs as your own user and refuses to start as root. "
-            "Run `hermes palace setup` as the user that owns your Hermes home.",
+            "Run `hermes 3d setup` as the user that owns your Hermes home.",
         )
 
 
@@ -201,7 +201,7 @@ def download(
     """Fetch ``url`` into ``dest`` (0600), hashing while reading. Deletes ``dest`` and raises on ANY problem. Returns the size."""
     check_url(url)
     cap = expect_size if expect_size else MAX_DOWNLOAD
-    req = urllib.request.Request(url, headers={"User-Agent": "hermes-palace-installer"})  # noqa: S310 -- scheme checked above
+    req = urllib.request.Request(url, headers={"User-Agent": "hermes-3d-installer"})  # noqa: S310 -- scheme checked above
     digest = hashlib.sha256()
     total = 0
     fd = os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
@@ -260,7 +260,7 @@ def check_against_sums(url: str, asset_name: str, sha: str, *, timeout: float = 
     sums_url = url.rsplit("/", 1)[0] + "/" + SUMS_NAME
     try:
         check_url(sums_url)
-        req = urllib.request.Request(sums_url, headers={"User-Agent": "hermes-palace-installer"})  # noqa: S310 -- scheme checked
+        req = urllib.request.Request(sums_url, headers={"User-Agent": "hermes-3d-installer"})  # noqa: S310 -- scheme checked
         with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
             text = resp.read(SUMS_MAX).decode("utf-8", "replace")
     except (InstallError, OSError, http.client.HTTPException, ValueError):
@@ -494,10 +494,10 @@ def set_engine_path(home: Path, engine_path: Path) -> str:
     if path.exists():
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         mode = path.stat().st_mode & 0o777
-        shutil.copy2(path, home / "config.yaml.palace-backup")
+        shutil.copy2(path, home / "config.yaml.hermes-3d-backup")
     entry = data.setdefault("plugins", {}).setdefault("entries", {}).setdefault(S.PLUGIN_ID, {})
     entry.setdefault("settings", {})["engine_path"] = str(engine_path)
-    tmp = path.with_name("config.yaml.palace-tmp")
+    tmp = path.with_name("config.yaml.hermes-3d-tmp")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
         yaml.safe_dump(data, fh, sort_keys=False, allow_unicode=True)
@@ -516,13 +516,13 @@ def shortcut_text(platform: str, hermes_bin: str, url: str, hermes_home: str | N
     env = f"HERMES_HOME={shlex.quote(hermes_home)} " if hermes_home else ""
     if platform.startswith("win"):
         setter = f'set "HERMES_HOME={hermes_home}"\r\n' if hermes_home and not re.search(r'["%^&|<>]', hermes_home) else ""
-        return f'@echo off\r\n{setter}"{hermes_bin}" palace up\r\nstart {url}\r\n'
+        return f'@echo off\r\n{setter}"{hermes_bin}" 3d up\r\nstart {url}\r\n'
     if platform == "darwin":
         export = f"export HERMES_HOME={shlex.quote(hermes_home)}\n" if hermes_home else ""
-        return f"#!/bin/bash\n{export}{shlex.quote(hermes_bin)} palace up\nopen {shlex.quote(url)}\n"
-    command = f"{env}{shlex.quote(hermes_bin)} palace up && xdg-open {shlex.quote(url)}; read -r -p 'Press Enter to close ' _"
+        return f"#!/bin/bash\n{export}{shlex.quote(hermes_bin)} 3d up\nopen {shlex.quote(url)}\n"
+    command = f"{env}{shlex.quote(hermes_bin)} 3d up && xdg-open {shlex.quote(url)}; read -r -p 'Press Enter to close ' _"
     return (
-        "[Desktop Entry]\nType=Application\nName=Hermes Palace\n"
+        "[Desktop Entry]\nType=Application\nName=Hermes 3D\n"
         "Comment=Start the Hermes world and open it in the browser\n"
         f'Exec=sh -c "{_desktop_escape(command)}"\nTerminal=true\nCategories=Utility;\n'
     )
@@ -533,13 +533,13 @@ def write_shortcut(platform: str, hermes_bin: str, url: str, hermes_home: str | 
     home = home or Path.home()
     if platform.startswith("linux"):
         data = os.environ.get("XDG_DATA_HOME")
-        target = (Path(data) if data else home / ".local" / "share") / "applications" / "hermes-palace.desktop"
+        target = (Path(data) if data else home / ".local" / "share") / "applications" / "hermes-3d.desktop"
         mode = 0o755
         platform = "linux"
     elif platform == "darwin":
-        target, mode = home / "Desktop" / "Hermes Palace.command", 0o755
+        target, mode = home / "Desktop" / "Hermes 3D.command", 0o755
     elif platform.startswith("win"):
-        target, mode = home / "Desktop" / "Hermes Palace.bat", 0o644
+        target, mode = home / "Desktop" / "Hermes 3D.bat", 0o644
     else:
         return None
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -550,7 +550,7 @@ def write_shortcut(platform: str, hermes_bin: str, url: str, hermes_home: str | 
 
 # ---- the install -----------------------------------------------------------------------------------------------------------
 def engine_dir(home: Path, lock: Lock) -> Path:
-    return config.palace_dir(home) / "engine" / lock.dir_name
+    return config.plugin_data_dir(home) / "engine" / lock.dir_name
 
 
 def installed_marker(dest: Path) -> dict[str, Any] | None:
@@ -610,7 +610,7 @@ def install_engine(
     shortcut = None
     if not no_shortcut:
         hermes_bin = shutil.which("hermes") or "hermes"
-        page = S.PalaceSettings.from_yaml(home).page_url()
+        page = S.Hermes3DSettings.from_yaml(home).page_url()
         shortcut = write_shortcut(platform or sys.platform, hermes_bin, page, os.environ.get("HERMES_HOME"))
         out(f"shortcut: {shortcut}" if shortcut else "shortcut: not created (unsupported platform)")
     return {

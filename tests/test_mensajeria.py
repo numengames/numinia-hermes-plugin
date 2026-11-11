@@ -6,7 +6,7 @@ import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from hermes_palace_lib import mensajeria, scan
+from hermes_3d_lib import mensajeria, scan
 
 NOW = datetime(2026, 11, 6, 12, 0, 0, tzinfo=UTC)
 SECRET = "123456:AAH-this-is-a-fake-bot-token-0123456789"

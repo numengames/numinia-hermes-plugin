@@ -14,7 +14,7 @@ Player-visible group names are English.
 
 ``read_project_tree(root)`` returns a plain, JSON-serialisable dict::
 
-    {"schema": "hermes-palace/projects@1", "label": "Projects", "count": n, "active": a, "archived": b,
+    {"schema": "hermes-3d/projects@1", "label": "Projects", "count": n, "active": a, "archived": b,
      "projects": [{"id", "slug", "name", "board", "archived", "profile", "folders": [{"label"}]}],
      "groups": [{"name": "Active", "slugs": [...]}, {"name": "Archived", "slugs": [...]}],
      "error": ""}
@@ -32,7 +32,7 @@ from .protocol import make_object
 from .scan import _EXPECTED, NoDatabase, _open_ro, profile_dirs
 from .zones import FALLBACK_ZONES
 
-SCHEMA = "hermes-palace/projects@1"
+SCHEMA = "hermes-3d/projects@1"
 LABEL = "Projects"  # player-visible: English
 GROUP_ACTIVE = "Active"
 GROUP_ARCHIVED = "Archived"

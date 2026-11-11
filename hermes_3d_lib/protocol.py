@@ -6,7 +6,7 @@ The PLUGIN opens the connection (to the engine's own link port, 127.0.0.1 only, 
 
 Handshake (HMAC, the key never travels):
     engine -> plugin   {"v":1,"t":"reto","nonce":"<hex, single use>"}
-    plugin -> engine   {"v":1,"t":"hola","plugin":"hermes-palace","hermes_version":"…",
+    plugin -> engine   {"v":1,"t":"hola","plugin":"hermes-3d","hermes_version":"…",
                         "firma":"<hex hmac-sha256(key, 'numinia-enlace@1\\n' + nonce)>"}
     engine -> plugin   {"v":1,"t":"hola","funciones":["salud","cron"],"zonas":[…],"acciones":{…}}
                        (``funciones`` lists what is ON; what is off is never asked for)

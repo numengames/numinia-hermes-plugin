@@ -33,7 +33,7 @@ from .logsafe import describe, redact
 from .worldtext import say
 from .zones import zone_for
 
-logger = logging.getLogger("hermes_palace.hub")
+logger = logging.getLogger("hermes_3d.hub")
 
 MAX_BODY = 32 * 1024
 MAX_HEADER_BYTES = 8 * 1024  # request line + headers together
@@ -120,7 +120,7 @@ def parse_ack(msg: dict[str, Any]) -> dict[str, Any]:
 
     The engine sends it only when something was dropped (unknown zone, zone without that type); engines that
     never send it leave the status at zero. Text is cut, stripped of control characters and passed through the
-    secret-shape redaction because it ends up in the log and in ``palace status``.
+    secret-shape redaction because it ends up in the log and in ``hermes 3d status``.
     """
     raw = msg.get("descartadas")
     items: list[dict[str, str]] = []
@@ -240,7 +240,7 @@ class Hub:
         self._server = await asyncio.start_server(self._handle_http, P_HOST, self.port, limit=MAX_HEADER_BYTES * 2)
         self.port = self._server.sockets[0].getsockname()[1]
         if self.engine_url and self.link_key:
-            self._tasks.append(asyncio.create_task(self._engine_loop(), name="palace-engine"))
+            self._tasks.append(asyncio.create_task(self._engine_loop(), name="hermes-3d-engine"))
         else:
             self.last_error = "no engine link configured"
         return self.port
@@ -365,7 +365,7 @@ class Hub:
             P.encode(
                 {
                     "t": "hola",
-                    "plugin": "hermes-palace",
+                    "plugin": "hermes-3d",
                     "hermes_version": self.hermes_version,
                     "firma": P.sign_nonce(self.link_key or "", first["nonce"]),
                 }
@@ -475,11 +475,11 @@ class Hub:
                 self.engine_functions = _functions_on(msg.get("funciones"))
                 self.guide = _guide_on(msg.get("funciones"))
                 if self.on_functions is not None:
-                    task = asyncio.create_task(self._functions_changed(), name="palace-functions")
+                    task = asyncio.create_task(self._functions_changed(), name="hermes-3d-functions")
                     self._answers.add(task)
                     task.add_done_callback(self._answers.discard)
             elif kind == "peticion":
-                task = asyncio.create_task(self._answer_request(msg), name="palace-answer")
+                task = asyncio.create_task(self._answer_request(msg), name="hermes-3d-answer")
                 self._answers.add(task)  # keep a reference: the loop only holds weak ones
                 task.add_done_callback(self._answers.discard)
 

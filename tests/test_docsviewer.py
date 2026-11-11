@@ -1,4 +1,4 @@
-"""``hermes palace docs``: a fake docs-visor (build-docs.sh + serve.mjs) stands in for the real viewer."""
+"""``hermes 3d docs``: a fake docs-visor (build-docs.sh + serve.mjs) stands in for the real viewer."""
 
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 from conftest import LOOP
 
-from hermes_palace_lib import docsviewer, procid
-from hermes_palace_lib import settings as S
+from hermes_3d_lib import docsviewer, procid
+from hermes_3d_lib import settings as S
 
 FAKE_BUILD = """#!/usr/bin/env bash
 # fake build-docs.sh: build-docs.sh lite --out DIR  ->  DIR/lite/index.html
@@ -47,11 +47,11 @@ def viewer(tmp_path, hermes_home):
     return d
 
 
-def cfg_for(home: Path, viewer_dir: Path | None, port: int, **extra) -> S.PalaceSettings:
+def cfg_for(home: Path, viewer_dir: Path | None, port: int, **extra) -> S.Hermes3DSettings:
     values = {"docs_viewer_port": port, "link_port": free_port(), **extra}
     if viewer_dir is not None:
         values["docs_viewer_path"] = str(viewer_dir)
-    return S.PalaceSettings.from_getter(lambda k, d=None: values.get(k, d), home)
+    return S.Hermes3DSettings.from_getter(lambda k, d=None: values.get(k, d), home)
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def cleanup(hermes_home):
 
 
 def test_defaults_and_settings(hermes_home):
-    cfg = S.PalaceSettings.from_getter(lambda k, d=None: d, hermes_home)
+    cfg = S.Hermes3DSettings.from_getter(lambda k, d=None: d, hermes_home)
     assert cfg.docs_viewer_port == 8791 and cfg.docs_viewer_path is None
     assert docsviewer.default_path().name == "docs-visor"
     assert docsviewer.url_for(9000) == f"http://{LOOP}:9000/docs/"
@@ -189,7 +189,7 @@ def _entry(name="hp_entry_docs"):
 def _configure(home, **settings):
     import yaml
 
-    (home / "config.yaml").write_text(yaml.safe_dump({"plugins": {"entries": {"hermes-palace": {"settings": settings}}}}))
+    (home / "config.yaml").write_text(yaml.safe_dump({"plugins": {"entries": {"hermes-3d": {"settings": settings}}}}))
 
 
 def test_cli_docs_start_status_stop(hermes_home, viewer, capsys, cleanup):
@@ -212,7 +212,7 @@ def test_cli_docs_error_is_clean(hermes_home, tmp_path, capsys):
 
     _configure(hermes_home, docs_viewer_path=str(tmp_path / "nope"))
     mod = _entry()
-    rc = mod._cli(argparse.Namespace(palace_cmd="docs", stop=False))
+    rc = mod._cli(argparse.Namespace(hermes3d_cmd="docs", stop=False))
     assert rc == 1 and "docs viewer not found" in capsys.readouterr().err
 
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from hermes_palace_lib import cronsync
-from hermes_palace_lib.crontable import clean_text, parse_cron_list
+from hermes_3d_lib import cronsync
+from hermes_3d_lib.crontable import clean_text, parse_cron_list
 
 
 def test_one_job_real_output(sample):
@@ -139,7 +139,7 @@ def test_every_sample_job_becomes_an_object_the_engine_accepts(sample):
 
 
 def test_text_is_cut_in_bytes_not_characters():
-    from hermes_palace_lib import protocol
+    from hermes_3d_lib import protocol
 
     o = protocol.make_object("cron", "abc123", "ñ" * 80, subtitulo="é" * 100, estado="programado", zona="z7")
     _engine_accepts(o)

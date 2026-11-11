@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from hermes_palace_lib import actions
+from hermes_3d_lib import actions
 
 
 def _queue(ttl_known=True):

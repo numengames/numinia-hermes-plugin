@@ -18,8 +18,8 @@ WANT = ">=0.22.0, <0.24"
 def _three() -> dict[str, str]:
     return {
         "plugin.yaml": yaml.safe_load((ROOT / "plugin.yaml").read_text())["requires_hermes"],
-        "pyproject.toml": tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["hermes-palace"]["requires_hermes"],
-        "catalog draft": yaml.safe_load((ROOT / "docs/plugin-catalog/hermes-palace.yaml").read_text())["requires_hermes"],
+        "pyproject.toml": tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["hermes-3d"]["requires_hermes"],
+        "catalog draft": yaml.safe_load((ROOT / "docs/plugin-catalog/hermes-3d.yaml").read_text())["requires_hermes"],
     }
 
 
@@ -38,9 +38,9 @@ def test_catalog_draft_passes_the_nous_catalog_validator(monkeypatch):
     mod = importlib.util.module_from_spec(spec)
     monkeypatch.setitem(sys.modules, "nous_validate_catalog", mod)
     spec.loader.exec_module(mod)
-    entry = yaml.safe_load((ROOT / "docs/plugin-catalog/hermes-palace.yaml").read_text())
+    entry = yaml.safe_load((ROOT / "docs/plugin-catalog/hermes-3d.yaml").read_text())
     entry["sha"] = "0" * 40  # the draft carries placeholders until the repository is public
-    entry["repo"] = "https://github.com/example/hermes-palace"
+    entry["repo"] = "https://github.com/example/hermes-3d"
     entry["docs_url"] = entry["repo"]
     entry["maintainer"] = "example"
     errors, _warnings = mod.validate_entry(entry)

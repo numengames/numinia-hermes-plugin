@@ -1,4 +1,4 @@
-"""`hermes palace setup`: guided, idempotent, writes only after confirmation, never prompts with --yes."""
+"""`hermes 3d setup`: guided, idempotent, writes only after confirmation, never prompts with --yes."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from types import SimpleNamespace
 import pytest
 from test_entry import load_entry
 
-from hermes_palace_lib import settings as S
-from hermes_palace_lib import setup_cmd
+from hermes_3d_lib import settings as S
+from hermes_3d_lib import setup_cmd
 
 
 class Recorder:
@@ -66,7 +66,7 @@ def test_every_switch_has_a_plain_description():
 # ---- checks -------------------------------------------------------------------------------------------------
 def test_checks_report_node_engine_docs_and_hermes(hermes_home, tmp_path, monkeypatch):
     monkeypatch.setattr(setup_cmd.shutil, "which", lambda n: None)
-    rows = {r.name: r for r in setup_cmd.run_checks(S.PalaceSettings.from_getter(getter({}), hermes_home))}
+    rows = {r.name: r for r in setup_cmd.run_checks(S.Hermes3DSettings.from_getter(getter({}), hermes_home))}
     assert not rows["node"].ok and "22.18" in rows["node"].fix
     assert not rows["engine"].ok and "install-engine" in rows["engine"].fix
     assert "docs viewer" in rows and "link key" in rows
@@ -92,7 +92,7 @@ def test_dry_flow_with_yes_and_a_profile_writes_exactly_the_diff(hermes_home, ca
     assert rc == 0
     keys = {k.rsplit(".", 1)[1] for k, _ in rec.calls}
     assert keys == {"publish_cron", "publish_agents", "publish_skills", "publish_docs", "read_only"}  # health is already on
-    assert all(k.startswith("plugins.entries.hermes-palace.settings.") for k, _ in rec.calls)
+    assert all(k.startswith("plugins.entries.hermes-3d.settings.") for k, _ in rec.calls)
     out = capsys.readouterr().out
     assert "metadata only" in out and "allow_direct_db_read" in out and "off" in out
 
@@ -114,7 +114,7 @@ def test_yes_without_a_profile_or_engine_path_changes_nothing_and_never_prompts(
     monkeypatch.setattr("builtins.input", lambda *a: (_ for _ in ()).throw(AssertionError("prompted")))
     rec = Recorder()
     assert setup_cmd.cmd_setup(SimpleNamespace(yes=True, profile=None, engine_path=None), home=hermes_home, setter=rec) == 0
-    assert rec.calls == [] and "hermes palace demo" in capsys.readouterr().out
+    assert rec.calls == [] and "hermes 3d demo" in capsys.readouterr().out
 
 
 def test_interactive_no_answers_writes_nothing(hermes_home, monkeypatch):
@@ -154,7 +154,7 @@ def test_engine_path_is_validated_before_it_is_written(hermes_home, tmp_path, ca
     assert rec.calls == []
     good_root = engine_checkout(tmp_path)
     ok = setup_cmd.cmd_setup(SimpleNamespace(yes=True, profile=None, engine_path=str(good_root)), home=hermes_home, setter=rec)
-    assert ok == 0 and rec.calls == [("plugins.entries.hermes-palace.settings.engine_path", str(good_root))]
+    assert ok == 0 and rec.calls == [("plugins.entries.hermes-3d.settings.engine_path", str(good_root))]
 
 
 def test_a_failed_write_is_reported_not_hidden(hermes_home, capsys):
@@ -179,7 +179,7 @@ def test_setter_uses_an_argv_list_without_a_shell(hermes_home, monkeypatch):
 
     monkeypatch.setattr(setup_cmd.shutil, "which", lambda n: "/usr/bin/hermes")
     monkeypatch.setattr(setup_cmd.subprocess, "run", fake_run)
-    assert setup_cmd.hermes_config_set(hermes_home)("plugins.entries.hermes-palace.settings.read_only", "true")
+    assert setup_cmd.hermes_config_set(hermes_home)("plugins.entries.hermes-3d.settings.read_only", "true")
     assert seen["argv"][:3] == ["/usr/bin/hermes", "config", "set"] and not seen["kw"].get("shell")
     assert seen["kw"]["env"]["HERMES_HOME"] == str(hermes_home)
 
@@ -192,11 +192,11 @@ def test_setup_is_a_registered_subcommand(hermes_home):
     p = argparse.ArgumentParser()
     mod._setup_cli(p)
     ns = p.parse_args(["setup", "--yes", "--profile", "showcase"])
-    assert ns.palace_cmd == "setup" and ns.yes and ns.profile == "showcase"
+    assert ns.hermes3d_cmd == "setup" and ns.yes and ns.profile == "showcase"
 
 
 def test_up_without_an_engine_points_to_setup_and_to_what_works_without_one(hermes_home, capsys):
     mod = load_entry()
-    assert mod._cli(SimpleNamespace(palace_cmd="up")) == 1
+    assert mod._cli(SimpleNamespace(hermes3d_cmd="up")) == 1
     err = capsys.readouterr().err
-    assert "engine_path" in err and "hermes palace setup" in err and "hermes palace scan" in err
+    assert "engine_path" in err and "hermes 3d setup" in err and "hermes 3d scan" in err

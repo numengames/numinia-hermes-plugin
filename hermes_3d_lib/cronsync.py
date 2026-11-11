@@ -11,7 +11,7 @@ from typing import Any
 
 from .protocol import make_object
 
-logger = logging.getLogger("hermes_palace.cronsync")
+logger = logging.getLogger("hermes_3d.cronsync")
 
 ZONE_CRON = "z7"
 

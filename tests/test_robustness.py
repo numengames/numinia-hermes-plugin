@@ -13,9 +13,9 @@ import pytest
 from conftest import LOOP, run
 from test_supervisor import fake_engine_checkout, settings_for
 
-from hermes_palace_lib import bridge_main, client, config, linkkey, nodebin, procid, supervisor
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.errors import NodeMissing
+from hermes_3d_lib import bridge_main, client, config, linkkey, nodebin, procid, supervisor
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.errors import NodeMissing
 
 FAKE_NODE = nodebin.NodeRuntime("/usr/bin/node", (26, 12, 1), "pm", "")
 
@@ -88,7 +88,7 @@ def test_spawned_bridge_gets_a_minimal_environment(hermes_home, monkeypatch):
     assert supervisor.spawn_bridge(hermes_home) == 4242
     assert "OPENAI_API_KEY" not in seen["env"] and seen["env"]["HERMES_HOME"] == str(hermes_home)
     assert seen["env"][linkkey.ENV_LINK_KEY] == "k" * 24 and "k" * 24 not in " ".join(seen["argv"])
-    assert seen["argv"][1:] == ["-m", "hermes_palace_lib.bridge_main"] and seen["start_new_session"] is True
+    assert seen["argv"][1:] == ["-m", "hermes_3d_lib.bridge_main"] and seen["start_new_session"] is True
 
 
 def test_procid_identity_of_this_process_matches_itself_and_not_a_changed_record():
@@ -123,7 +123,7 @@ def test_client_reports_missing_stale_and_unreachable_bridges(hermes_home):
 
 
 def test_client_talks_to_a_real_hub_and_sends_json(hermes_home):
-    from hermes_palace_lib.hub import Hub
+    from hermes_3d_lib.hub import Hub
 
     async def main():
         hub = Hub(token="tok-0123456789abcdef", engine_url=None, link_key=None, switches={"salud": True})
@@ -141,9 +141,7 @@ def test_client_talks_to_a_real_hub_and_sends_json(hermes_home):
 
 
 def test_bridge_main_refuses_invalid_settings_and_logs_privately(hermes_home, monkeypatch):
-    (hermes_home / "config.yaml").write_text(
-        "plugins:\n  entries:\n    hermes-palace:\n      settings:\n        engine_port: 12\n"
-    )
+    (hermes_home / "config.yaml").write_text("plugins:\n  entries:\n    hermes-3d:\n      settings:\n        engine_port: 12\n")
     logger_root = bridge_main.logging.getLogger()
     saved = list(logger_root.handlers)
     try:
@@ -153,7 +151,7 @@ def test_bridge_main_refuses_invalid_settings_and_logs_privately(hermes_home, mo
             logger_root.removeHandler(h)
         for h in saved:
             logger_root.addHandler(h)
-    log = hermes_home / "plugin-data" / "hermes-palace" / "bridge.log"
+    log = hermes_home / "plugin-data" / "hermes-3d" / "bridge.log"
     assert "engine_port" in log.read_text() and (log.stat().st_mode & 0o777) == 0o600
 
 
@@ -176,7 +174,7 @@ def test_bridge_main_runs_with_valid_settings(hermes_home, monkeypatch):
         for h in saved:
             logger_root.addHandler(h)
     assert called["key"] == key and called["url"].startswith(f"ws://{LOOP}:8791") and called["page"] == f"http://{LOOP}:8790/"
-    assert S.PalaceSettings.from_yaml(hermes_home).link_port == 0
+    assert S.Hermes3DSettings.from_yaml(hermes_home).link_port == 0
 
 
 def test_cron_list_runner_uses_an_argv_list(monkeypatch):

@@ -10,9 +10,9 @@ import time
 import pytest
 from conftest import LOOP
 
-from hermes_palace_lib import documentos, habilidades, logsafe, scan, tablero
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.protocol import MAX_TITLE, MAX_URL, OBJECT_KEYS, make_object
+from hermes_3d_lib import documentos, habilidades, logsafe, scan, tablero
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.protocol import MAX_TITLE, MAX_URL, OBJECT_KEYS, make_object
 
 SECRET = "sk-" + "a1b2c3d4e5f6g7h8i9j0"
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,31}$")
@@ -260,7 +260,7 @@ def test_make_object_accepts_the_m6_fields_and_cuts_oversize():
 
 # ------------------------------------------------------------------------------------- bridge and settings
 def _bridge(fake_root, tmp_path, on):
-    from hermes_palace_lib import bridge_main
+    from hermes_3d_lib import bridge_main
 
     b = bridge_main.Bridge(
         tmp_path / "home", engine_url=f"ws://{LOOP}:1", link_key="k", scan_root=fake_root, allow_direct_db=True, docs_port=8800
@@ -305,7 +305,7 @@ def test_new_switches_default_off_and_map_to_settings():
 
 
 def test_guia_flag_passes_through_the_hub():
-    from hermes_palace_lib.hub import _functions_on, _guide_on
+    from hermes_3d_lib.hub import _functions_on, _guide_on
 
     assert _guide_on(["salud", "guia"]) is True and _guide_on(["salud"]) is False and _guide_on(None) is False
     assert "guia" not in _functions_on(["salud", "guia"])  # not a source switch: never acted on

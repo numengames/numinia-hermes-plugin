@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_every_module_using_subprocess_is_in_the_readme_table():
     users = {
         p.name
-        for p in (ROOT / "hermes_palace_lib").glob("*.py")
+        for p in (ROOT / "hermes_3d_lib").glob("*.py")
         if re.search(r"\bsubprocess\.(run|Popen|call|check_)", p.read_text())
     }
     users |= {p.name for p in ROOT.glob("*.py") if re.search(r"\bsubprocess\.", p.read_text())}
@@ -20,7 +20,7 @@ def test_every_module_using_subprocess_is_in_the_readme_table():
     table = table[: table.index("\n## ")]
     listed = set(re.findall(r"\| `([a-z_]+\.py)` \|", table))
     assert users <= listed, f"undocumented subprocess users: {sorted(users - listed)}"
-    assert listed <= {p.name for p in (ROOT / "hermes_palace_lib").glob("*.py")}
+    assert listed <= {p.name for p in (ROOT / "hermes_3d_lib").glob("*.py")}
 
 
 def test_no_address_port_literal_or_secrets_file_path_ships():

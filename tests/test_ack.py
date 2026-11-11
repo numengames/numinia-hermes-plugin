@@ -9,7 +9,7 @@ from conftest import SAMPLES, run, until
 from fake_engine import FakeEngine
 from test_bridge import Reader, listing, make_bridge, started, stop
 
-from hermes_palace_lib import hub as hubmod
+from hermes_3d_lib import hub as hubmod
 
 
 def recorded() -> dict:
@@ -84,11 +84,11 @@ def test_dropped_resets_when_the_link_reconnects(hermes_home):
     run(main())
 
 
-def test_palace_status_prints_the_dropped_objects(hermes_home, monkeypatch, capsys):
+def test_hermes3d_status_prints_the_dropped_objects(hermes_home, monkeypatch, capsys):
     from conftest import ROOT  # noqa: F401
     from test_entry import load_entry
 
-    from hermes_palace_lib import client
+    from hermes_3d_lib import client
 
     data = {
         "connected": True,

@@ -23,7 +23,7 @@ from typing import Any
 
 from . import config, enginekeys, linkkey, logsafe, nodebin, procid
 from . import settings as S
-from .errors import PalaceError
+from .errors import Hermes3DError
 
 TEMPLATE = "hermes"
 SWITCH_FILE = Path("entorno") / "espejo.json"  # no file = the engine opens no link at all
@@ -55,7 +55,7 @@ def _world_json(world: Path, relative: Path | str) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
-def link_port(cfg: S.PalaceSettings) -> int:
+def link_port(cfg: S.Hermes3DSettings) -> int:
     """The engine's link port: the ``link_port`` setting, else the world's espejo.json, else 8791."""
     if cfg.link_port:
         return cfg.link_port
@@ -110,7 +110,7 @@ def node_binary() -> str:
 
 
 def engine_environment(
-    cfg: S.PalaceSettings,
+    cfg: S.Hermes3DSettings,
     key: str,
     lport: int,
     node: nodebin.NodeRuntime | None = None,
@@ -176,27 +176,27 @@ def log_tail(path: Path, lines: int = 12) -> str:
     return logsafe.redact("\n".join(text.strip().splitlines()[-lines:]))
 
 
-class EngineStartFailed(SupervisorError, PalaceError):
+class EngineStartFailed(SupervisorError, Hermes3DError):
     code = "ENGINE_START_FAILED"
     retryable = True
 
 
-class PortBusy(SupervisorError, PalaceError):
+class PortBusy(SupervisorError, Hermes3DError):
     code = "PORT_BUSY"
     retryable = False
 
 
-def check_ports(cfg: S.PalaceSettings, lport: int) -> None:
+def check_ports(cfg: S.Hermes3DSettings, lport: int) -> None:
     """The ports we are about to use must differ, and the game port must be free (we only reuse OUR engine)."""
     if cfg.engine_port == cfg.docs_viewer_port or cfg.engine_port == lport:
         raise PortBusy(
             f"engine_port ({cfg.engine_port}) clashes with the docs viewer ({cfg.docs_viewer_port}) or the link ({lport}); "
-            "change one with `hermes config set plugins.entries.hermes-palace.settings.engine_port <port>`"
+            "change one with `hermes config set plugins.entries.hermes-3d.settings.engine_port <port>`"
         )
     if link_listening(cfg.engine_port):
         raise PortBusy(
             f"127.0.0.1:{cfg.engine_port} is already in use by another program. Stop it, or choose another port: "
-            "`hermes config set plugins.entries.hermes-palace.settings.engine_port <port>`"
+            "`hermes config set plugins.entries.hermes-3d.settings.engine_port <port>`"
         )
 
 
@@ -221,7 +221,7 @@ def seed_embed(world: Path) -> bool:
     return True
 
 
-def start_engine(cfg: S.PalaceSettings, hold_stdin: bool = True) -> dict[str, Any]:
+def start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = True) -> dict[str, Any]:
     """Start the engine; on a world it just created for Path A (``engine_link`` off) turn embed on and restart it once.
 
     The real engine builds a new world from its template at the first start, with embed OFF, and reads the file only at
@@ -241,7 +241,7 @@ def start_engine(cfg: S.PalaceSettings, hold_stdin: bool = True) -> dict[str, An
     return again
 
 
-def _start_engine(cfg: S.PalaceSettings, hold_stdin: bool = False) -> dict[str, Any]:
+def _start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = False) -> dict[str, Any]:
     """Start the engine for the configured world unless it already runs (reuse).
 
     The engine ALWAYS gets a stdin pipe and ``MOTOR_SALIR_SI_STDIN_CIERRA=1``: its write end is returned as ``stdin_fd`` and the
@@ -267,7 +267,7 @@ def _start_engine(cfg: S.PalaceSettings, hold_stdin: bool = False) -> dict[str, 
     node = node_runtime()
     marker = cfg.engine_install()
     keys = enginekeys.ensure(cfg.home, str(marker.get("sha256", "checkout")) if marker else "checkout")
-    log = config.palace_dir(cfg.home) / "engine.log"
+    log = config.plugin_data_dir(cfg.home) / "engine.log"
     read_fd, write_fd = os.pipe() if hold_stdin else (None, None)
     try:
         with config.open_log(log) as lf:
@@ -361,7 +361,7 @@ def spawn_bridge(home: Path, read_only: bool = False, demo: bool = False, hold_f
     It receives only ``HERMES_HOME`` (it reads the settings from config.yaml itself) and, if set, the
     secret link key through the environment (never on the command line).
     """
-    log = config.palace_dir(home) / "bridge.log"
+    log = config.plugin_data_dir(home) / "bridge.log"
     env = {
         k: v
         for k, v in os.environ.items()
@@ -373,7 +373,7 @@ def spawn_bridge(home: Path, read_only: bool = False, demo: bool = False, hold_f
             [
                 sys.executable,
                 "-m",
-                "hermes_palace_lib.bridge_main",
+                "hermes_3d_lib.bridge_main",
                 *(["--read-only"] if read_only else []),
                 *(["--demo"] if demo else []),
             ],

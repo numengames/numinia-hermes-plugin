@@ -12,7 +12,7 @@ Why the shape is what it is (all verified against the installed Hermes 0.22.7 so
 
 So a request from the world never runs anything by itself. It is **queued** (``ActionQueue``)
 and shown to Hermes as a pending action. Executing it is the job of the registered tool
-``palace_cron_action``; the ``pre_tool_call`` hook of this plugin marks every call to that tool
+``hermes3d_cron_action``; the ``pre_tool_call`` hook of this plugin marks every call to that tool
 with ``approve``. If nobody approves within the TTL the world gets ``ok=false`` and the reason.
 """
 
@@ -33,7 +33,7 @@ from typing import Any
 from .crontable import clean_text
 from .worldtext import say
 
-TOOL_NAME = "palace_cron_action"
+TOOL_NAME = "hermes3d_cron_action"
 VERB_TO_CLI = {"cron.pausar": "pause", "cron.reanudar": "resume"}
 JOB_ID = re.compile(r"[a-z0-9][a-z0-9_-]{3,63}")  # always used with fullmatch: `$` would accept a trailing newline
 SEEN_TTL = 600.0  # a request id is honoured once within this window (replay guard)
@@ -204,8 +204,8 @@ def approval_directive(tool_name: str, args: dict[str, Any] | None) -> dict[str,
     cli = VERB_TO_CLI.get(verb, "?")
     return {
         "action": "approve",
-        "message": f"The Hermes Palace world asks to run `hermes cron {cli} {job}`",
-        "rule_key": f"hermes-palace:cron:{cli}",
+        "message": f"The Hermes 3D world asks to run `hermes cron {cli} {job}`",
+        "rule_key": f"hermes-3d:cron:{cli}",
     }
 
 
@@ -215,7 +215,7 @@ def tool_schema() -> dict[str, Any]:
         "name": TOOL_NAME,
         "description": (
             "Carry out a pause/resume of a cron job that someone asked for from the Hermes "
-            "Palace 3D world. Needs human approval; fails closed when nobody can approve."
+            "Hermes 3D 3D world. Needs human approval; fails closed when nobody can approve."
         ),
         "parameters": {
             "type": "object",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from hermes_palace_lib import events
+from hermes_3d_lib import events
 
 
 def hooks(tmp_path, sent):

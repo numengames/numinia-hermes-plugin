@@ -1,7 +1,7 @@
 # Strings shown inside the world (Spanish, formal «usted»)
 
 The engine displays these to people in the world, so they stay Spanish. Kept identical to
-`hermes_palace_lib/worldtext.py` by `tests/test_docs.py`.
+`hermes_3d_lib/worldtext.py` by `tests/test_docs.py`.
 
 ## Replies to world requests (`worldtext.MESSAGES`)
 

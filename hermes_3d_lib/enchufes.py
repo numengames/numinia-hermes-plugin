@@ -17,7 +17,7 @@ per profile.
 
 ``read_plugins(root)`` returns a plain, JSON-serialisable dict::
 
-    {"schema": "hermes-palace/plugins@1", "label": "Plugins", "count": n, "installed": m, "enabled_somewhere": k,
+    {"schema": "hermes-3d/plugins@1", "label": "Plugins", "count": n, "installed": m, "enabled_somewhere": k,
      "plugins": [{"name", "version", "mixed_versions", "description", "kind", "tools", "hooks",
                   "profiles": [{"profile", "enabled"}], "enabled_in": j}],
      "error": ""}
@@ -33,7 +33,7 @@ from .crontable import clean_text
 from .scan import _EXPECTED, _NAME, _read_yaml, profile_dirs
 
 _EXPECTED_VALUE: tuple[type[BaseException], ...] = (*_EXPECTED, ValueError)
-SCHEMA = "hermes-palace/plugins@1"
+SCHEMA = "hermes-3d/plugins@1"
 LABEL = "Plugins"
 MAX_PLUGINS = 200  # the world admits 200 things per zone
 MAX_MANIFEST = 64 * 1024

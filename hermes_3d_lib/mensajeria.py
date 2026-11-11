@@ -24,7 +24,7 @@ Light: ``green`` connected; ``amber`` connecting, retrying, paused or disconnect
 
 ``read_messaging(root)`` returns a plain, JSON-serialisable dict::
 
-    {"schema": "hermes-palace/messaging@1", "label": "Messaging", "count": n, "connected": c, "attention": a,
+    {"schema": "hermes-3d/messaging@1", "label": "Messaging", "count": n, "connected": c, "attention": a,
      "gateways": [{"home", "state", "live", "active_agents", "profiles_served"}],
      "platforms": [{"platform", "profile", "state", "light", "stale", "needs_attention", "retrying",
                     "error_code", "configured"}], "error": ""}
@@ -43,7 +43,7 @@ from .crontable import clean_text
 from .scan import _EXPECTED, _NAME, _read_yaml, profile_dirs
 
 _EXPECTED_VALUE: tuple[type[BaseException], ...] = (*_EXPECTED, ValueError)
-SCHEMA = "hermes-palace/messaging@1"
+SCHEMA = "hermes-3d/messaging@1"
 LABEL = "Messaging"
 MAX_FILE = 256 * 1024
 MAX_PLATFORMS = 200  # the world admits 200 things per zone

@@ -1,5 +1,5 @@
 [project]
-name = "hermes-palace"
+name = "hermes-3d"
 version = "0.7.2rc1"
 description = "Hermes plugin: bridge between Hermes and a Numinia Engine 'hermes' world"
 requires-python = ">=3.11"
@@ -7,7 +7,7 @@ license = { text = "MIT" }
 dependencies = []
 
 # The one place the range is configured for tooling; plugin.yaml and the catalog draft must carry the same string (tests/test_requires_hermes.py).
-[tool.hermes-palace]
+[tool.hermes-3d]
 requires_hermes = ">=0.22.0, <0.24"
 
 [tool.pytest.ini_options]
@@ -33,14 +33,14 @@ python_version = "3.11"
 explicit_package_bases = true
 mypy_path = "."
 ignore_missing_imports = true
-files = ["hermes_palace_lib"]
+files = ["hermes_3d_lib"]
 
 [[tool.mypy.overrides]]
-module = ["hermes_palace_lib.settings", "hermes_palace_lib.linkkey", "hermes_palace_lib.procid", "hermes_palace_lib.logsafe", "hermes_palace_lib.worldtext"]
+module = ["hermes_3d_lib.settings", "hermes_3d_lib.linkkey", "hermes_3d_lib.procid", "hermes_3d_lib.logsafe", "hermes_3d_lib.worldtext"]
 strict = true
 
 [tool.coverage.run]
-source = ["hermes_palace_lib"]
+source = ["hermes_3d_lib"]
 branch = true
 
 [tool.coverage.report]

@@ -78,7 +78,7 @@ function fakeCtx(rest) {
   return {
     contributions,
     restCalls: [],
-    source: 'plugin:hermes-palace',
+    source: 'plugin:hermes-3d',
     registerMany: cs => { contributions.push(...cs); return () => {} },
     register: c => { contributions.push(c); return () => {} },
     rest: async (p, o) => { fakeCtx.last.restCalls.push(p); return rest(p, o) },
@@ -88,8 +88,8 @@ function fakeCtx(rest) {
 }
 
 test('contract: id equals folder name, opt-in, contributes a status chip and a pane', () => {
-  assert.equal(plugin.id, path.basename(path.resolve(here, '..')) === 'hermes-palace' ? 'hermes-palace' : plugin.id)
-  assert.equal(plugin.id, 'hermes-palace')
+  assert.equal(plugin.id, path.basename(path.resolve(here, '..')) === 'hermes-3d' ? 'hermes-3d' : plugin.id)
+  assert.equal(plugin.id, 'hermes-3d')
   assert.equal(plugin.defaultEnabled, false)
   const ctx = fakeCtx(async () => ({})); fakeCtx.last = ctx
   plugin.register(ctx)
@@ -167,7 +167,7 @@ test('open button asks the backend for the URL and opens it through ctx.os.openE
 test('open button refuses a non-loopback URL and tells the user when the world is down', async () => {
   await clickWith({ url: 'http://evil.example/' })
   assert.deepEqual(opened, [])
-  assert.match(notified.at(-1)[1].message, /hermes palace up/)
+  assert.match(notified.at(-1)[1].message, /hermes 3d up/)
   await clickWith({ url: null })
   assert.deepEqual(opened, [])
 })
@@ -191,7 +191,7 @@ test('D4 error: the backend message and the hint; wins over stale data', () => {
 test('D4 disconnected: says how to start the world, button disabled', () => {
   for (const status of [{ bridge: false, connected: false }, { bridge: true, connected: false }]) {
     const html = render({ loading: false, status, switches: fns, error: '' })
-    assert.match(html, /hermes palace up/); assert.match(html, /disabled=""/)
+    assert.match(html, /hermes 3d up/); assert.match(html, /disabled=""/)
   }
 })
 test('D4 empty: connected but nothing reported', () => {
@@ -207,7 +207,7 @@ test('D6 Spanish locale renders the chip, every pane state and falls back to Eng
   const mk = loc => { const c = fakeCtx(async () => ({})); fakeCtx.last = c; c.locale = loc; return c }
   assert.match(renderWith('chip', baseState({ bridge: true, connected: true }, null), mk('es-ES')), /Mundo · conectado/)
   assert.match(render({ loading: true, status: null, switches: null, error: '' }, 'es'), /Cargando…/)
-  assert.match(render({ loading: false, status: { bridge: false }, switches: fns, error: '' }, 'es_MX'), /Arránquelo con `hermes palace up`/)
+  assert.match(render({ loading: false, status: { bridge: false }, switches: fns, error: '' }, 'es_MX'), /Arránquelo con `hermes 3d up`/)
   assert.match(render({ loading: false, status: null, switches: null, error: 'x' }, 'es'), /Sin respuesta del servidor: x/)
   assert.match(render({ loading: false, status: { bridge: true, connected: true, read_only: true }, switches: fns, error: '' }, 'es'), /solo lectura/)
   assert.match(render({ loading: false, status: { bridge: true, connected: true }, switches: fns, error: '' }, 'es'), /Salud/)
@@ -227,18 +227,18 @@ const pageCtx = (locale) => { const c = fakeCtx(async () => ({})); fakeCtx.last 
 const pageState = (over = {}) => ({ phase: 'ready', url: `http://${LOOP}:9/?embed=1#embed=e1.1.2.3`, code: '', hint: '', error: '', hola: false, readOnly: false, note: '', n: 0, ...over })
 const page = (state, locale) => renderWith('page', state, pageCtx(locale))
 
-test('A1 registers a /palace route and a sidebar row', () => {
+test('A1 registers a /hermes-3d route and a sidebar row', () => {
   const ctx = pageCtx(); plugin.register(ctx)
   const by = Object.fromEntries(ctx.contributions.map(c => [c.id, c]))
-  assert.equal(by.page.area, 'routes'); assert.equal(by.page.data.path, '/palace')
-  assert.equal(by.nav.area, 'sidebar.nav'); assert.equal(by.nav.data.path, '/palace'); assert.equal(by.nav.data.label, 'Palace')
+  assert.equal(by.page.area, 'routes'); assert.equal(by.page.data.path, '/hermes-3d')
+  assert.equal(by.nav.area, 'sidebar.nav'); assert.equal(by.nav.data.path, '/hermes-3d'); assert.equal(by.nav.data.label, 'Hermes 3D')
   assert.ok(by.chip && by.pane, 'the chip and the panel are still there')
 })
 test('A2 loading / down / error / waiting / connected are all rendered, with the exact commands', () => {
   assert.match(page(pageState({ phase: 'loading', url: '' })), /Opening the world…/)
-  const down = page(pageState({ phase: 'down', url: '', code: 'engine-down', hint: 'Run `hermes palace up` to start the world' }))
-  assert.match(down, /The world is not running\./); assert.match(down, /<code>hermes palace up<\/code>/); assert.match(down, /Try again/); assert.doesNotMatch(down, /<iframe/)
-  assert.match(page(pageState({ phase: 'down', url: '', code: 'engine-down', hint: 'Run `hermes palace setup` first, then `hermes palace up`' })), /<code>hermes palace setup<\/code>/)
+  const down = page(pageState({ phase: 'down', url: '', code: 'engine-down', hint: 'Run `hermes 3d up` to start the world' }))
+  assert.match(down, /The world is not running\./); assert.match(down, /<code>hermes 3d up<\/code>/); assert.match(down, /Try again/); assert.doesNotMatch(down, /<iframe/)
+  assert.match(page(pageState({ phase: 'down', url: '', code: 'engine-down', hint: 'Run `hermes 3d setup` first, then `hermes 3d up`' })), /<code>hermes 3d setup<\/code>/)
   assert.match(page(pageState({ phase: 'down', url: '', code: 'embed-off', hint: 'x' })), /does not accept an embedded page/)
   assert.match(page(pageState({ phase: 'down', url: '', code: 'no-link-key', hint: '' })), /no link key/)
   assert.match(page(pageState({ phase: 'error', url: '', code: 'rest', error: 'HTTP 404' })), /Could not open the world: HTTP 404/)
@@ -251,11 +251,11 @@ test('A3 the frame has exactly the sandbox the engine contract names, and the cr
   assert.match(html, /sandbox="allow-scripts allow-pointer-lock"/); assert.doesNotMatch(html, /allow-same-origin|allow-popups|allow-top-navigation|allow-modals/)
   const src = /src="([^"]+)"/.exec(html)[1].replaceAll('&amp;', '&')
   assert.match(src, /\?embed=1#embed=e1\./); assert.ok(!src.split('#')[0].includes('e1.'))
-  assert.match(html, /title="Hermes Palace world"/)
+  assert.match(html, /title="Hermes 3D world"/)
 })
 test('A4 Spanish locale for the page; both locales keep the same keys (already asserted above)', () => {
   assert.match(page(pageState({ phase: 'loading', url: '' }), 'es'), /Abriendo el mundo…/)
-  assert.match(page(pageState({ phase: 'down', url: '', code: 'engine-down', hint: 'Run `hermes palace up`' }), 'es'), /Ejecute <code>hermes palace up<\/code>/)
+  assert.match(page(pageState({ phase: 'down', url: '', code: 'engine-down', hint: 'Run `hermes 3d up`' }), 'es'), /Ejecute <code>hermes 3d up<\/code>/)
 })
 
 // ---- the bridge, driven without a browser ----
@@ -298,19 +298,19 @@ test('B4 a gateway event of OURS schedules one debounced refresh that sends only
   const m = makeBridge({ rest: async () => snap })
   await m.from({ v: 1, kind: 'hola' }); m.win.sent.length = 0
   m.bridge.onGatewayEvent({ type: 'tool.progress' }); m.bridge.onGatewayEvent({ type: 'plugin.other.x' }); assert.equal(m.timers.length, 0)
-  m.bridge.onGatewayEvent({ type: 'plugin.hermes-palace.tool.started' }); m.bridge.onGatewayEvent({ type: 'plugin.hermes-palace.tool.finished' })
+  m.bridge.onGatewayEvent({ type: 'plugin.hermes-3d.tool.started' }); m.bridge.onGatewayEvent({ type: 'plugin.hermes-3d.tool.finished' })
   assert.equal(m.timers.length, 1, 'debounced'); assert.equal(m.timers[0].ms, 1500)
   snap = { ok: true, objetos: [cron('a', 'A2'), cron('c', 'C')], funciones: ['cron'] }
   m.timers[0].fn(); await new Promise(r => setTimeout(r, 5))
   assert.deepEqual(kinds(m.win).sort(), ['event:alta', 'event:baja', 'event:cambio'])
   const baja = m.win.sent.map(x => x[0]).find(x => x.evento === 'baja'); assert.deepEqual(baja.objeto, { tipo: 'cron', id: 'b' })
-  m.bridge.onGatewayEvent({ type: 'plugin.hermes-palace.x' }); assert.equal(m.timers.length, 2, 'can schedule again after it ran')
+  m.bridge.onGatewayEvent({ type: 'plugin.hermes-3d.x' }); assert.equal(m.timers.length, 2, 'can schedule again after it ran')
 })
 test('B5 an unchanged picture sends nothing; dispose cancels the pending refresh and stops everything', async () => {
   const m = makeBridge({ rest: async () => ({ ok: true, objetos: [cron('a', 'A')], funciones: ['cron'] }) })
   await m.from({ v: 1, kind: 'hola' }); m.win.sent.length = 0
   await m.bridge.refresh(false); assert.equal(m.win.sent.length, 0)
-  m.bridge.onGatewayEvent({ type: 'plugin.hermes-palace.x' }); m.bridge.dispose(); assert.equal(m.timers[0].off, true)
+  m.bridge.onGatewayEvent({ type: 'plugin.hermes-3d.x' }); m.bridge.dispose(); assert.equal(m.timers[0].off, true)
   await m.from({ v: 1, kind: 'hola' }); assert.equal(m.win.sent.length, 0)
 })
 test('B6 a backend failure becomes a note, never a crash', async () => {

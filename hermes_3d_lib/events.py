@@ -1,4 +1,4 @@
-"""Live-activity feed: Hermes observer hooks -> a small bounded spool -> ``GET /api/plugins/hermes-palace/events``.
+"""Live-activity feed: Hermes observer hooks -> a small bounded spool -> ``GET /api/plugins/hermes-3d/events``.
 
 Metadata only. An event carries its kind, the platform (``cli``/``cron``/``telegram``/...; ``subagent`` for a
 delegated child), the profile, an opaque id, the tool NAME, a status and timestamps. It never carries tool arguments,
@@ -7,7 +7,7 @@ allow-list and :func:`clean` cuts every value, so a hook payload cannot leak a f
 
 Why a file and not a queue in memory: the hooks run inside whichever Hermes process is working (CLI, gateway, cron
 runner, a delegated child) and the dashboard route runs in another one. They share the Hermes home, so the spool is
-``<HERMES_HOME>/plugin-data/hermes-palace/events.jsonl`` (0600, appended with one ``O_APPEND`` write per event, trimmed to the last
+``<HERMES_HOME>/plugin-data/hermes-3d/events.jsonl`` (0600, appended with one ``O_APPEND`` write per event, trimmed to the last
 :data:`KEEP` lines when it passes :data:`MAX_BYTES`). Nothing is written unless the ``sesiones`` switch is on.
 
 The hook payloads (hermes-agent 0.22.7) do not all carry ``platform``: only ``on_session_start/end`` and
@@ -125,19 +125,19 @@ BROADCAST_NAMES = {
 
 
 def desktop_broadcast(name: str, payload: dict[str, Any]) -> bool:
-    """``plugin.hermes-palace.<name>`` to Hermes Desktop. A no-op (False) unless the gateway of ``hermes serve`` is in
+    """``plugin.hermes-3d.<name>`` to Hermes Desktop. A no-op (False) unless the gateway of ``hermes serve`` is in
     this process: from a plain CLI or gateway run nobody is listening, so nothing happens."""
     try:
         from hermes_cli.plugin_events import broadcast_plugin_event
     except ImportError:
         return False
-    broadcast_plugin_event("hermes-palace", name, payload)
+    broadcast_plugin_event("hermes-3d", name, payload)
     return True
 
 
 # ------------------------------------------------------------------------------------------------- the spool
 def spool_path(home: Path | None = None) -> Path:
-    return config.palace_dir(home) / SPOOL_NAME
+    return config.plugin_data_dir(home) / SPOOL_NAME
 
 
 def append(event: dict[str, Any], home: Path | None = None) -> bool:
@@ -212,7 +212,7 @@ def make_hooks(
                 append(ev, home)
                 broadcast(BROADCAST_NAMES[kind], ev)  # same allow-listed record as the spool; separate guard below
         except Exception:
-            logger.debug("palace: activity event dropped", exc_info=True)  # observer hooks must never break the agent
+            logger.debug("hermes-3d: activity event dropped", exc_info=True)  # observer hooks must never break the agent
 
     def on_session_start(session_id: str = "", platform: str = "", model: str = "", **_kw: Any) -> None:
         platforms.learn(session_id, platform, model)

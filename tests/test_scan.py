@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 from conftest import LOOP, SECRET_TEXT, SECRET_TOKEN
 
-from hermes_palace_lib import agentes, config, gasto, scan
-from hermes_palace_lib import protocol as P
-from hermes_palace_lib import settings as S
+from hermes_3d_lib import agentes, config, gasto, scan
+from hermes_3d_lib import protocol as P
+from hermes_3d_lib import settings as S
 
 SAMPLES = Path(__file__).parent / "samples"
 
@@ -252,7 +252,7 @@ def test_switches_include_agentes_gasto_off_by_default():
 
 
 def _bridge(fake_root, tmp_path, on: list[str]):
-    from hermes_palace_lib import bridge_main
+    from hermes_3d_lib import bridge_main
 
     b = bridge_main.Bridge(
         tmp_path / "home", engine_url=f"ws://{LOOP}:1", link_key="k", scan_root=fake_root, allow_direct_db=True
@@ -285,7 +285,7 @@ def test_scan_sections_without_engine_type_publish_nothing(fake_root, tmp_path):
     asyncio.run(b.run_scan())
     assert {k.split("/")[0] for k in b.mirror_objects()} <= {"agente", "gasto", "habilidad", "tablero", "documento", "proyecto"}
     assert b.scan["sections"]["kanban"]["tarjetas"] == 3  # kept in the snapshot
-    assert "mcp" not in b.scan["sections"]  # no switch asks for it: the bridge does not even read it (`palace scan` does)
+    assert "mcp" not in b.scan["sections"]  # no switch asks for it: the bridge does not even read it (`hermes 3d scan` does)
 
 
 def test_publish_mirrors_diffs_alta_cambio_baja(fake_root, tmp_path):
@@ -338,7 +338,7 @@ def _e2e_imports():
 
 def test_first_lote_carries_agentes_and_gasto_only_when_switched_on(fake_root, hermes_home):
     run, _until, FakeEngine = _e2e_imports()
-    from hermes_palace_lib.bridge_main import Bridge
+    from hermes_3d_lib.bridge_main import Bridge
 
     async def main(on, world_on=("salud", "agentes", "gasto")):
         eng = FakeEngine(funciones={config.ENGINE_FUNCTION.get(n, n): (n in world_on) for n in S.FUNCTIONS})
@@ -376,7 +376,7 @@ def test_scan_http_routes_need_the_bearer_token(fake_root, hermes_home):
     run, _until, FakeEngine = _e2e_imports()
     from test_bridge import _http
 
-    from hermes_palace_lib.bridge_main import Bridge
+    from hermes_3d_lib.bridge_main import Bridge
 
     async def main():
         eng = FakeEngine()
@@ -406,12 +406,12 @@ def test_scan_http_routes_need_the_bearer_token(fake_root, hermes_home):
     assert st2 == 200 and body2["scan"]["schema"] == scan.SCHEMA and SECRET_TEXT not in json.dumps(body2)
 
 
-def test_palace_up_prints_the_exact_world_url(hermes_home, monkeypatch, capsys):
+def test_hermes3d_up_prints_the_exact_world_url(hermes_home, monkeypatch, capsys):
     import importlib.util
 
     import yaml
 
-    from hermes_palace_lib import supervisor
+    from hermes_3d_lib import supervisor
 
     spec = importlib.util.spec_from_file_location(
         "hp_entry2", Path(__file__).parents[1] / "__init__.py", submodule_search_locations=[str(Path(__file__).parents[1])]
@@ -424,9 +424,7 @@ def test_palace_up_prints_the_exact_world_url(hermes_home, monkeypatch, capsys):
     monkeypatch.setattr(supervisor, "spawn_bridge", lambda *a, **k: 4242)
 
     def configure(**settings):
-        (hermes_home / "config.yaml").write_text(
-            yaml.safe_dump({"plugins": {"entries": {"hermes-palace": {"settings": settings}}}})
-        )
+        (hermes_home / "config.yaml").write_text(yaml.safe_dump({"plugins": {"entries": {"hermes-3d": {"settings": settings}}}}))
 
     configure(engine_port=18999)
     assert mod.cmd_up() == 0
@@ -437,7 +435,7 @@ def test_palace_up_prints_the_exact_world_url(hermes_home, monkeypatch, capsys):
 
 
 def test_world_function_names_are_the_engines_own():
-    from hermes_palace_lib.hub import _functions_on
+    from hermes_3d_lib.hub import _functions_on
 
     assert _functions_on(["salud", "perfiles", "uso"]) == {
         "salud": True,

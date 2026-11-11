@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from hermes_palace_lib import nodebin
-from hermes_palace_lib.errors import NodeMissing, PalaceError
+from hermes_3d_lib import nodebin
+from hermes_3d_lib.errors import Hermes3DError, NodeMissing
 
 
 def fake_node(tmp_path: Path) -> Path:
@@ -132,6 +132,6 @@ def test_hermes_path_env_degrades_quietly(monkeypatch):
 
 
 def test_error_base_class():
-    assert issubclass(NodeMissing, PalaceError)
-    e = PalaceError("x", code="C", retryable=True)
+    assert issubclass(NodeMissing, Hermes3DError)
+    e = Hermes3DError("x", code="C", retryable=True)
     assert e.code == "C" and e.retryable is True and str(e) == "C: x"

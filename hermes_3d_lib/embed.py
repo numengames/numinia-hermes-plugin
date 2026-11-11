@@ -26,9 +26,11 @@ from . import settings as S
 
 PREFIX = "numinia-embed@1\n"
 VERSION = "e1"
-HINT_UP = "Run `hermes palace up` to start the world"
-HINT_SETUP = "Run `hermes palace setup` first, then `hermes palace up`"
-HINT_EMBED = 'Turn the embed mode on in the world: entorno/espejo.json needs "embed": {"activa": true}, then restart with `hermes palace up`'
+HINT_UP = "Run `hermes 3d up` to start the world"
+HINT_SETUP = "Run `hermes 3d setup` first, then `hermes 3d up`"
+HINT_EMBED = (
+    'Turn the embed mode on in the world: entorno/espejo.json needs "embed": {"activa": true}, then restart with `hermes 3d up`'
+)
 
 
 def sign(key: str, exp: int, nonce: str) -> str:
@@ -71,7 +73,7 @@ def probe_engine(base: str, timeout: float = 1.5) -> dict[str, Any]:
     return {"up": True, "embed": bool(isinstance(espejo, dict) and espejo.get("embed") is True)}
 
 
-def issue(cfg: S.PalaceSettings, key: str | None, *, probe: Any = None) -> dict[str, Any]:
+def issue(cfg: S.Hermes3DSettings, key: str | None, *, probe: Any = None) -> dict[str, Any]:
     """The answer of ``POST /embed-credential``. Always a dict with ``ok``; a refusal carries ``error`` and a ``hint``.
 
     Never contains the key. ``read_only`` is reported but does not matter here: looking at the world is always allowed.

@@ -22,7 +22,7 @@ from .crontable import clean_text
 from .protocol import make_object
 from .zones import FALLBACK_ZONES
 
-logger = logging.getLogger("hermes_palace.agentes")
+logger = logging.getLogger("hermes_3d.agentes")
 
 TYPE_AGENTE = "perfil"  # the engine's own type for a Hermes profile (function ``perfiles``)
 ZONE_AGENTES = FALLBACK_ZONES[TYPE_AGENTE]  # z6; the hub swaps in the zone the engine announces

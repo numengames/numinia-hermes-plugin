@@ -10,8 +10,8 @@ import sys
 
 import pytest
 
-from hermes_palace_lib import config, linkkey, nodebin, procid, supervisor
-from hermes_palace_lib import settings as S
+from hermes_3d_lib import config, linkkey, nodebin, procid, supervisor
+from hermes_3d_lib import settings as S
 
 FAKE_NODE = nodebin.NodeRuntime("/usr/bin/node", (26, 12, 1), "pm", "")
 
@@ -26,7 +26,7 @@ def fake_engine_checkout(root, page=True):
 
 
 def settings_for(home, engine=None, **kw):
-    return S.PalaceSettings(home=home, engine_path=engine, world_path=home / "plugin-data" / "hermes-palace" / "mundo", **kw)
+    return S.Hermes3DSettings(home=home, engine_path=engine, world_path=home / "plugin-data" / "hermes-3d" / "mundo", **kw)
 
 
 def test_engine_not_configured_gives_actionable_error(hermes_home):
@@ -79,7 +79,7 @@ def test_start_engine_passes_www_dir_key_and_never_puts_the_key_on_argv(hermes_h
     assert out["reused"] is False and out["serves_page"] is True
     assert seen["env"]["WWW_DIR"].endswith("dist/plaza") and seen["env"]["MOTOR_ENLACE_CLAVE"] == key
     assert key not in " ".join(seen["argv"])
-    assert (hermes_home / "plugin-data" / "hermes-palace" / "engine.log").stat().st_mode & 0o777 == 0o600
+    assert (hermes_home / "plugin-data" / "hermes-3d" / "engine.log").stat().st_mode & 0o777 == 0o600
 
 
 def test_running_link_is_reused_without_starting_anything(hermes_home, tmp_path, monkeypatch):
@@ -91,14 +91,14 @@ def test_running_link_is_reused_without_starting_anything(hermes_home, tmp_path,
 
 def test_link_port_setting_then_espejo_json_then_default(hermes_home, tmp_path):
     world = tmp_path / "w"
-    cfg = S.PalaceSettings(home=hermes_home, world_path=world)
+    cfg = S.Hermes3DSettings(home=hermes_home, world_path=world)
     assert supervisor.link_port(cfg) == 8791 and supervisor.espejo_enabled(world) is False
     (world / "entorno").mkdir(parents=True)
     (world / "entorno" / "espejo.json").write_text(
         json.dumps({"activa": True, "fuente": {"tipo": "enlace-local", "puerto": 9100}})
     )
     assert supervisor.link_port(cfg) == 9100 and supervisor.espejo_enabled(world) is True
-    assert supervisor.link_port(S.PalaceSettings(home=hermes_home, world_path=world, link_port=9300)) == 9300
+    assert supervisor.link_port(S.Hermes3DSettings(home=hermes_home, world_path=world, link_port=9300)) == 9300
     (world / "entorno" / "espejo.json").write_text("{not json")
     assert supervisor.link_port(cfg) == 8791 and supervisor.espejo_enabled(world) is False
 
@@ -110,7 +110,7 @@ def test_world_files_are_not_read_through_a_symlink(hermes_home, tmp_path):
     secret.write_text(json.dumps({"activa": True, "fuente": {"puerto": 9999}}))
     (world / "entorno" / "espejo.json").symlink_to(secret)
     assert supervisor.espejo_enabled(world) is False
-    assert supervisor.link_port(S.PalaceSettings(home=hermes_home, world_path=world)) == 8791
+    assert supervisor.link_port(S.Hermes3DSettings(home=hermes_home, world_path=world)) == 8791
 
 
 def test_foreign_world_is_never_reused(tmp_path):
@@ -169,14 +169,14 @@ def test_identity_is_none_for_dead_or_invalid_pids():
 def test_logs_and_pid_file_are_private_whatever_the_umask(hermes_home):
     old = os.umask(0)
     try:
-        with config.open_log(config.palace_dir(hermes_home) / "x.log") as fh:
+        with config.open_log(config.plugin_data_dir(hermes_home) / "x.log") as fh:
             fh.write(b"x")
         config.write_engine_pid(os.getpid(), hermes_home)
     finally:
         os.umask(old)
     for name in ("x.log", "engine.pid"):
-        assert (hermes_home / "plugin-data" / "hermes-palace" / name).stat().st_mode & 0o777 == 0o600
-    (hermes_home / "plugin-data" / "hermes-palace" / "loose.log").write_text("a")
-    (hermes_home / "plugin-data" / "hermes-palace" / "loose.log").chmod(0o666)
-    config.open_log(hermes_home / "plugin-data" / "hermes-palace" / "loose.log").close()
-    assert (hermes_home / "plugin-data" / "hermes-palace" / "loose.log").stat().st_mode & 0o777 == 0o600
+        assert (hermes_home / "plugin-data" / "hermes-3d" / name).stat().st_mode & 0o777 == 0o600
+    (hermes_home / "plugin-data" / "hermes-3d" / "loose.log").write_text("a")
+    (hermes_home / "plugin-data" / "hermes-3d" / "loose.log").chmod(0o666)
+    config.open_log(hermes_home / "plugin-data" / "hermes-3d" / "loose.log").close()
+    assert (hermes_home / "plugin-data" / "hermes-3d" / "loose.log").stat().st_mode & 0o777 == 0o600

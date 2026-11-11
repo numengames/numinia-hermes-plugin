@@ -1,4 +1,4 @@
-"""``hermes palace setup``: a guided first run. Checks what is missing, explains every switch, writes settings after you say yes.
+"""``hermes 3d setup``: a guided first run. Checks what is missing, explains every switch, writes settings after you say yes.
 
 Design rules
 * Nothing is written without a confirmation, except with ``--yes`` (scripts), and ``--yes`` never *chooses* for you: with no
@@ -23,7 +23,7 @@ from typing import Any
 
 from . import docsviewer, embed, installer, linkkey, nodebin
 from . import settings as S
-from .errors import NodeMissing, PalaceError
+from .errors import Hermes3DError, NodeMissing
 
 CONFIG_TIMEOUT = 20
 
@@ -117,7 +117,7 @@ def node_ok() -> bool:
     return m is not None and (int(m.group(1)), int(m.group(2))) >= nodebin.NODE_RECOMMENDED[:2]
 
 
-def run_checks(cfg: S.PalaceSettings) -> list[Check]:
+def run_checks(cfg: S.Hermes3DSettings) -> list[Check]:
     rows: list[Check] = []
     ver = _node_version()
     rows.append(
@@ -125,7 +125,7 @@ def run_checks(cfg: S.PalaceSettings) -> list[Check]:
             "node",
             node_ok(),
             ver or "Hermes has no Node installed yet",
-            "" if node_ok() else "hermes palace setup --first-run   (Hermes' package manager installs Node 22.18 or newer)",
+            "" if node_ok() else "hermes 3d setup --first-run   (Hermes' package manager installs Node 22.18 or newer)",
         )
     )
     main = cfg.engine_main()
@@ -136,7 +136,7 @@ def run_checks(cfg: S.PalaceSettings) -> list[Check]:
             str(cfg.engine_path) if main else "engine_path is not set or is not an engine checkout",
             ""
             if main
-            else "hermes palace setup --first-run   (or: hermes palace install-engine, or setup --engine-path /path/to/engine)",
+            else "hermes 3d setup --first-run   (or: hermes 3d install-engine, or setup --engine-path /path/to/engine)",
         )
     )
     if main is not None:
@@ -156,11 +156,11 @@ def run_checks(cfg: S.PalaceSettings) -> list[Check]:
                 "docs viewer",
                 built or bool(dv.get("running")),
                 "running" if dv.get("running") else ("built" if built else "not built yet"),
-                "" if built or dv.get("running") else "hermes palace docs   (builds it on first use)",
+                "" if built or dv.get("running") else "hermes 3d docs   (builds it on first use)",
             )
         )
     except (OSError, ValueError, KeyError, RuntimeError, S.SettingsError) as exc:
-        rows.append(Check("docs viewer", False, f"cannot tell ({type(exc).__name__})", "hermes palace docs"))
+        rows.append(Check("docs viewer", False, f"cannot tell ({type(exc).__name__})", "hermes 3d docs"))
     try:
         rows.append(Check("link key", True, linkkey.source(cfg.home)))
     except (OSError, ValueError, RuntimeError) as exc:
@@ -246,10 +246,10 @@ def cmd_setup(
     home: Path,
     setter: Callable[[str, str], bool] | None = None,
     get: S.Getter | None = None,
-    starter: Callable[[S.PalaceSettings], int] | None = None,
+    starter: Callable[[S.Hermes3DSettings], int] | None = None,
     ask: Callable[[str], str] | None = None,
 ) -> int:
-    """``hermes palace setup [--profile minimal|showcase] [--engine-path DIR] [--yes]``."""
+    """``hermes 3d setup [--profile minimal|showcase] [--engine-path DIR] [--yes]``."""
     yes = bool(getattr(args, "yes", False))
     profile = getattr(args, "profile", None)
     engine_arg = getattr(args, "engine_path", None)
@@ -257,9 +257,9 @@ def cmd_setup(
         raise SetupError(f"unknown profile {profile!r}; choose one of: {', '.join(PROFILES)}")
     get = get or S.yaml_getter(home)
     setter = setter or hermes_config_set(home)
-    cfg = S.PalaceSettings.from_getter(get, home)
+    cfg = S.Hermes3DSettings.from_getter(get, home)
 
-    print("Hermes Palace setup. Nothing is changed until you confirm; everything it publishes is metadata only.\n")
+    print("Hermes 3D setup. Nothing is changed until you confirm; everything it publishes is metadata only.\n")
     _say_checks(run_checks(cfg))
     print("\nthe switches (all off but health unless you choose a profile):")
     print(describe_switches())
@@ -306,10 +306,10 @@ def cmd_setup(
     if getattr(args, "first_run", False):
         return first_run(home=home, yes=yes, setter=setter, starter=starter, ask=ask or _ask, out=print)
     print("\nnext:")
-    print("  hermes palace setup --first-run   one command: Node from Hermes, the engine, start it (Camino A)")
-    print("  hermes palace demo   see your own Hermes as a world, read-only (needs an engine)")
-    print("  hermes palace scan   what the world would mirror, without an engine")
-    print("  hermes palace up     start the engine and the bridge with your settings")
+    print("  hermes 3d setup --first-run   one command: Node from Hermes, the engine, start it (Camino A)")
+    print("  hermes 3d demo   see your own Hermes as a world, read-only (needs an engine)")
+    print("  hermes 3d scan   what the world would mirror, without an engine")
+    print("  hermes 3d up     start the engine and the bridge with your settings")
     return 0
 
 
@@ -318,7 +318,7 @@ def first_run(
     home: Path,
     yes: bool,
     setter: Callable[[str, str], bool],
-    starter: Callable[[S.PalaceSettings], int] | None,
+    starter: Callable[[S.Hermes3DSettings], int] | None,
     ask: Callable[[str], str],
     out: Callable[..., None] = print,
     lock_path: Path | None = None,
@@ -348,7 +348,7 @@ def first_run(
             out(f"  warning: {warning}")
 
         out("first run: 2/4 engine")
-        cfg = S.PalaceSettings.from_yaml(home)
+        cfg = S.Hermes3DSettings.from_yaml(home)
         if cfg.engine_main() is None:
             res = installer.install_engine(home, lock_path=lock_path, url=url, yes=yes, confirm=confirm, out=out)
             out(f"  engine ready ({res['seconds']} s, {res['size_mb']} MB)")
@@ -356,12 +356,12 @@ def first_run(
             out(f"  engine already set: {cfg.engine_path}")
 
         out("first run: 3/4 settings")
-        cfg = S.PalaceSettings.from_yaml(home)
+        cfg = S.Hermes3DSettings.from_yaml(home)
         if cfg.engine_link and confirm("Set engine_link=false so the world opens inside Hermes Desktop? [y/N] "):
             if not setter(_key("engine_link"), "false"):
                 out("could not write engine_link (is `hermes` on PATH?). Set it in Settings -> Plugins and run again.")
                 return 1
-            cfg = S.PalaceSettings.from_yaml(home)
+            cfg = S.Hermes3DSettings.from_yaml(home)
         out(f"  engine_link = {str(cfg.engine_link).lower()}, engine port {cfg.engine_port}")
         if cfg.engine_link:
             out("  note: engine_link is still true, so the embedded page cannot be used (an engine takes one source).")
@@ -372,15 +372,15 @@ def first_run(
             return rc
         seen = (probe or embed.probe_engine)(cfg.page_url())
         if seen.get("up") and seen.get("embed"):
-            out("\nready: open the Palace page in Hermes Desktop.")
+            out("\nready: open the Hermes 3D page in Hermes Desktop.")
         elif seen.get("up"):
             out("\nthe engine is running but this world does not accept an embedded page yet:")
             out(f"  {embed.HINT_EMBED}")
         else:
-            out("\nthe engine did not answer after starting; see `hermes palace status`.")
+            out("\nthe engine did not answer after starting; see `hermes 3d status`.")
             return 1
         return 0
-    except PalaceError as exc:
+    except Hermes3DError as exc:
         out(f"\nstopped: {exc}")
         return 1
     except EOFError:

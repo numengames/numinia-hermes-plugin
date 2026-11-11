@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from hermes_palace_lib import enchufes, scan
+from hermes_3d_lib import enchufes, scan
 
 
 def _plugin(home: Path, folder: str, manifest: str, extra: dict[str, str] | None = None) -> None:

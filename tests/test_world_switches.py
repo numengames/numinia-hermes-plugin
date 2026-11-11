@@ -14,8 +14,8 @@ from conftest import run, until
 from fake_engine import FakeEngine
 from test_bridge import Reader, listing, make_bridge, stop
 
-from hermes_palace_lib import config
-from hermes_palace_lib import settings as S
+from hermes_3d_lib import config
+from hermes_3d_lib import settings as S
 
 
 def _cron_lotes(eng: FakeEngine) -> list[dict]:
@@ -114,7 +114,7 @@ def test_cron_lote_carries_the_mirrors_too(hermes_home, fake_root):
 
 
 def _many(n: int) -> list[dict]:
-    from hermes_palace_lib.protocol import make_object
+    from hermes_3d_lib.protocol import make_object
 
     return [
         make_object(
@@ -132,7 +132,7 @@ def _many(n: int) -> list[dict]:
 
 def test_a_big_snapshot_is_not_wiped_by_its_own_second_lote(hermes_home):
     """INT-04: a snapshot over one 16 KB frame was sent as several `lote`s; each REPLACES the world, so only the last chunk survived."""
-    from hermes_palace_lib.hub import Hub
+    from hermes_3d_lib.hub import Hub
 
     async def main():
         eng = FakeEngine()
@@ -156,7 +156,7 @@ def test_a_big_snapshot_is_not_wiped_by_its_own_second_lote(hermes_home):
 
 def test_writes_stay_under_the_engine_rate_limit(hermes_home, monkeypatch):
     """INT-05: 100 changes in one poll arrived unpaced and the real engine closes the link (4429) above RAFAGA 40 / RITMO 20 per second."""
-    from hermes_palace_lib import hub as hubmod
+    from hermes_3d_lib import hub as hubmod
 
     monkeypatch.setattr(hubmod, "SEND_RATE", 60.0)
     monkeypatch.setattr(hubmod, "SEND_BURST", 10.0)
@@ -180,8 +180,8 @@ def test_writes_stay_under_the_engine_rate_limit(hermes_home, monkeypatch):
 def test_objects_for_a_zone_the_world_lacks_are_not_sent(hermes_home):
     """INT-06: the real engine rejects a WHOLE lote when one object names a zone the world does not have (the hermes template has no
     z4/z5 yet), so the cron things never appeared. The plugin now keeps only what the engine's `hola` says it can place."""
-    from hermes_palace_lib.hub import Hub
-    from hermes_palace_lib.protocol import make_object
+    from hermes_3d_lib.hub import Hub
+    from hermes_3d_lib.protocol import make_object
 
     good = make_object("cron", "aaa111", "A job", estado="programado", zona="z7", acciones=[])
     no_zone = make_object("perfil", "alpha", "alpha", estado="activo", zona="z4", acciones=[])
@@ -215,8 +215,8 @@ def test_objects_for_a_zone_the_world_lacks_are_not_sent(hermes_home):
 
 
 def test_an_engine_that_announces_no_zones_gets_everything(hermes_home):
-    from hermes_palace_lib.hub import Hub
-    from hermes_palace_lib.protocol import make_object
+    from hermes_3d_lib.hub import Hub
+    from hermes_3d_lib.protocol import make_object
 
     obj = make_object("perfil", "alpha", "alpha", estado="activo", zona="z4", acciones=[])
 

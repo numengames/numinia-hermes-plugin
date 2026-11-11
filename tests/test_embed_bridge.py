@@ -8,7 +8,7 @@ from conftest import run, until
 from fake_engine import FakeEngine
 from test_bridge import Reader, _http, listing, make_bridge, started, stop
 
-from hermes_palace_lib import actions
+from hermes_3d_lib import actions
 
 REQ = {
     "id": "w1",

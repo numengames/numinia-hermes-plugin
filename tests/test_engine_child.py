@@ -17,9 +17,9 @@ from pathlib import Path
 import pytest
 from conftest import ROOT
 
-from hermes_palace_lib import config, enginekeys, nodebin, procid, supervisor
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.errors import PalaceError
+from hermes_3d_lib import config, enginekeys, nodebin, procid, supervisor
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.errors import Hermes3DError
 
 PYNODE = nodebin.NodeRuntime(sys.executable, (26, 12, 1), "pm", "")
 
@@ -38,11 +38,11 @@ def rig(hermes_home, tmp_path, monkeypatch):
     (eng / "www").mkdir()
     (eng / "www" / "index.html").write_text("<html>")
     shutil.copy(ROOT / "tests" / "stub_engine.py", eng / "app" / "stub.py")
-    (eng / ".palace-engine.json").write_text(json.dumps({"schema": 1, "sha256": "a" * 64, "entry": "stub.py"}))
+    (eng / ".hermes-3d-engine.json").write_text(json.dumps({"schema": 1, "sha256": "a" * 64, "entry": "stub.py"}))
     monkeypatch.setattr(supervisor, "node_runtime", lambda **kw: PYNODE)
     monkeypatch.setattr(supervisor, "ENGINE_START_TIMEOUT", 15.0)
-    cfg = S.PalaceSettings(
-        home=hermes_home, engine_path=eng, world_path=hermes_home / "plugin-data" / "hermes-palace" / "mundo",
+    cfg = S.Hermes3DSettings(
+        home=hermes_home, engine_path=eng, world_path=hermes_home / "plugin-data" / "hermes-3d" / "mundo",
         engine_port=free_port(), docs_viewer_port=free_port(), link_port=free_port(),
     )  # fmt: skip
     started: list[int] = []
@@ -94,7 +94,7 @@ def test_secrets_are_stored_0600_per_install_and_never_in_the_log(rig, hermes_ho
     path = enginekeys.keys_path(hermes_home)
     assert path.stat().st_mode & 0o777 == 0o600
     data = json.loads(path.read_text())
-    log = (config.palace_dir(hermes_home) / "engine.log").read_text()
+    log = (config.plugin_data_dir(hermes_home) / "engine.log").read_text()
     assert data["secret"] not in log and data["admin"] not in log
     assert enginekeys.ensure(hermes_home, "a" * 64) == (data["secret"], data["admin"])  # stable for the same install
     assert enginekeys.ensure(hermes_home, "b" * 64)[0] != data["secret"]  # a new install gets new ones
@@ -159,7 +159,7 @@ def test_crash_on_start_reports_the_last_log_lines(rig):
     with pytest.raises(supervisor.EngineStartFailed) as e:
         start(rig, hold_stdin=True)
     assert "exited with code 3" in str(e.value) and "boom: cannot open the world" in str(e.value)
-    assert e.value.code == "ENGINE_START_FAILED" and isinstance(e.value, PalaceError)
+    assert e.value.code == "ENGINE_START_FAILED" and isinstance(e.value, Hermes3DError)
 
 
 def test_engine_that_never_answers_health_times_out_and_is_stopped(rig, monkeypatch):
@@ -191,13 +191,13 @@ def test_port_busy_is_a_clear_non_retryable_error_and_starts_nothing(rig):
 
 def test_engine_port_must_not_clash_with_docs_viewer_or_link(rig):
     for field in ("docs_viewer_port", "link_port"):
-        cfg = S.PalaceSettings(**{**rig.cfg.__dict__, field: rig.cfg.engine_port})
+        cfg = S.Hermes3DSettings(**{**rig.cfg.__dict__, field: rig.cfg.engine_port})
         with pytest.raises(supervisor.PortBusy, match="clashes"):
             supervisor.start_engine(cfg)
 
 
 def test_default_ports_do_not_clash_with_each_other():
-    d = S.PalaceSettings(home=Path("/x"))
+    d = S.Hermes3DSettings(home=Path("/x"))
     assert d.engine_port == 8790 and len({d.engine_port, d.docs_viewer_port}) == 2
 
 

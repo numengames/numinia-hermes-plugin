@@ -1,4 +1,4 @@
-"""``hermes palace docs``: start and stop the lite documentation viewer of the ``docs-visor`` repo.
+"""``hermes 3d docs``: start and stop the lite documentation viewer of the ``docs-visor`` repo.
 
 The viewer is a separate program (``serve.mjs``, MIT, no dependencies) that serves an offline copy of the Hermes
 documentation on **127.0.0.1 only** with a CSP that lets only the engine's origin frame it. The world's library
@@ -6,8 +6,8 @@ documentation on **127.0.0.1 only** with a CSP that lets only the engine's origi
 
 * Where: setting ``docs_viewer_path`` (the ``docs-visor`` checkout; default = the folder ``docs-visor`` next to this
   plugin's folder). It must hold ``build-docs.sh`` and ``serve.mjs``.
-* Build: if ``<HERMES_HOME>/plugin-data/hermes-palace/docs-site/lite/index.html`` is missing, ``build-docs.sh lite --out <that>``
-  is run first (it fetches the pinned upstream commit with git; nothing is written outside ``plugin-data/hermes-palace/``).
+* Build: if ``<HERMES_HOME>/plugin-data/hermes-3d/docs-site/lite/index.html`` is missing, ``build-docs.sh lite --out <that>``
+  is run first (it fetches the pinned upstream commit with git; nothing is written outside ``plugin-data/hermes-3d/``).
 * Port: setting ``docs_viewer_port`` (default 8791). The document origin ``http://127.0.0.1:<port>`` must be in the
   world's ``documentos.origenes``, and the port must not be the engine's link port.
 * Process: started detached; pid, start time and command line are recorded (``docs-viewer.pid``) so ``--stop`` only
@@ -28,7 +28,7 @@ from . import settings as S
 
 BUILD_SCRIPT = "build-docs.sh"
 SERVE_SCRIPT = "serve.mjs"
-SITE_DIRNAME = "docs-site"  # under <HERMES_HOME>/plugin-data/hermes-palace/
+SITE_DIRNAME = "docs-site"  # under <HERMES_HOME>/plugin-data/hermes-3d/
 BUILD_TIMEOUT = 900.0
 START_TIMEOUT = 15.0
 BASE_PATH = "/docs/"
@@ -36,28 +36,28 @@ _ENV_KEEP = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "XDG_RUNTIME_DIR", "HER
 
 
 class DocsError(supervisor.SupervisorError):
-    """A clean, user-facing failure of ``hermes palace docs``."""
+    """A clean, user-facing failure of ``hermes 3d docs``."""
 
 
 def default_path() -> Path:
-    """The ``docs-visor`` folder next to this plugin's folder (``<plugins>/hermes-palace`` -> ``<plugins>/docs-visor``)."""
+    """The ``docs-visor`` folder next to this plugin's folder (``<plugins>/hermes-3d`` -> ``<plugins>/docs-visor``)."""
     return Path(__file__).resolve().parents[2] / "docs-visor"
 
 
-def viewer_dir(cfg: S.PalaceSettings) -> Path:
+def viewer_dir(cfg: S.Hermes3DSettings) -> Path:
     path = cfg.docs_viewer_path or default_path()
     for name in (BUILD_SCRIPT, SERVE_SCRIPT):
         if not (path / name).is_file():
             raise DocsError(
                 f"docs viewer not found: {path / name} is missing. Set the plugin setting `docs_viewer_path` to the "
                 "folder of the docs-visor repo (it holds build-docs.sh and serve.mjs), e.g. "
-                "`hermes config set plugins.entries.hermes-palace.settings.docs_viewer_path /path/to/docs-visor`."
+                "`hermes config set plugins.entries.hermes-3d.settings.docs_viewer_path /path/to/docs-visor`."
             )
     return path
 
 
 def site_root(home: Path) -> Path:
-    return config.palace_dir(home) / SITE_DIRNAME
+    return config.plugin_data_dir(home) / SITE_DIRNAME
 
 
 def lite_site(home: Path) -> Path:
@@ -65,7 +65,7 @@ def lite_site(home: Path) -> Path:
 
 
 def pid_path(home: Path) -> Path:
-    return config.palace_dir(home) / "docs-viewer.pid"
+    return config.plugin_data_dir(home) / "docs-viewer.pid"
 
 
 def url_for(port: int) -> str:
@@ -90,8 +90,8 @@ def _write_record(home: Path, pid: int, port: int, ident: dict[str, Any] | None)
         json.dump({"pid": int(pid), "port": int(port), **(ident or {})}, fh)
 
 
-def status(home: Path, cfg: S.PalaceSettings) -> dict[str, Any]:
-    """What ``palace status`` shows: running (by us), listening (by anybody), built."""
+def status(home: Path, cfg: S.Hermes3DSettings) -> dict[str, Any]:
+    """What ``hermes 3d status`` shows: running (by us), listening (by anybody), built."""
     rec = read_record(home)
     port = int(rec["port"]) if rec and isinstance(rec.get("port"), int) else cfg.docs_viewer_port
     return {
@@ -108,7 +108,7 @@ def _env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if k in _ENV_KEEP}
 
 
-def build(home: Path, cfg: S.PalaceSettings, *, run: Any = subprocess.run) -> bool:
+def build(home: Path, cfg: S.Hermes3DSettings, *, run: Any = subprocess.run) -> bool:
     """Build the lite site unless it is there. True when a build was run. Raises ``DocsError`` when it fails."""
     if (lite_site(home) / "index.html").is_file():
         return False
@@ -131,7 +131,7 @@ def build(home: Path, cfg: S.PalaceSettings, *, run: Any = subprocess.run) -> bo
     return True
 
 
-def start(home: Path, cfg: S.PalaceSettings) -> dict[str, Any]:
+def start(home: Path, cfg: S.Hermes3DSettings) -> dict[str, Any]:
     """Start the viewer (building it first if needed). Returns ``{"url", "port", "pid", "reused", "built"}``."""
     vdir = viewer_dir(cfg)  # first: "where is the viewer" is the more basic question
     port = cfg.docs_viewer_port
@@ -139,7 +139,7 @@ def start(home: Path, cfg: S.PalaceSettings) -> dict[str, Any]:
     if port == lport:
         raise DocsError(
             f"docs_viewer_port ({port}) is the engine's link port; pick another with "
-            "`hermes config set plugins.entries.hermes-palace.settings.docs_viewer_port <port>` and list "
+            "`hermes config set plugins.entries.hermes-3d.settings.docs_viewer_port <port>` and list "
             f"http://127.0.0.1:<port> in the world's entorno/espejo.json documentos.origenes"
         )
     rec = read_record(home)
@@ -155,7 +155,7 @@ def start(home: Path, cfg: S.PalaceSettings) -> dict[str, Any]:
         raise DocsError(f"127.0.0.1:{port} is already in use by another program; change `docs_viewer_port`")
     node = supervisor.node_binary()
     built = build(home, cfg)
-    log = config.palace_dir(home) / "docs-viewer.log"
+    log = config.plugin_data_dir(home) / "docs-viewer.log"
     cmd = [
         node,
         str(vdir / SERVE_SCRIPT),

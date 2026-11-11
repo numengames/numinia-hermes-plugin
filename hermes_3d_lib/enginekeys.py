@@ -21,7 +21,7 @@ _VALID = re.compile(r"\A[A-Za-z0-9_-]{16,128}\Z")
 
 
 def keys_path(home: Path) -> Path:
-    return config.palace_dir(home) / KEY_FILE
+    return config.plugin_data_dir(home) / KEY_FILE
 
 
 def _read(path: Path, install_id: str) -> tuple[str, str] | None:

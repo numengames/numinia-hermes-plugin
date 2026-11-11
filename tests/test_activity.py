@@ -9,7 +9,7 @@ import yaml
 from conftest import ROOT, run
 from test_entry import FakeCtx, load_entry, load_router
 
-from hermes_palace_lib import events
+from hermes_3d_lib import events
 
 SECRET = "SECRET-PROMPT-TEXT-sk-ant-0123456789"
 
@@ -172,10 +172,10 @@ def test_registered_hooks_follow_the_sessions_switch_and_keep_the_approval_direc
     ctx.settings["publish_sessions"] = True
     assert ctx.hooks["pre_tool_call"](tool_name="terminal", args={"command": SECRET}, session_id="s") is None
     d = ctx.hooks["pre_tool_call"](
-        tool_name="palace_cron_action", args={"job_id": "8bc0eecea9b5", "verb": "cron.pausar"}, session_id="s"
+        tool_name="hermes3d_cron_action", args={"job_id": "8bc0eecea9b5", "verb": "cron.pausar"}, session_id="s"
     )
     assert d and d["action"] == "approve"
-    assert [e["tool"] for e in _spool(hermes_home)] == ["terminal", "palace_cron_action"]
+    assert [e["tool"] for e in _spool(hermes_home)] == ["terminal", "hermes3d_cron_action"]
     assert SECRET not in events.spool_path(hermes_home).read_text()
 
 
@@ -186,7 +186,7 @@ def test_events_route_is_metadata_only_and_empty_while_off(hermes_home):
     off = run(api.events())
     assert off["enabled"] is False and off["events"] == []
     (hermes_home / "config.yaml").write_text(
-        "plugins:\n  entries:\n    hermes-palace:\n      settings:\n        publish_sessions: true\n"
+        "plugins:\n  entries:\n    hermes-3d:\n      settings:\n        publish_sessions: true\n"
     )
     on = run(api.events())
     assert on["enabled"] is True and [e["tool"] for e in on["events"]] == ["terminal"]
@@ -197,7 +197,7 @@ def test_events_route_is_metadata_only_and_empty_while_off(hermes_home):
 def test_manifest_blocks_nothing_on_missing_env_and_pins_a_range():
     manifest = yaml.safe_load((ROOT / "plugin.yaml").read_text())
     assert "requires_env" not in manifest, "the plugin makes its own link key; no env var may gate its load"
-    assert [e["name"] for e in manifest["optional_env"]] == ["HERMES_PALACE_LINK_KEY"]
+    assert [e["name"] for e in manifest["optional_env"]] == ["HERMES_3D_LINK_KEY"]
     assert manifest["config_schema"]["link_key"]["type"] == "secret"  # the user-facing way to set it
     spec = manifest["requires_hermes"]
     assert spec.startswith(">=") and "<" in spec
@@ -205,15 +205,15 @@ def test_manifest_blocks_nothing_on_missing_env_and_pins_a_range():
 
 def test_plugin_loads_and_registers_with_no_environment_at_all(tmp_path, monkeypatch):
     for k in list(os.environ):
-        if k.startswith(("HERMES_PALACE_", "MOTOR_ENLACE_")):
+        if k.startswith(("HERMES_3D_", "MOTOR_ENLACE_")):
             monkeypatch.delenv(k)
     home = tmp_path / "home"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     ctx = FakeCtx()
     load_entry().register(ctx)  # must not raise: no LINK_KEY, no engine, nothing
-    assert "palace_state" in ctx.tools
-    from hermes_palace_lib import linkkey
+    assert "hermes3d_state" in ctx.tools
+    from hermes_3d_lib import linkkey
 
     assert len(linkkey.ensure(home)) >= 32  # the plugin makes its own key on first use
     assert linkkey.ENV_LINK_KEY not in os.environ

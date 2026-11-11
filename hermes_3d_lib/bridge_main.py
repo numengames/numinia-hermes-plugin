@@ -1,6 +1,6 @@
-"""The bridge process: ``python -m hermes_palace_lib.bridge_main`` (one per Hermes profile).
+"""The bridge process: ``python -m hermes_3d_lib.bridge_main`` (one per Hermes profile).
 
-Started by ``hermes palace up`` (or auto-started on demand). It owns:
+Started by ``hermes 3d up`` (or auto-started on demand). It owns:
   * the loopback face (Hub) that hooks and the Desktop backend talk to,
   * the single WS link to the engine,
   * the cron poller (``hermes cron list --all``), when ``funciones.cron`` is on,
@@ -51,7 +51,7 @@ from .hub import Hub
 from .sessions import SessionBook
 from .worldtext import say
 
-logger = logging.getLogger("hermes_palace.bridge")
+logger = logging.getLogger("hermes_3d.bridge")
 CRON_ARGS = ("cron", "list", "--all")
 CRON_TIMEOUT = 20
 
@@ -144,7 +144,7 @@ class Bridge:
         self._mirror_published: dict[str, dict[str, Any]] | None = None
 
     async def on_action_route(self, method: str, path: str, raw: bytes) -> tuple[int, dict[str, Any]]:
-        """Loopback routes used by the Hermes-side tool (`palace_cron_action`) and the approval hook.
+        """Loopback routes used by the Hermes-side tool (`hermes3d_cron_action`) and the approval hook.
 
         GET  /action/pending          -> what the world asked and nobody has run yet
         POST /action/claim   {job_id, verb}            -> take the oldest matching request (after approval)
@@ -433,9 +433,9 @@ def main() -> int:
     demo = "--demo" in sys.argv[1:]
     read_only_flag = "--read-only" in sys.argv[1:] or demo
     home = config.hermes_home()
-    log = logsafe.install(config.palace_dir(home) / "bridge.log")
+    log = logsafe.install(config.plugin_data_dir(home) / "bridge.log")
     try:
-        cfg = S.PalaceSettings.from_yaml(home)
+        cfg = S.Hermes3DSettings.from_yaml(home)
     except S.SettingsError as exc:
         logger.error("invalid plugin settings: %s", exc)
         return 2
@@ -450,7 +450,7 @@ def main() -> int:
         poll_seconds=cfg.poll_seconds,
         scan_root=scan.default_root(),
         scan_days=cfg.scan_days,
-        allow_direct_db=cfg.allow_direct_db_read or demo,  # `palace demo` is the user's explicit, read-only look at spend
+        allow_direct_db=cfg.allow_direct_db_read or demo,  # `hermes 3d demo` is the user's explicit, read-only look at spend
         hermes_api=None if demo else hermes_api_mod,
         page_url=cfg.page_url(),
         read_only=cfg.read_only or read_only_flag,
@@ -461,7 +461,7 @@ def main() -> int:
     return asyncio.run(bridge.run())
 
 
-def link_url(cfg: S.PalaceSettings, key: str | None) -> str | None:
+def link_url(cfg: S.Hermes3DSettings, key: str | None) -> str | None:
     """The engine link to open, or None. Path A (the world inside Desktop) needs ``engine_link: false``: an engine takes ONE source,
     and a local link that connects displaces the embedded page (engine contract, «Quién toca»)."""
     if not key or not cfg.engine_link:

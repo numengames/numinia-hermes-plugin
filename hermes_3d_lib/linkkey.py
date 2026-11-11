@@ -3,11 +3,11 @@
 Decision (documented in docs/ARCHITECTURE.md): the plugin never reads another program's credential file
 (the engine's ``<world>/enlace.env``). The key has exactly two sources, in this order:
 
-1. ``HERMES_PALACE_LINK_KEY`` in the environment (Hermes loads its own secrets file into the process environment). Use this to
+1. ``HERMES_3D_LINK_KEY`` in the environment (Hermes loads its own secrets file into the process environment). Use this to
    join an engine somebody else started: put *that* engine's ``MOTOR_ENLACE_CLAVE`` here.
 2. A key the plugin generated itself, stored in the plugin's own data folder
-   (``<HERMES_HOME>/hermes-palace/link.key``, mode 0600, created atomically, never followed through a
-   symlink). When ``hermes palace up`` launches the engine it hands this key over through the engine's
+   (``<HERMES_HOME>/hermes-3d/link.key``, mode 0600, created atomically, never followed through a
+   symlink). When ``hermes 3d up`` launches the engine it hands this key over through the engine's
    documented ``MOTOR_ENLACE_CLAVE`` variable (engine docs/EXTENDER.md, "Espejo (v1)", "Clave"), so
    the engine never has to write ``enlace.env`` and the plugin never has to read it.
 
@@ -24,7 +24,7 @@ from pathlib import Path
 
 from . import config
 
-ENV_LINK_KEY = "HERMES_PALACE_LINK_KEY"
+ENV_LINK_KEY = "HERMES_3D_LINK_KEY"
 ENGINE_KEY_ENV = "MOTOR_ENLACE_CLAVE"  # the engine's own name for the same secret
 KEY_FILE = "link.key"
 _VALID = re.compile(r"\A[A-Za-z0-9_-]{16,128}\Z")
@@ -35,7 +35,7 @@ def valid(key: str | None) -> bool:
 
 
 def key_path(home: Path) -> Path:
-    return config.palace_dir(home) / KEY_FILE
+    return config.plugin_data_dir(home) / KEY_FILE
 
 
 def _read_private(path: Path) -> str | None:

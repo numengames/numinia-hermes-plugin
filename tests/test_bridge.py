@@ -9,9 +9,9 @@ import os
 from conftest import SAMPLES, run, until
 from fake_engine import FakeEngine
 
-from hermes_palace_lib import actions, config
-from hermes_palace_lib.bridge_main import Bridge
-from hermes_palace_lib.sessions import engine_id
+from hermes_3d_lib import actions, config
+from hermes_3d_lib.bridge_main import Bridge
+from hermes_3d_lib.sessions import engine_id
 
 
 def listing(name: str) -> str:
@@ -288,7 +288,7 @@ def test_runtime_file_is_private_and_removed(hermes_home):
         rt = config.read_runtime(hermes_home)
         assert rt["port"] == b.hub.port and rt["pid"] == os.getpid() and len(rt["token"]) >= 40
         assert config.runtime_mode_ok(hermes_home)
-        assert oct(config.palace_dir(hermes_home).stat().st_mode & 0o777) == "0o700"
+        assert oct(config.plugin_data_dir(hermes_home).stat().st_mode & 0o777) == "0o700"
         b.hub._stop.set()
         await asyncio.wait_for(task, 5)
         assert config.read_runtime(hermes_home) is None

@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-from hermes_palace_lib import nodebin
+from hermes_3d_lib import nodebin
 
 ROOT = Path(__file__).resolve().parent.parent
 NODE_MENTION = re.compile(r"\bNode(?:\.js)?\s*(?:>=|≥|\()?\s*(\d{2})(?:\.(\d+))?", re.IGNORECASE)
