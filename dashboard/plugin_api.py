@@ -14,6 +14,7 @@ The on/off switches go through the normal Settings → Plugins page, which uses 
 
 from __future__ import annotations
 
+import asyncio
 import importlib.util
 import sys
 from pathlib import Path
@@ -56,7 +57,7 @@ async def status() -> dict[str, Any]:
     from hermes_3d_lib import client
 
     _lib()
-    res = client.call("GET", "/status")
+    res = await asyncio.to_thread(client.call, "GET", "/status")
     if not res.get("ok"):
         return {"bridge": False, "connected": False, "reason": res.get("error", "unknown"), "switches": _read_switches()}
     data = res["data"]
@@ -78,7 +79,7 @@ async def switches() -> dict[str, Any]:
 
     _lib()
     local = _read_switches()
-    res = client.call("GET", "/status")
+    res = await asyncio.to_thread(client.call, "GET", "/status")
     engine = res["data"].get("engine_functions", {}) if res.get("ok") else {}
     rows = [
         {"name": name, "local": on, "engine": engine.get(name), "effective": bool(on and engine.get(name, True))}
@@ -132,7 +133,7 @@ async def state() -> dict[str, Any]:
     from hermes_3d_lib import events as ev
 
     sw = _read_switches()
-    got = client.call("GET", "/scan")
+    got = await asyncio.to_thread(client.call, "GET", "/scan")
     scan = got["data"] if got.get("ok") and isinstance(got.get("data"), dict) else {}
     feed = ev.read(0, 20, cfg.hermes_home()) if sw.get("sesiones") else {"events": [], "next": 0}
     return {
@@ -171,7 +172,7 @@ async def embed_credential() -> dict[str, Any]:
             "message": str(exc)[:200],
             "hint": "Fix the hermes-3d section of config.yaml",
         }
-    out = embed.issue(conf, linkkey.resolve(home))
+    out = await asyncio.to_thread(embed.issue, conf, linkkey.resolve(home))
     return out
 
 
@@ -181,7 +182,7 @@ async def world_snapshot() -> dict[str, Any]:
     from hermes_3d_lib import client
 
     _lib()
-    res = client.call("GET", "/snapshot", timeout=8.0)
+    res = await asyncio.to_thread(client.call, "GET", "/snapshot", timeout=8.0)
     if not res.get("ok") or not isinstance(res.get("data"), dict):
         return {"ok": False, "error": res.get("error", "bridge-down"), "hint": "Run `hermes 3d up`"}
     return {"ok": True, **res["data"]}
@@ -201,7 +202,7 @@ async def action(body: Any = _BODY) -> dict[str, Any]:
     if not isinstance(body, dict) or len(_json.dumps(body, ensure_ascii=False).encode("utf-8")) > MAX_ACTION_BYTES:
         return say("invalid_request")
     msg = {k: body[k] for k in ACTION_FIELDS if k in body}
-    res = client.call("POST", "/action/submit", msg, timeout=35.0)
+    res = await asyncio.to_thread(client.call, "POST", "/action/submit", msg, timeout=35.0)
     if not res.get("ok") or not isinstance(res.get("data"), dict):
         return say("no_actions")
     return res["data"]

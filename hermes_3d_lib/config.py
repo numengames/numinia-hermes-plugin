@@ -35,6 +35,28 @@ PLUGIN_NAME = "hermes-3d"
 ENGINE_FUNCTION = {"agentes": "perfiles", "gasto": "uso"}
 
 
+# Variables that switch Hermes' approvals or session identity. A `hermes` child the plugin starts never inherits them:
+# whatever it runs was approved (or is read-only) in THIS process, and must not run under a YOLO or another session's
+# identity (catalog rule 12).
+NO_INHERIT = (
+    "HERMES_YOLO_MODE",
+    "HERMES_IGNORE_RULES",
+    "HERMES_ACCEPT_HOOKS",
+    "HERMES_INTERACTIVE",
+    "HERMES_GATEWAY_SESSION",
+    "HERMES_EXEC_ASK",
+    "HERMES_SESSION_KEY",
+)
+
+
+def hermes_child_env(**extra: str) -> dict[str, str]:
+    """Environment for a ``hermes`` child process: ours minus :data:`NO_INHERIT`, plain output, plus ``extra``."""
+    env = {k: v for k, v in os.environ.items() if k not in NO_INHERIT}
+    env["NO_COLOR"] = "1"
+    env.update(extra)
+    return env
+
+
 def hermes_home() -> Path:
     """The active profile's home, from the documented env var (never ``~``)."""
     raw = os.environ.get("HERMES_HOME")

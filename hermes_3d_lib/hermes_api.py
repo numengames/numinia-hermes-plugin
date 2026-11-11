@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import shutil
 import subprocess
 import time
@@ -27,6 +26,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from . import config
 from .crontable import clean_text
 from .logsafe import redact_title
 
@@ -137,7 +137,7 @@ def kanban_via_cli(days: int, *, runner: Runner = subprocess.run, hermes: str | 
             timeout=CLI_TIMEOUT,
             check=False,
             stdin=subprocess.DEVNULL,
-            env={**os.environ, "NO_COLOR": "1"},
+            env=config.hermes_child_env(),
         )
     except (subprocess.TimeoutExpired, OSError):
         return None

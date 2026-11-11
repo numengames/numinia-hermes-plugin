@@ -36,6 +36,17 @@ Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer]
   the published plugin API.
 - `AGENTS.md`, `CONTRIBUTING.md` and `SECURITY.md` describe the current plugin (name, gates, supported version).
 
+### Fixed
+- Starting the world (`hermes 3d up`) gave each body its spend and Kanban titles by reading `state.db` / `kanban.db`
+  even with `allow_direct_db_read` off. Those reads now need the opt-in and the `gasto` / `kanban` switch, as everywhere
+  else (THREAT-MODEL T19); without them a body carries its name only.
+- The read-only SQLite open escapes the path (`Path.as_uri()`): a `#` or `?` in `HERMES_HOME` no longer drops `mode=ro`.
+- The dashboard routes run their bridge calls in a worker thread: a world action waiting for approval no longer freezes
+  the Hermes web server's event loop.
+- `hermes` child processes no longer inherit approval or session variables (`HERMES_YOLO_MODE` and the like).
+- Docs match the code: 256-bit bridge token, the approval prompt names job and verb, only pause/resume exist, and the
+  README says the approval follows Hermes' own approval settings and when `config.yaml` is edited directly.
+
 ## [0.7.2-rc1] - 2026-11-05
 
 ### Changed
