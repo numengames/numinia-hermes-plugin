@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 # Catalog entry for NousResearch/hermes-agent -> plugin-catalog/hermes-3d.yaml
 # `image` carries <SHA>: replace it with the same 40-hex sha at pin time.
 # `sha` is the commit that merges this rename; set it (40 hex) before opening the catalog PR.

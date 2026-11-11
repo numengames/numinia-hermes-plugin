@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """The bridge ("hub"): ONE loopback process per Hermes profile.
 
 Two faces, one process:

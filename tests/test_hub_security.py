@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """The loopback face as an attack surface: rebinding, browsers, slowloris, request smuggling, size caps, logs.
 
 Every test speaks raw bytes on a socket so that nothing a polite HTTP client would normalise can hide a hole.

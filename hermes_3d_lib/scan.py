@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """``hermes 3d scan``: the FIRST thing the plugin does when the world opens — a full READ-ONLY scan of the
 user's Hermes (HISTORIA-DE-USUARIO §4): profiles/agents, cron jobs, sessions, skills, MCP servers,
 kanban, projects, documents and spend.
@@ -114,7 +117,8 @@ def _open_ro(path: Path) -> sqlite3.Connection:
     """Open a SQLite file strictly read-only. Raises ``NoDatabase`` (never creates the file) if it does not exist."""
     if not path.is_file():
         raise NoDatabase(path.name)
-    con = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=DB_TIMEOUT)
+    # as_uri() percent-escapes the path: a raw "#" or "?" in it would end the path early and drop mode=ro.
+    con = sqlite3.connect(path.absolute().as_uri() + "?mode=ro", uri=True, timeout=DB_TIMEOUT)
     con.execute("pragma query_only = 1")
     return con
 

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Node for the engine and the docs viewer: the one Hermes' package manager (``pm``) provides.
 
 Why: the plugin must not ask a person to install Node. Hermes ships ``pm`` which pins, downloads and checksums a Node per

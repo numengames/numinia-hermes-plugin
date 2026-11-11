@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Project shelf-tree reader (C7): the projects of every Hermes profile, read from ``projects.db``.
 
 Source: ``<home>/projects.db`` of the default home and of every ``profiles/<name>`` (Hermes' private schema:

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Locate, start, reuse and stop the Numinia Engine world, and the bridge process.
 
 Nothing is hardcoded: the engine folder, the world folder and the ports are plugin settings
@@ -256,16 +259,21 @@ def _sow_bodies(cfg: S.Hermes3DSettings) -> None:
         names = [n for n, _d in scan.profile_dirs(scan.default_root())]
         from . import gasto
 
-        try:  # the spend travels with the body (what you read when you talk to it); no spend must not skip the body
-            spend = gasto.by_profile(scan.scan_gasto(scan.default_root()))
-        except Exception:
-            logger.debug("no spend for the bodies", exc_info=True)
-            spend = {}
-        try:  # what each agent is doing / did last, from the Kanban (titles only)
-            activity = agentes.activity_by_profile(scan.scan_kanban(scan.default_root()))
-        except Exception:
-            logger.debug("no activity for the bodies", exc_info=True)
-            activity = {}
+        # Spend and Kanban titles come from Hermes' private databases: only with the opt-in AND the function switched on
+        # (README "What is read from where"; THREAT-MODEL T19). Without them the bodies carry names only.
+        direct = bool(cfg.allow_direct_db_read)
+        spend: dict[str, Any] = {}
+        activity: dict[str, Any] = {}
+        if direct and cfg.switches.get("gasto"):
+            try:  # the spend travels with the body (what you read when you talk to it); no spend must not skip the body
+                spend = gasto.by_profile(scan.scan_gasto(scan.default_root()))
+            except Exception:
+                logger.debug("no spend for the bodies", exc_info=True)
+        if direct and cfg.switches.get("kanban"):
+            try:  # what each agent is doing / did last, from the Kanban (titles only)
+                activity = agentes.activity_by_profile(scan.scan_kanban(scan.default_root()))
+            except Exception:
+                logger.debug("no activity for the bodies", exc_info=True)
         cuerpos.sow(cfg.world_path, names, spend=spend, activity=activity)
     except Exception:  # bodies are decoration: a failure must not stop the world
         logger.debug("could not sow the bodies", exc_info=True)

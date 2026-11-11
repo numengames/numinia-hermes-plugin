@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Mirror ``agentes``: every Hermes profile (agent) as a ``perfil`` thing in the world.
 
 Two sources, one shape:

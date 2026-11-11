@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 # `make check` runs every gate (see scripts/check.sh for the environment variables it honours).
 .PHONY: check fmt integration
 check:

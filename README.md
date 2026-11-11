@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Numen Games S.L.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # hermes-3d
 
 Turn your Hermes into a 3D game world you can walk through. Your scheduled jobs, conversations and system health become places to explore, right on your own computer. Anything that changes Hermes, like pausing a job, waits for your approval. Built on the Numinia Engine by Numen Games.
@@ -59,9 +64,13 @@ Guarantees (catalog rule 17 style disclosure):
 - **Reads:** `hermes 3d scan` and the bridge read, read-only, the `state.db`, `kanban.db`, `projects.db`,
   `config.yaml` (MCP server names only) and `skills/` of **every profile** under the Hermes root; with the
   `cron` function on they run `hermes cron list --all`. See "What `hermes 3d scan` reads".
-- **Actions:** only after your explicit approval in Hermes, `hermes cron pause|resume <id>`.
+- **Actions:** only after your explicit approval in Hermes, `hermes cron pause|resume <id>`. The prompt is Hermes' own
+  approval gate, so it follows your approval settings: with `--yolo` / `HERMES_YOLO_MODE`, `approvals.mode: off` or
+  `approvals.cron_mode: approve` Hermes skips it. Set `read_only: true` if the world must never change cron.
 - **Writes:** only `<HERMES_HOME>/plugin-data/hermes-3d/` (runtime file, link key, `bridge.log`, `engine.log`) and the
-  world folder you configure. Message text and secrets are never read.
+  world folder you configure. Message text and secrets are never read. One exception: `hermes 3d install-engine` saves
+  `engine_path` through Hermes' own `config set` command; only if that command fails does it edit `config.yaml` itself
+  (it writes `config.yaml.hermes-3d-backup` first, and YAML comments are not kept).
 
 ### Every place the plugin starts a process
 
@@ -71,7 +80,7 @@ in a loop. The Nous scanner reports each one as `python_subprocess` (medium); th
 | Module | Command | Why |
 |---|---|---|
 | `bridge_main.py` | `hermes cron list --all` (fallback when `cron/jobs.json` cannot be used) | the only public listing when the file is unreadable |
-| `actions.py` | after your approval in Hermes, `hermes cron pause\|resume\|run <id>` | the only public way to change cron today |
+| `actions.py` | after your approval in Hermes, `hermes cron pause\|resume <id>` | the only public way to change cron today |
 | `supervisor.py` | the bridge (`python -m ...bridge_main`) and the Node engine (`node ... main.ts`) | `hermes 3d up`; both detached, pid recorded with its start time |
 | `docsviewer.py` | `build-docs.sh`, `node serve.mjs` of the docs-visor folder | `hermes 3d docs` only |
 | `installer.py` | `hermes config set` (saves `engine_path`); the download itself is in-process `urllib`, the unpacking in-process Python | `hermes 3d install-engine` / `setup` only |

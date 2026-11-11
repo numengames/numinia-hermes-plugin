@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Mirror ``habilidades``: the skills of every Hermes profile as ``habilidad`` things (the workshop, zone z4).
 
 Source: the scan (``scan.scan_skills``): name, group (the folder under ``skills/``), enabled, description cut to 140.

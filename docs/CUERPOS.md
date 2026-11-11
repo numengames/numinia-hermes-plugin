@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Numen Games S.L.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Bodies for the bots (stick figures)
 
 One black-and-white stick figure per Hermes profile (up to 14), walking a short round in the control tower (z6).

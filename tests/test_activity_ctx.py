@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Session context (platform/model/role) learned from pre_llm_call, pre_api_request and subagent_start; Desktop broadcast."""
 
 from __future__ import annotations

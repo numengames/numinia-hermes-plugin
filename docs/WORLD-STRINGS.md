@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Numen Games S.L.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Strings shown inside the world (English)
 
 The engine displays these to people in the world, and they are all English. Only the engine's schema (object types,

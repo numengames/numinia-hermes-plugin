@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Project workshops (talleres.py): one zone per project with its card, its board and its agents."""
 
 import json

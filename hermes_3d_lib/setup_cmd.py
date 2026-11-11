@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """``hermes 3d setup``: a guided first run. Checks what is missing, explains every switch, writes settings after you say yes.
 
 Design rules
@@ -21,7 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from . import docsviewer, embed, installer, linkkey, nodebin
+from . import config, docsviewer, embed, installer, linkkey, nodebin
 from . import settings as S
 from .errors import Hermes3DError, NodeMissing
 
@@ -183,7 +186,6 @@ def hermes_config_set(home: Path) -> Callable[[str, str], bool]:
         exe = shutil.which("hermes")
         if exe is None:
             return False
-        import os
 
         try:
             res = subprocess.run(
@@ -192,7 +194,7 @@ def hermes_config_set(home: Path) -> Callable[[str, str], bool]:
                 text=True,
                 timeout=CONFIG_TIMEOUT,
                 check=False,
-                env={**os.environ, "HERMES_HOME": str(home)},
+                env=config.hermes_child_env(HERMES_HOME=str(home)),
             )
         except (OSError, subprocess.SubprocessError):
             return False

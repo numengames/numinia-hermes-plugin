@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """hermes-3d — Hermes plugin entry point (MIT).
 
 Registers, and nothing more (the manifest declares exactly this):
@@ -6,7 +9,8 @@ Registers, and nothing more (the manifest declares exactly this):
            on_session_start / on_session_end / on_session_finalize (publish `sesion` places)
   CLI    : `hermes 3d up|status|down`
 
-It never edits Hermes files, never imports Hermes internals, never opens a port to the network
+It never imports Hermes internals, edits a Hermes file only in one disclosed fallback (``install-engine`` saving
+``engine_path`` when Hermes' own ``config set`` fails), never opens a port to the network
 (the loopback bridge binds 127.0.0.1 only and lives in its own process, see bridge_main.py).
 """
 

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Data folder = Hermes' per-plugin storage."""
 
 from __future__ import annotations

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """``hermes 3d setup --first-run`` end to end: fake release server -> installer -> stub engine, with Node mocked (no real pm)."""
 
 from __future__ import annotations

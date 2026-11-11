@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Entry module, approval hook, tools, session hooks, CLI, supervisor and dashboard router."""
 
 from __future__ import annotations

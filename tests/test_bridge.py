@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Bridge end to end against the fake engine: cron publishing, switches, sessions, actions."""
 
 from __future__ import annotations

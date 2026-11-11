@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """A FAKE GitHub release for tests: a local http server on a random loopback port serving one tiny asset and its SHA256SUMS.
 
 Tests never download from the internet. The asset has the SHAPE of the engine's real one (``instalar-motor.sh`` = a bash header, the

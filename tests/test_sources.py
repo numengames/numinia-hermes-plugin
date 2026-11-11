@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Where the scan reads from: direct database reads are opt-in, switch-gated and change-driven (review point 1 and 2)."""
 
 from __future__ import annotations

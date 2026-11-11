@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """P3-3: ``hermes 3d demo`` - your own Hermes as a world, read-only, with agents, spend and cron on."""
 
 from __future__ import annotations

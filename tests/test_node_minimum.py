@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """The Node minimum is one number (22.18) everywhere the user can read it."""
 
 from __future__ import annotations

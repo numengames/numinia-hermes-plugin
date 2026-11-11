@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """World -> Hermes actions (``cron.pausar`` / ``cron.reanudar``), through Hermes' own approval.
 
 Why the shape is what it is (all verified against the installed Hermes 0.22.7 source):
@@ -19,7 +22,6 @@ with ``approve``. If nobody approves within the TTL the world gets ``ok=false`` 
 from __future__ import annotations
 
 import asyncio
-import os
 import re
 import shutil
 import subprocess
@@ -30,6 +32,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
+from . import config
 from .crontable import clean_text
 from .worldtext import say
 
@@ -251,7 +254,7 @@ def run_cron_cli(job_id: str, verb: str, *, runner: Runner = subprocess.run, her
             timeout=CLI_TIMEOUT,
             check=False,
             stdin=subprocess.DEVNULL,
-            env={**os.environ, "NO_COLOR": "1"},
+            env=config.hermes_child_env(),
         )
     except subprocess.TimeoutExpired:
         return say("timeout")

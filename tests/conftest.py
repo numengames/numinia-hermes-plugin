@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Shared test helpers (no pytest-asyncio: tests drive the loop with ``run``)."""
 
 from __future__ import annotations

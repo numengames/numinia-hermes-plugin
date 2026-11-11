@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Failure paths: engine start-up errors, the spawned bridge's environment, the client, and bridge main()."""
 
 from __future__ import annotations
