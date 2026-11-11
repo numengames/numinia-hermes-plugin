@@ -18,7 +18,7 @@ SPDX-License-Identifier: CC-BY-4.0
 
 ## Checks
 ```
-uv sync --locked --group dev   # the gate tools, pinned in uv.lock
+uv sync --project tools --locked --group dev   # gate tools, pinned in tools/uv.lock (outside the root pyproject.toml so Hermes never asks users to install them)
 PY=.venv/bin/python REACT_DIR=…/node_modules HERMES_AGENT_DIR=…/hermes-agent make check
 ```
 Runs: `ruff format --check`, `ruff check`, `mypy` (+ `--strict` on the new modules), `reuse lint`, `pytest` with a

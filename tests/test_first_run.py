@@ -137,16 +137,16 @@ def test_the_whole_path_works_against_the_fake_release_and_is_fast(env, monkeypa
         rc, text, setter = run(env, rel)
     seconds = time.monotonic() - t0
     assert rc == 0, text
-    assert "Ready. Open the Hermes 3D page in Hermes Desktop." in text
-    assert (
-        "Step 1 of 4: Node" in text
-        and "Step 2 of 4: Engine" in text
-        and "Step 3 of 4: Settings" in text
-        and "Step 4 of 4: Start" in text
-    )
+    assert "Your Hermes is a place now." in text
+    for block in ("Checking this computer", "The plan.", "Doing it"):
+        assert block in text
+    assert "never runs it" in text and "14.4 MB" not in text  # the fake release has its own size
+    assert "✓ Downloaded" in text and "✓ Checksum matches" in text and "✓ Unpacked" in text and "✓ World started" in text
+    assert "hermes 3d setup --explain" in text and "Switches" not in text
+    assert "Shortcut" not in text and not list(env.home.rglob("hermes-3d.desktop"))
     cfg = S.Hermes3DSettings.from_yaml(env.home)
     assert cfg.engine_link is False and cfg.engine_main() is not None and cfg.engine_path.name == rel.sha256[:12]
-    assert [c for c in setter.calls] == [("plugins.entries.hermes-3d.settings.engine_link", "false")]
+    assert ("plugins.entries.hermes-3d.settings.engine_link", "false") in setter.calls
     assert supervisor.engine_healthy(env.port)
     with capsys.disabled():
         print(f"FIRST_RUN_SECONDS={seconds:.2f}")
@@ -161,7 +161,7 @@ def test_second_run_downloads_nothing_and_reuses_the_running_engine(env, monkeyp
         assert run(env, rel)[0] == 0
         hits = len(rel.hits)
         rc, text, setter = run(env, rel)
-        assert rc == 0 and len(rel.hits) == hits and "Engine already installed" in text and setter.calls == []
+        assert rc == 0 and len(rel.hits) == hits and "already installed, nothing to download" in text and setter.calls == []
 
 
 def test_node_missing_asks_then_lets_pm_install_it(env, monkeypatch):
@@ -175,7 +175,7 @@ def test_node_missing_asks_then_lets_pm_install_it(env, monkeypatch):
 
     monkeypatch.setattr(nodebin, "resolve_node", resolve)
     with FakeRelease(stub_asset()) as rel:
-        rc, text, _ = run(env, rel, yes=False, answers=["y", "y", "y"])
+        rc, text, _ = run(env, rel, yes=False, answers=[""])
     assert rc == 0 and calls[:2] == [False, True], text
 
 
@@ -186,7 +186,7 @@ def test_declining_the_node_download_stops_before_anything_else(env, monkeypatch
     monkeypatch.setattr(nodebin, "resolve_node", resolve)
     with FakeRelease(stub_asset()) as rel:
         rc, text, _ = run(env, rel, yes=False, answers=["n"])
-        assert rc == 1 and "Stopped. Without Node" in text and rel.hits == []
+        assert rc == 0 and "Nothing was changed" in text and "Install Node with Hermes" in text and rel.hits == []
 
 
 def test_pm_failing_to_install_node_is_a_typed_stop(env, monkeypatch):
@@ -196,7 +196,7 @@ def test_pm_failing_to_install_node_is_a_typed_stop(env, monkeypatch):
     monkeypatch.setattr(nodebin, "resolve_node", resolve)
     with FakeRelease(stub_asset()) as rel:
         rc, text, _ = run(env, rel)
-        assert rc == 1 and "NODE_MISSING" in text and "hermes pm doctor" in text and rel.hits == []
+        assert rc == 1 and "hermes pm doctor" in text and "✗" in text and rel.hits == []
 
 
 def test_a_bad_checksum_stops_at_the_engine_step_and_starts_nothing(env, monkeypatch):
@@ -208,7 +208,7 @@ def test_a_bad_checksum_stops_at_the_engine_step_and_starts_nothing(env, monkeyp
             home=env.home, yes=True, setter=YamlSetter(env.home), starter=lambda cfg: pytest.fail("must not start"),
             ask=lambda p: "y", out=lambda *a, **k: lines.append(" ".join(map(str, a))), lock_path=lock, url=rel.url,
         )  # fmt: skip
-    assert rc == 1 and "SHA256_MISMATCH" in "\n".join(lines) and not supervisor.engine_healthy(env.port)
+    assert rc == 1 and "sha256 of the download" in "\n".join(lines) and not supervisor.engine_healthy(env.port)
 
 
 def test_an_unpinned_lock_stops_with_the_publish_message(env, monkeypatch, tmp_path):
@@ -232,7 +232,7 @@ def test_settings_write_failure_stops(env, monkeypatch):
     monkeypatch.setattr(nodebin, "resolve_node", lambda ensure=True, **kw: PYNODE)
     with FakeRelease(stub_asset()) as rel:
         rc, text, _ = run(env, rel, setter=YamlSetter(env.home, ok=False))
-    assert rc == 1 and "Could not write engine_link" in text
+    assert rc == 1 and "could not write" in text
 
 
 def test_world_without_embed_gets_the_hint_not_a_false_ready(env, monkeypatch):
@@ -281,15 +281,41 @@ def test_no_terminal_without_yes_is_a_clear_stop(env, monkeypatch):
     assert rc == 1 and "--yes" in "\n".join(lines)
 
 
-def test_cmd_setup_flag_runs_the_first_run_and_plain_setup_points_to_it(env, monkeypatch, capsys):
+def test_plain_setup_is_the_first_run_and_explain_lists_the_switches(env, monkeypatch, capsys):
     called = {}
     monkeypatch.setattr(setup_cmd, "first_run", lambda **kw: called.update(kw) or 0)
-    args = SimpleNamespace(yes=True, engine_path=None, first_run=True)
+    args = SimpleNamespace(yes=True, engine_path=None, first_run=False, explain=False)
     assert setup_cmd.cmd_setup(args, home=env.home, setter=YamlSetter(env.home)) == 0 and called["yes"] is True
     capsys.readouterr()
-    args.first_run = False
+    args.explain = True
     assert setup_cmd.cmd_setup(args, home=env.home, setter=YamlSetter(env.home)) == 0
-    assert "setup --first-run" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "publish_kanban" in out and "Settings > Plugins" in out
+
+
+def test_the_one_question_defaults_to_yes_and_is_asked_once(env, monkeypatch):
+    monkeypatch.setattr(nodebin, "resolve_node", lambda ensure=True, **kw: PYNODE)
+    asked = []
+    with FakeRelease(stub_asset()) as rel:
+        lock = rel.lock(env.tmp, entry=STUB_ENTRY)
+        rc = setup_cmd.first_run(
+            home=env.home, yes=False, setter=YamlSetter(env.home), starter=lambda cfg: env.mod.cmd_up(cfg=cfg),
+            ask=lambda p: asked.append(p) or "", out=lambda *a, **k: None, lock_path=lock, url=rel.url,
+        )  # fmt: skip
+    assert rc == 0 and len(asked) == 1 and "[Y/n]" in asked[0]
+
+
+def test_hermes_version_comes_from_the_public_cli_and_is_checked_against_the_range(monkeypatch):
+    monkeypatch.setattr(setup_cmd.shutil, "which", lambda n: "/x/hermes")
+    monkeypatch.setattr(
+        setup_cmd.subprocess,
+        "run",
+        lambda *a, **k: SimpleNamespace(returncode=0, stdout="Hermes Agent v0.23.1+1963.ge2a0 (2026.9.24)\n"),
+    )
+    assert setup_cmd.hermes_version() == "0.23.1"
+    assert setup_cmd.version_supported("0.23.1", ">=0.22.0, <0.24") is True
+    assert setup_cmd.version_supported("0.24.0", ">=0.22.0, <0.24") is False
+    assert setup_cmd.version_supported("", ">=0.22.0") is None
 
 
 def test_cli_parses_first_run(env):

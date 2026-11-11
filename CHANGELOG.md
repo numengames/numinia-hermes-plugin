@@ -8,6 +8,23 @@ SPDX-License-Identifier: CC-BY-4.0
 Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer](https://semver.org).
 
 
+## [0.8.2] - 2026-11-11
+
+### Changed
+- `hermes 3d setup` is now the whole first run, as three blocks: Checking this computer, The plan, Doing it, then a closing.
+  One question after the plan (default yes; `--yes` skips it). Figures are measured at run time: Hermes version (from
+  `hermes --version`, checked against the tested range), Node, download size and time. A live bar shows the download; each
+  finished step prints a green check. The plan says the downloaded archive is unpacked by the plugin and never run.
+- The 11-switch catalogue moved to `hermes 3d setup --explain`. `setup --first-run` still works as an alias.
+- `engine_link: false` (world inside Hermes Desktop) is part of the plan, no longer a third question.
+- `setup` no longer creates a launcher shortcut; only `install-engine` run on its own does, and the README now says so.
+
+### Fixed
+- `hermes plugins install` no longer asks an empty "declares Python dependencies" question. The gate tools (ruff, mypy,
+  pytest, …) moved out of the root `pyproject.toml` into `tools/pyproject.toml` (+ `tools/uv.lock`), so Hermes sees a plugin
+  with no Python dependencies and does not install test tools into its shared plugin environment. Contributors now run
+  `uv sync --project tools --locked --group dev`.
+
 ## [0.8.1] - 2026-11-11
 
 ### Changed

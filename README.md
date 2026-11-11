@@ -16,27 +16,27 @@ Turn your Hermes into a 3D game world you can walk through. Your scheduled jobs,
 ## Install in five minutes
 
 Three commands, no Node to install, nothing to compile. Measured against the fake release in the tests: 0.22 s for the whole
-`setup --first-run` flow; on a real machine the time is the download (the engine release is ~14 MB) plus ~1 s for `/health`.
+`setup` flow; on a real machine the time is the download (the engine release is ~14 MB) plus ~1 s for `/health`.
 
 ```
 hermes plugins install hermes-3d
 hermes plugins enable hermes-3d
-hermes 3d setup --first-run             # asks before each download or write; add --yes for scripts
+hermes 3d setup                       # shows a plan, asks once (default yes); add --yes for scripts
 # then open the "Hermes 3D" page in Hermes Desktop
 ```
 
-What `setup --first-run` does, in order, and what each step downloads, runs and writes:
+What `hermes 3d setup` does, in order, and what each step downloads, runs and writes. It first shows this as a plan and asks once (default yes):
 
 | # | Step | Downloads | Runs | Writes |
 |---|---|---|---|---|
-| 1 | Node | Hermes' package manager fetches **its own pinned, checksummed Node** (only if missing, after you say yes) | `pm.ensure("node")`; `node --version` | Hermes' own tools folder (Hermes does this, not the plugin) |
-| 2 | Engine | **One file** from the GitHub release named in `engine.lock.json` (`github.com/numengames/numinia-engine/releases`, pinned tag + asset). The command shows URL and size and asks first. | Nothing from the download is executed: the plugin unpacks `app/` and `www/` itself, after the sha256 matches | `<HERMES_HOME>/plugin-data/hermes-3d/engine/<sha12>/` (0700) and `engine_path` in your `config.yaml` |
-| 3 | Settings | nothing | `hermes config set ...engine_link false` (after you say yes) | one key in `config.yaml` |
+| 1 | Node | Hermes' package manager fetches **its own pinned, checksummed Node** (only if missing, after you say yes to the plan) | `pm.ensure("node")`; `node --version` | Hermes' own tools folder (Hermes does this, not the plugin) |
+| 2 | Engine | **One file** from the GitHub release named in `engine.lock.json` (`github.com/numengames/numinia-engine/releases`, pinned tag + asset). The plan shows source and size before anything is fetched. | Nothing from the download is executed: the plugin unpacks `app/` and `www/` itself, after the sha256 matches | `<HERMES_HOME>/plugin-data/hermes-3d/engine/<sha12>/` (0700) and `engine_path` in your `config.yaml` |
+| 3 | Settings | nothing | `hermes config set` for the default switches and `engine_link false` (so the world opens inside Hermes Desktop); part of the plan you said yes to | one key in `config.yaml` |
 | 4 | Start | nothing | the engine (`node app/<entry>`, as you, never root, `127.0.0.1` only) and the bridge | `engine-keys.json` (0600), `engine.pid`, `engine.log`, `bridge.log` |
 
 Guarantees (catalog rule 17 style disclosure):
 
-- **Network:** only to GitHub releases, only for the pinned asset, only when you run `install-engine` or `setup --first-run`. `https` only
+- **Network:** only to GitHub releases, only for the pinned asset, only when you run `install-engine` or `setup`. `https` only
   (plain `http` only to the loopback, for the tests). No telemetry.
 - **Integrity:** the sha256 of the download is compared with the one pinned in `engine.lock.json` **before anything is unpacked**; a wrong
   or truncated download is deleted and nothing is installed. If the release publishes `SHA256SUMS` next to the asset, the pin is checked against it too (skipped silently if it cannot be fetched; a mismatch aborts). The lock says `TODO-PUBLISH` until a release that contains the Hermes
@@ -68,7 +68,7 @@ Guarantees (catalog rule 17 style disclosure):
   approval gate, so it follows your approval settings: with `--yolo` / `HERMES_YOLO_MODE`, `approvals.mode: off` or
   `approvals.cron_mode: approve` Hermes skips it. Set `read_only: true` if the world must never change cron.
 - **Writes:** only `<HERMES_HOME>/plugin-data/hermes-3d/` (runtime file, link key, `bridge.log`, `engine.log`) and the
-  world folder you configure. Message text and secrets are never read. One exception: `hermes 3d install-engine` saves
+  world folder you configure. Message text and secrets are never read. `hermes 3d setup` writes nothing else. Exceptions, only for `hermes 3d install-engine` run on its own: it creates a launcher shortcut (`~/.local/share/applications/hermes-3d.desktop` on Linux, a `.command` or `.bat` on the Desktop elsewhere), and it saves
   `engine_path` through Hermes' own `config set` command; only if that command fails does it edit `config.yaml` itself
   (it writes `config.yaml.hermes-3d-backup` first, and YAML comments are not kept).
 
@@ -182,9 +182,12 @@ reads and its query plan on a throwaway 1M-message database), and only when the 
 
 ## First run: `hermes 3d setup`
 
-One path, no choices. `hermes 3d setup` checks Node (22.18 or later), the engine, the built page, the docs viewer and the
-link key. It lists every switch in plain words with where it reads from, then asks once before it writes anything (through
-`hermes config set`, never by editing `config.yaml` itself). It is idempotent, and with `--yes` it never prompts.
+One path, one question. The command prints three blocks: **Checking this computer** (your Hermes version and whether it is in the
+tested range, Node, the engine), **The plan** (what will be downloaded, with its real size and source, what will be switched on,
+what will be started), and, after you answer `Y` (the default), **Doing it** with a live bar for the download and a line per
+finished step. Every figure is measured when you run it. The downloaded file is a self-extracting archive that Hermes 3D unpacks
+itself and never runs. It is idempotent, and with `--yes` it never prompts. `hermes 3d setup --explain` lists every switch in plain
+words with where it reads from.
 
 What it turns on is one default set: **Health, Cron jobs, Agents, Skills and the Docs library, read-only.** Names, states and
 counts from Hermes' own files and CLI; the world cannot change anything. Sessions feed, Spend, Kanban and Projects stay off.
@@ -295,12 +298,12 @@ The default is `false`. If a read-write bridge is already running, `hermes 3d up
 
 ## Installing the engine
 
-The engine is a separate AGPL program and is never bundled. `hermes 3d install-engine` (also step 2 of `setup --first-run`)
+The engine is a separate AGPL program and is never bundled. `hermes 3d install-engine` (also step 2 of `setup`)
 downloads it **only when you run it**: it reads `engine.lock.json` (release `tag`, `asset`, URL template, `sha256`, `size_bytes`, `entry`
 file), shows URL, size and destination, and asks (`--yes` for scripts). The asset is the engine's own release file (`instalar-motor.sh`:
 a script header, the line `__CARGA_DEBAJO__`, then a base64 `tar.gz` of `app/` and `www/`); a plain `.tar.gz` or `.zip` with the same
 two folders also works. It is never executed: Python reads the payload, checks the sha256 first, then unpacks into
-`<hermes home>/plugin-data/hermes-3d/engine/<sha12>/`, writes `engine_path`, and creates a launcher shortcut (`.desktop` on Linux,
+`<hermes home>/plugin-data/hermes-3d/engine/<sha12>/`, writes `engine_path`, and and (for `install-engine` only, not `setup`) creates a launcher shortcut (`.desktop` on Linux,
 `.command` on macOS, `.bat` on Windows; Linux is the tested one). The engine entry is `app/<entry>` (the real release: `packages/server/src/entrada.ts`),
 run by Hermes' Node. While `engine.lock.json` says `TODO-PUBLISH` the command refuses: it never downloads an unpinned file.
 To pin a release: set `tag`, `sha256` (the `SHA256SUMS` line for `asset`), `size_bytes`, and `entry` if it moved.
