@@ -227,6 +227,41 @@ def seed_embed(world: Path) -> bool:
     return True
 
 
+def own_world(cfg: S.Hermes3DSettings) -> bool:
+    """True when the world folder is the plugin's own (``world_path`` unset), never one the user configured."""
+    return cfg.world_path == config.data_dir_path(cfg.home) / "mundo"
+
+
+def _write_world_json(world: Path, data: dict[str, Any]) -> None:
+    target = world / SWITCH_FILE
+    tmp = target.with_name(target.name + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, target)
+
+
+def seed_functions(world: Path, switches: dict[str, bool]) -> bool:
+    """Turn ON, in the world's ``entorno/espejo.json`` ``funciones``, every function whose plugin switch is on.
+
+    A function runs only when both sides are on, and the engine template ships all of them off but ``salud``: without
+    this a fresh install opens an empty world. Only ever switches ON (never off), only that key. True when changed.
+    """
+    data = _world_json(world, SWITCH_FILE)
+    if data is None:
+        return False
+    current = data.get("funciones")
+    funciones = dict(current) if isinstance(current, dict) else {}
+    changed = False
+    for name, on in switches.items():
+        engine_name = config.ENGINE_FUNCTION.get(name, name)
+        if on and funciones.get(engine_name) is not True:
+            funciones[engine_name] = True
+            changed = True
+    if changed:
+        data["funciones"] = funciones
+        _write_world_json(world, data)
+    return changed
+
+
 def start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = True) -> dict[str, Any]:
     """Start the engine; on a world it just created for Path A (``engine_link`` off) turn embed on and restart it once.
 
@@ -236,14 +271,22 @@ def start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = True) -> dict[str, 
     """
     hold_stdin = True  # always: see _start_engine
     fresh = world_info(cfg.world_path) is None
+    ours = own_world(cfg)
+    if ours and not fresh:  # a world of ours from an earlier run: the engine has not read it yet
+        seed_functions(cfg.world_path, cfg.switches)
     started = _start_engine(cfg, hold_stdin)
-    if not fresh or cfg.engine_link or started.get("reused") or not seed_embed(cfg.world_path):
+    if not fresh or started.get("reused"):
+        return started
+    seeded_fn = ours and seed_functions(cfg.world_path, cfg.switches)
+    seeded_embed = not cfg.engine_link and seed_embed(cfg.world_path)
+    if not (seeded_fn or seeded_embed):
         return started
     if started.get("stdin_fd") is not None:
         os.close(started["stdin_fd"])
     stop_engine({"pid": started["pid"], **(started.get("identity") or {})})
     again = _start_engine(cfg, hold_stdin)
-    again["embed_seeded"] = True
+    again["embed_seeded"] = seeded_embed
+    again["functions_seeded"] = seeded_fn
     return again
 
 

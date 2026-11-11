@@ -377,3 +377,33 @@ def test_seed_embed_edits_only_the_embed_key_and_survives_junk(tmp_path):
     assert supervisor.seed_embed(tmp_path) is False  # already on
     (f / "espejo.json").write_text("[1]")
     assert supervisor.seed_embed(tmp_path) is False
+
+
+def test_seed_functions_turns_on_only_what_the_switches_turned_on(tmp_path):
+    f = tmp_path / "entorno"
+    f.mkdir()
+    on = {"salud": True, "cron": True, "agentes": True, "habilidades": True, "documentos": True, "gasto": False}
+    assert supervisor.seed_functions(tmp_path, on) is False  # no file
+    (f / "espejo.json").write_text('{"funciones": {"salud": true, "cron": false, "uso": true, "sesiones": false}}')
+    assert supervisor.seed_functions(tmp_path, on) is True
+    got = json.loads((f / "espejo.json").read_text())["funciones"]
+    assert got == {
+        "salud": True,
+        "cron": True,
+        "uso": True,  # never switched off
+        "sesiones": False,
+        "perfiles": True,
+        "habilidades": True,
+        "documentos": True,
+    }
+    assert supervisor.seed_functions(tmp_path, on) is False  # already in step
+    (f / "espejo.json").write_text("[1]")
+    assert supervisor.seed_functions(tmp_path, on) is False
+
+
+def test_own_world_is_only_the_default_folder(tmp_path):
+    from hermes_3d_lib import config, settings
+
+    own = settings.Hermes3DSettings(home=tmp_path, world_path=config.data_dir_path(tmp_path) / "mundo")
+    assert supervisor.own_world(own)
+    assert not supervisor.own_world(settings.Hermes3DSettings(home=tmp_path, world_path=tmp_path / "mine"))

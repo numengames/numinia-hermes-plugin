@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from . import config, docsviewer, embed, installer, linkkey, nodebin
+from . import config, docsviewer, embed, installer, linkkey, nodebin, supervisor
 from . import settings as S
 from .errors import Hermes3DError, NodeMissing
 
@@ -512,7 +512,8 @@ def first_run(
     ui.plan_item(
         n,
         "Show health, cron jobs, agents, skills, docs",
-        "read-only: the world can look, never change. Names, states and counts, never your messages",
+        "read-only: the world can look, never change. Names, states and counts, never your messages."
+        + (" Turns the same ones on in the world folder Hermes 3D keeps" if supervisor.own_world(cfg) else ""),
     )
     if changes or wants_desktop:
         extra = " and open inside Hermes Desktop" if wants_desktop else ""
