@@ -18,6 +18,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -41,6 +42,7 @@ from . import (
     scan,
     supervisor,
     tablero,
+    talleres,
 )
 from . import hermes_api as hermes_api_mod
 from . import protocol as P
@@ -52,6 +54,18 @@ from .sessions import SessionBook
 from .worldtext import say
 
 logger = logging.getLogger("hermes_3d.bridge")
+
+
+def _hermes_version() -> str:
+    """The running Hermes' version, or "?" when this process cannot import it."""
+    try:
+        import hermes_cli
+
+        return str(hermes_cli.__version__)
+    except (ImportError, AttributeError):  # a version label must never stop the bridge
+        return "?"
+
+
 CRON_ARGS = ("cron", "list", "--all")
 CRON_TIMEOUT = 20
 
@@ -88,13 +102,16 @@ class Bridge:
         scan_days: int = scan.DEFAULT_DAYS,
         scan_every: float = 300.0,
         allow_direct_db: bool = False,
+        deadline_clock: bool = False,
         hermes_api: Any = None,
         page_url: str = "",
         read_only: bool = False,
         demo: bool = False,
         docs_port: int = S.DEFAULT_DOCS_PORT,
+        world: Path | None = None,
     ) -> None:
         self.home = home
+        self.world = world  # the world folder: its espejo.json says where each project workshop stands (talleres.py)
         self.docs_port = docs_port
         self.demo = demo
         self.read_only = read_only or demo  # the demo can never write, whatever else is asked
@@ -102,8 +119,19 @@ class Bridge:
         self.cron_reader = cron_reader
         self.cron_source: str = ""  # "file" (cron/jobs.json) or "cli" (hermes cron list), as of the last poll
         self.switches = read_switches_from_yaml(home)
-        if demo:  # look at your own Hermes: health, agents, spend and cron on; session titles stay off
-            self.switches.update({"salud": True, "cron": True, "agentes": True, "gasto": True})
+        if demo:  # look at your own Hermes: every read-only mirror on; session titles stay off
+            self.switches.update(
+                {
+                    "salud": True,
+                    "cron": True,
+                    "agentes": True,
+                    "gasto": True,
+                    "habilidades": True,
+                    "kanban": True,
+                    "proyectos": True,
+                    "documentos": True,
+                }
+            )
         self.poll = poll_seconds if poll_seconds is not None else S.POLL_SECONDS_DEFAULT
         self.cron_snapshot: dict[str, dict[str, Any]] | None = None
         self.known_jobs: set[str] = set()
@@ -139,6 +167,7 @@ class Bridge:
         self.scan_every: float = scan_every
         self.hermes_api: Any = hermes_api  # first layer for kanban/sessions (module hermes_api); None = off (tests, demo)
         self._seen_session_ids: list[str] = []
+        self.deadline_clock: bool = deadline_clock  # setting deadline_clock; off = no countdown card, no hackathon links
         self.allow_direct_db: bool = allow_direct_db  # setting allow_direct_db_read; off = no database is ever opened
         self._scan_cache: dict[str, Any] = {}  # database sections reused while their files are unchanged
         self._mirror_published: dict[str, dict[str, Any]] | None = None
@@ -213,23 +242,73 @@ class Bridge:
         type for yet are still in ``self.scan`` but published as nothing."""
         out: dict[str, dict[str, Any]] = {}
         sections = (self.scan or {}).get("sections", {})
+        if self.hub.function_on("salud"):
+            out["salud/version"] = self.version_card()
+        if self.deadline_clock and self.hub.function_on("salud"):
+            out["salud/plazo"] = self.deadline_card()  # the delivery clock where you arrive (the threshold)
         if self.read_only and self.hub.function_on("salud"):
             out["salud/hermes"] = self.read_only_card()
         if self.hub.function_on("agentes"):
-            out.update({f"agente/{k}": v for k, v in agentes.snapshot_from_scan(sections.get("agentes", {})).items()})
+            out.update(
+                {
+                    f"agente/{k}": v
+                    for k, v in agentes.snapshot_from_scan(
+                        sections.get("agentes", {}),
+                        gasto.by_profile(sections.get("gasto", {})),
+                        agentes.activity_by_profile(sections.get("kanban", {})),
+                    ).items()
+                }
+            )
         if self.hub.function_on("gasto"):
             out.update({f"gasto/{k}": v for k, v in gasto.gasto_objects(sections.get("gasto", {})).items()})
         if self.hub.function_on("habilidades"):
             skills = habilidades.snapshot_from_scan(sections.get("skills", {}))
             out.update({f"habilidad/{k}": v for k, v in skills.items()})
+        zones = self.hub.engine_zones or talleres.read_zone_types(self.world)
+        projects = (sections.get("arbol") or {}).get("projects") or []
         if self.hub.function_on("kanban"):
-            out.update({f"tablero/{k}": v for k, v in tablero.snapshot_from_scan(sections.get("kanban", {})).items()})
+            first = talleres.workshop_boards(projects, sections.get("kanban", {}), zones)
+            out.update({f"tablero/{k}": v for k, v in tablero.snapshot_boards(sections.get("kanban", {}), first).items()})
         if self.hub.function_on("proyectos"):
             out.update({f"proyecto/{k}": v for k, v in proyectos.project_objects(sections.get("arbol", {})).items()})
+        out = talleres.place(out, projects, sections.get("kanban", {}), zones, talleres.read_geometry(self.world))
         if self.hub.function_on("documentos"):
             out.update({f"documento/{k}": v for k, v in documentos.snapshot(self.docs_port).items()})
-            out.update({f"documento/{k}": v for k, v in plazo.snapshot(self.now()).items()})  # C12: clock, requirements, links
+            if self.deadline_clock:
+                out.update(
+                    {f"documento/{k}": v for k, v in plazo.snapshot(self.now()).items()}
+                )  # C12: clock, requirements, links
         return out
+
+    @staticmethod
+    def version_card() -> dict[str, Any]:
+        """The card at the threshold (z0, type salud) that says which plugin, engine and Hermes versions this is."""
+        root = Path(__file__).resolve().parent.parent
+
+        def field(path: Path, pattern: str) -> str:
+            try:
+                found = re.search(pattern, path.read_text(encoding="utf-8"), re.M)
+            except OSError:
+                return "?"
+            return found.group(1) if found else "?"
+
+        version = field(root / "plugin.yaml", r"^version:\s*[\"']?([^\"'\s#]+)")
+        engine = field(root / "engine.lock.json", r'"tag":\s*"([^"]+)"')
+        hermes = _hermes_version()
+        return P.make_object(
+            "salud",
+            "version",
+            say("version_card_title")["texto"].format(version=version),
+            subtitulo=say("version_card_sub")["texto"].format(engine=engine, hermes=hermes),
+            estado="activo",
+            zona="z0",
+            acciones=[],
+        )
+
+    def deadline_card(self) -> dict[str, Any]:
+        """The hackathon clock as a card at the threshold (z0, type salud); same text as the library's clock."""
+        c = plazo.clock_object(self.now())
+        return P.make_object("salud", "plazo", c["titulo"], subtitulo=c["subtitulo"], estado=c["estado"], zona="z0", acciones=[])
 
     @staticmethod
     def read_only_card() -> dict[str, Any]:
@@ -305,7 +384,7 @@ class Bridge:
         while True:
             now = self.now()
             await asyncio.sleep(60.0 - (now.second + now.microsecond / 1e6) % 60.0 + 0.05)
-            if not self.hub.function_on("documentos"):
+            if not (self.hub.function_on("documentos") or self.hub.function_on("salud")):
                 continue
             try:
                 self.publish_mirrors()
@@ -343,6 +422,10 @@ class Bridge:
         elif kind == "funciones" and self.hub.connected:
             self.hub.publish({"t": "pulso"})
 
+    def _profile_name(self) -> str:
+        home = Path(self.home)
+        return home.name if home.parent.name == "profiles" else "default"
+
     async def poll_once(self) -> None:
         if not self.hub.function_on("cron"):
             return
@@ -358,8 +441,8 @@ class Bridge:
                 self.hub.last_error = "hermes cron list failed"
                 return
             parsed = parse_cron_list(text)
-        new = cronsync.snapshot(parsed["jobs"])
-        self.known_jobs = set(new)
+        self.known_jobs = {cronsync.engine_id(j["id"]) for j in parsed["jobs"] if "id" in j}
+        new = cronsync.declutter(parsed["jobs"], self._profile_name())
         msgs = cronsync.diff(self.cron_snapshot, new)
         self.cron_snapshot = new
         for msg in msgs:
@@ -429,6 +512,14 @@ class Bridge:
         return 0
 
 
+def _world_arg() -> Path | None:
+    """``--world <folder>``: the world the supervisor started (it may differ from the settings' ``world_path``)."""
+    argv = sys.argv[1:]
+    if "--world" in argv and argv.index("--world") + 1 < len(argv):
+        return Path(argv[argv.index("--world") + 1])
+    return None
+
+
 def main() -> int:
     demo = "--demo" in sys.argv[1:]
     read_only_flag = "--read-only" in sys.argv[1:] or demo
@@ -450,12 +541,14 @@ def main() -> int:
         poll_seconds=cfg.poll_seconds,
         scan_root=scan.default_root(),
         scan_days=cfg.scan_days,
+        deadline_clock=cfg.deadline_clock,
         allow_direct_db=cfg.allow_direct_db_read or demo,  # `hermes 3d demo` is the user's explicit, read-only look at spend
         hermes_api=None if demo else hermes_api_mod,
         page_url=cfg.page_url(),
         read_only=cfg.read_only or read_only_flag,
         demo=demo,
         docs_port=cfg.docs_viewer_port,
+        world=_world_arg() or cfg.world_path,
     )
     log.add_secret(bridge.hub.token)
     return asyncio.run(bridge.run())

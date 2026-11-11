@@ -19,7 +19,7 @@ import re
 from typing import Any
 
 from .crontable import clean_text
-from .protocol import make_object
+from .protocol import MAX_SUBTITLE, cut_bytes, make_object
 from .zones import FALLBACK_ZONES
 
 logger = logging.getLogger("hermes_3d.agentes")
@@ -79,34 +79,69 @@ def agent_state(item: dict[str, Any]) -> str:
     return "desconocido"
 
 
-def agent_to_object(item: dict[str, Any]) -> dict[str, Any]:
+def activity_by_profile(kanban: dict[str, Any] | None) -> dict[str, dict[str, str]]:
+    """``scan['sections']['kanban']`` -> ``{profile: {"haciendo": title, "hecho": title}}`` (only what the Kanban says)."""
+    out: dict[str, dict[str, str]] = {}
+    for who, v in ((kanban or {}).get("por_agente") or {}).items():
+        d = {k: str(v[k]) for k in ("haciendo", "hecho") if isinstance(v, dict) and v.get(k)}
+        if d:
+            out[str(who)] = d
+    return out
+
+
+def activity_line(activity: dict[str, str] | None, room: int) -> str:
+    """\"Doing: X · Done: Y\" cut to ``room`` BYTES; nothing if there is no activity or too little room (< 16 bytes)."""
+    if not activity or room < 16:
+        return ""
+    parts = []
+    if activity.get("haciendo"):
+        parts.append("Doing: " + activity["haciendo"])
+    if activity.get("hecho"):
+        parts.append("Done: " + activity["hecho"])
+    if not parts:
+        return ""
+    return cut_bytes(" · ".join(parts), room).rstrip(" ·")
+
+
+def agent_to_object(item: dict[str, Any], spend: str = "", activity: dict[str, str] | None = None) -> dict[str, Any]:
     """One scanned/parsed profile -> an ``objeto`` of type ``agente`` (no verbs: v0 only shows)."""
     name = str(item.get("nombre") or item.get("name") or item.get("id") or "")
     model = str(item.get("modelo") or item.get("model") or "")
     bits = [model or "sin modelo"]
     if item.get("tiene_cron") or item.get("cron_total"):
         bits.append(f"{item.get('cron_activos', 0)}/{item.get('cron_total', 0)} cron")
+    if spend:
+        bits.append(spend)  # the agent's spend for the period, with its "est." label
     gw = item.get("gateway")
     bits.append(
         "gateway " + ("activo" if gw is True or gw == "running" else "parado" if gw is False or gw == "stopped" else "¿?")
     )
+    subtitle = " · ".join(bits)
+    line = activity_line(activity, max(0, MAX_SUBTITLE - len(subtitle.encode()) - len(" · ".encode())))
+    if line:  # the existing state comes first and is never cut for it: the line only takes the bytes left over
+        subtitle += " · " + line
     return make_object(
         TYPE_AGENTE,
         agent_id(item.get("id") or name),
         name or "(sin nombre)",
-        subtitulo=" · ".join(bits),
+        subtitulo=subtitle,
         estado=agent_state(item),
         zona=ZONE_AGENTES,
         acciones=[],
     )
 
 
-def snapshot_from_scan(section: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def snapshot_from_scan(
+    section: dict[str, Any],
+    spend: dict[str, str] | None = None,
+    activity: dict[str, dict[str, str]] | None = None,
+) -> dict[str, dict[str, Any]]:
     """``scan['sections']['agentes']`` -> id -> object. An errored/empty section gives ``{}``."""
     out: dict[str, dict[str, Any]] = {}
     for it in (section or {}).get("items", []) or []:
         try:
-            obj = agent_to_object(it)
+            nm = str(it.get("nombre") or it.get("name") or it.get("id") or "")
+            obj = agent_to_object(it, (spend or {}).get(nm, ""), (activity or {}).get(nm))
             out[obj["id"]] = obj
         except (KeyError, TypeError, ValueError, AttributeError):  # one odd profile must not hide the rest
             logger.debug("skipping a profile that cannot be shown", exc_info=True)

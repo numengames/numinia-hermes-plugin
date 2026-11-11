@@ -37,7 +37,7 @@ def fake_runtime(monkeypatch, bridge_status, spawned):
     monkeypatch.setattr(
         supervisor,
         "spawn_bridge",
-        lambda home, read_only=False, demo=False, hold_fd=None: spawned.append((read_only, demo)) or 4242,
+        lambda home, read_only=False, demo=False, hold_fd=None, world=None: spawned.append((read_only, demo)) or 4242,
     )
 
     def call(method, path, body=None, home=None, **kw):

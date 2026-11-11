@@ -126,6 +126,11 @@ config_schema:
     default: false
     label: "Read Hermes' databases directly"
     description: "Spend (tokens, cost) has no public Hermes API, so the plugin reads state.db itself, read-only, numbers only, never message text, and only when it changed. The work board comes from `hermes kanban list --json` first; the database is the fallback for it. Off = Spend publishes nothing."
+  deadline_clock:
+    type: bool
+    default: false
+    label: "Show the hackathon delivery clock"
+    description: "Adds a countdown card and the official hackathon links to the world. Off by default; only useful during the Nous plugin hackathon."
   embed_credential_ttl_s:
     type: int
     default: 3600

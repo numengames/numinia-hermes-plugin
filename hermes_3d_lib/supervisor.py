@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import http.client
 import json
+import logging
 import os
 import signal
 import socket
@@ -24,6 +25,8 @@ from typing import Any
 from . import config, enginekeys, linkkey, logsafe, nodebin, procid
 from . import settings as S
 from .errors import Hermes3DError
+
+logger = logging.getLogger("hermes_3d.supervisor")
 
 TEMPLATE = "hermes"
 SWITCH_FILE = Path("entorno") / "espejo.json"  # no file = the engine opens no link at all
@@ -241,6 +244,33 @@ def start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = True) -> dict[str, 
     return again
 
 
+def _sow_bodies(cfg: S.Hermes3DSettings) -> None:
+    """Before the engine starts (it reads ``aventura/`` only then): one stick figure per profile. Best effort, never fatal."""
+    if (
+        world_info(cfg.world_path) is None
+    ):  # a folder we create here would make the engine refuse it as "not a world"; the next start sows
+        return
+    try:
+        from . import agentes, cuerpos, scan
+
+        names = [n for n, _d in scan.profile_dirs(scan.default_root())]
+        from . import gasto
+
+        try:  # the spend travels with the body (what you read when you talk to it); no spend must not skip the body
+            spend = gasto.by_profile(scan.scan_gasto(scan.default_root()))
+        except Exception:
+            logger.debug("no spend for the bodies", exc_info=True)
+            spend = {}
+        try:  # what each agent is doing / did last, from the Kanban (titles only)
+            activity = agentes.activity_by_profile(scan.scan_kanban(scan.default_root()))
+        except Exception:
+            logger.debug("no activity for the bodies", exc_info=True)
+            activity = {}
+        cuerpos.sow(cfg.world_path, names, spend=spend, activity=activity)
+    except Exception:  # bodies are decoration: a failure must not stop the world
+        logger.debug("could not sow the bodies", exc_info=True)
+
+
 def _start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = False) -> dict[str, Any]:
     """Start the engine for the configured world unless it already runs (reuse).
 
@@ -263,6 +293,7 @@ def _start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = False) -> dict[str
     if link_listening(lport):
         return {"reused": True, "port": cfg.engine_port, "link_port": lport, "pid": None}
     check_ports(cfg, lport)
+    _sow_bodies(cfg)
     key = linkkey.ensure(cfg.home)
     node = node_runtime()
     marker = cfg.engine_install()
@@ -355,7 +386,9 @@ def stop_engine(record: dict[str, Any] | None, grace: float = 5.0) -> bool:
     return not procid.same_process(pid, record)
 
 
-def spawn_bridge(home: Path, read_only: bool = False, demo: bool = False, hold_fd: int | None = None) -> int:
+def spawn_bridge(
+    home: Path, read_only: bool = False, demo: bool = False, hold_fd: int | None = None, world: Path | None = None
+) -> int:
     """Start the bridge process detached (one per profile). Returns its pid.
 
     It receives only ``HERMES_HOME`` (it reads the settings from config.yaml itself) and, if set, the
@@ -376,6 +409,7 @@ def spawn_bridge(home: Path, read_only: bool = False, demo: bool = False, hold_f
                 "hermes_3d_lib.bridge_main",
                 *(["--read-only"] if read_only else []),
                 *(["--demo"] if demo else []),
+                *(["--world", str(world)] if world else []),
             ],
             cwd=str(Path(__file__).resolve().parents[1]),
             env=env,

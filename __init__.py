@@ -295,7 +295,7 @@ def _up_rest(
             )
         print(f"bridge already running (pid {rt['pid']})")
     else:
-        pid = supervisor.spawn_bridge(home, read_only=read_only, demo=demo, hold_fd=stdin_fd)
+        pid = supervisor.spawn_bridge(home, read_only=read_only, demo=demo, hold_fd=stdin_fd, world=cfg.world_path)
         print(f"bridge started (pid {pid}); log: {config.plugin_data_dir(home) / 'bridge.log'}")
     if demo:
         _require_read_only(home)

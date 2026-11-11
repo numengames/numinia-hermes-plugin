@@ -42,6 +42,8 @@ MESSAGES: dict[str, tuple[str, str]] = {
         "Read-only: the world cannot change anything in Hermes",
         "Solo lectura (read-only): el mundo no puede cambiar nada en Hermes",
     ),
+    "version_card_title": ("Hermes 3D v{version}", "Hermes 3D v{version}"),
+    "version_card_sub": ("Engine {engine} · Hermes {hermes}", "Motor {engine} · Hermes {hermes}"),
     "board_title": ("Work", "Trabajo"),
     "board_sub": (
         "{todo} to do · {doing} in progress · {done} done",

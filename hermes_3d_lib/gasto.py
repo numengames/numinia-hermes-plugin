@@ -117,19 +117,22 @@ def gasto_objects(section: dict[str, Any]) -> dict[str, dict[str, Any]]:
         sum(int(p.get("cache_lectura") or 0) + int(p.get("cache_escritura") or 0) for p in section.get("por_perfil") or []),
     )
     out[TOTAL_ID] = make_object(TYPE_GASTO, TOTAL_ID, t, subtitulo=s, estado="activo", zona=ZONE_GASTO, acciones=[])
+    # Per-profile spend has no cards here any more: it lives with the agent (its card and its body's talk), see by_profile.
+    return out
+
+
+def by_profile(section: dict[str, Any]) -> dict[str, str]:
+    """``scan['sections']['gasto']`` -> ``{profile: "$4.20 est. · 12,3 M tokens · 30 d"}`` for each profile with sessions.
+
+    The figure the spend zone used to show per profile, now shown with the agent. Always labelled ``est.``."""
+    out: dict[str, str] = {}
+    if not section:
+        return out
+    days = int(section.get("dias") or 0)
     for p in section.get("por_perfil") or []:
         if not p.get("sesiones"):
             continue
-        pid = "g-" + re.sub(r"[^a-z0-9._-]", "-", str(p.get("perfil", "")).lower())[:28]
-        top = (p.get("modelos") or [{}])[0].get("modelo", "")
-        t, s = _card(
-            str(p.get("perfil", "?")),
-            int(p.get("tokens") or 0),
-            float(p.get("coste_estimado_usd") or 0),
-            top,
-            days,
-            int(p.get("sesiones") or 0),
-            int(p.get("cache_lectura") or 0) + int(p.get("cache_escritura") or 0),
+        out[str(p.get("perfil", ""))] = (
+            f"{money(float(p.get('coste_estimado_usd') or 0))} est. · {human(int(p.get('tokens') or 0))} tokens · {days} d"
         )
-        out[pid] = make_object(TYPE_GASTO, pid, t, subtitulo=s, estado="activo", zona=ZONE_GASTO, acciones=[])
     return out

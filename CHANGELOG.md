@@ -5,6 +5,14 @@ Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer]
 
 ## Unreleased
 
+### Added
+- Per-agent stick-figure bodies: one figure and one `pnj@1` per Hermes profile, with a fixed round, a spend line and a
+  "Doing / Done" line from the Kanban (`hermes_3d_lib/cuerpos.py`, `docs/CUERPOS.md`, CC0 figure in `assets/`). Sown when
+  an existing world starts; a brand-new world gets them on the next start.
+- Project workshops: each project folder and its boards are placed in a workshop zone of the world (`talleres.py`).
+- Screenshots and banner in `docs/images/`.
+- Setting `deadline_clock` (default `false`): the hackathon countdown card and links are published only when asked for.
+
 ### Changed
 - The plugin is now called **hermes-3d**, titled "Hermes 3D" (it was published under its working name). Install with
   `hermes plugins install hermes-3d`, enable with `hermes plugins enable hermes-3d`; every command is `hermes 3d <...>`

@@ -87,7 +87,7 @@ def env(hermes_home, tmp_path, monkeypatch):
     holders: list[int] = []
     pids: list[int] = []
 
-    def spawn(home, read_only=False, demo=False, hold_fd=None):
+    def spawn(home, read_only=False, demo=False, hold_fd=None, world=None):
         if hold_fd is not None:
             holders.append(os.dup(hold_fd))  # the stand-in for the bridge: keeps the engine's stdin open
         return 4242

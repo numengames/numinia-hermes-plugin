@@ -116,6 +116,8 @@ def make_object(
     grupo: str | None = None,
     descripcion: str | None = None,
     tablero: dict[str, Any] | None = None,
+    x: float | None = None,
+    z: float | None = None,
 ) -> dict[str, Any]:
     """Build an ``objeto`` exactly as the engine's ``leerObjeto`` accepts it: only its keys, lowercase
     id up to 32, a known estado, text cut to BYTES, verbs from the known list. Raises on a bad id/type."""
@@ -135,6 +137,8 @@ def make_object(
     }
     if luz is not None:
         obj["luz"] = bool(luz)
+    if x is not None and z is not None:  # an explicit spot (metres, world axes); without one the engine picks a 4 m grid cell
+        obj["x"], obj["z"] = round(float(x), 2), round(float(z), 2)
     # M6 fields: the engine accepts each ONLY on its own type (``url`` on documento, ``grupo`` on habilidad,
     # ``tablero`` on tablero) and rejects the whole thing otherwise, so they are added only when given.
     if url is not None:

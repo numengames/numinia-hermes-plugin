@@ -228,11 +228,23 @@ def test_agent_id_is_safe():
 
 def test_gasto_objects_cards(fake_root):
     objs = gasto.gasto_objects(scan.scan_gasto(fake_root))
-    assert set(objs) == {"total", "g-alpha", "g-default"}  # beta has no sessions: no card
+    assert set(objs) == {"total"}  # per-profile spend lives with the agent, not in the spend zone
     for o in objs.values():
         assert o["tipo"] == "uso" and len(o["titulo"].encode()) <= P.MAX_TITLE and len(o["subtitulo"].encode()) <= P.MAX_SUBTITLE
     assert "tokens" in objs["total"]["subtitulo"] and "$" in objs["total"]["subtitulo"] and "30 d" in objs["total"]["subtitulo"]
     assert gasto.gasto_objects({"error": "x", "por_perfil": []}) == {}
+
+
+def test_spend_lives_with_the_agent(fake_root):
+    section = scan.scan_gasto(fake_root)
+    spend = gasto.by_profile(section)
+    assert set(spend) == {"alpha", "default"}  # beta has no sessions
+    for text in spend.values():
+        assert "est." in text and "$" in text and "30 d" in text  # the estimate label stays
+    agents = agentes.snapshot_from_scan(scan.scan_agentes(fake_root), spend)
+    card = agents[agentes.agent_id("alpha")]
+    assert spend["alpha"] in card["subtitulo"] and len(card["subtitulo"].encode()) <= P.MAX_SUBTITLE
+    assert "est." not in agents[agentes.agent_id("beta")]["subtitulo"]
 
 
 def test_human_numbers():
@@ -266,24 +278,32 @@ def test_mirror_objects_publish_nothing_when_switches_off(fake_root, tmp_path):
     b = _bridge(fake_root, tmp_path, on=["salud"])
     asyncio.run(b.run_scan())
     assert b.scan is not None and b.scan["sections"]["agentes"]["count"] == 3  # snapshot always kept
-    assert b.mirror_objects() == {}
+    assert set(b.mirror_objects()) == {"salud/version"}  # the always-on version card (the deadline card is opt-in)
 
 
 def test_mirror_objects_only_the_switched_on_function(fake_root, tmp_path):
     b = _bridge(fake_root, tmp_path, on=["salud", "agentes"])
     asyncio.run(b.run_scan())
     keys = set(b.mirror_objects())
-    assert keys == {"agente/a-default", "agente/a-alpha", "agente/a-beta"}
+    assert keys - {"salud/version"} == {"agente/a-default", "agente/a-alpha", "agente/a-beta"}
     b2 = _bridge(fake_root, tmp_path, on=["salud", "gasto"])
     asyncio.run(b2.run_scan())
-    assert {k.split("/")[0] for k in b2.mirror_objects()} == {"gasto"}
+    assert {k.split("/")[0] for k in b2.mirror_objects()} - {"salud"} == {"gasto"}
 
 
 def test_scan_sections_without_engine_type_publish_nothing(fake_root, tmp_path):
     """Sections the engine has no type for (cron/sessions/mcp...) never leave; the typed ones do (M6 adds three)."""
     b = _bridge(fake_root, tmp_path, on=list(S.FUNCTIONS))
     asyncio.run(b.run_scan())
-    assert {k.split("/")[0] for k in b.mirror_objects()} <= {"agente", "gasto", "habilidad", "tablero", "documento", "proyecto"}
+    assert {k.split("/")[0] for k in b.mirror_objects()} <= {
+        "salud",
+        "agente",
+        "gasto",
+        "habilidad",
+        "tablero",
+        "documento",
+        "proyecto",
+    }
     assert b.scan["sections"]["kanban"]["tarjetas"] == 3  # kept in the snapshot
     assert "mcp" not in b.scan["sections"]  # no switch asks for it: the bridge does not even read it (`hermes 3d scan` does)
 
@@ -363,13 +383,13 @@ def test_first_lote_carries_agentes_and_gasto_only_when_switched_on(fake_root, h
         await eng.stop()
         return types, len(lote["objetos"])
 
-    assert run(main([]))[0] == []
+    assert run(main([]))[0] == ["salud"]  # just the version card
     types, n = run(main(["agentes"]))
-    assert types == ["perfil"] and n == 3
+    assert types == ["perfil", "salud"] and n == 3 + 1
     types, n = run(main(["agentes", "gasto"]))
-    assert types == ["perfil", "uso"] and n == 3 + 3
+    assert types == ["perfil", "salud", "uso"] and n == 3 + 1 + 1
     # local switch on but the WORLD's switch off: fail closed, nothing published
-    assert run(main(["agentes", "gasto"], world_on=("salud",)))[0] == []
+    assert run(main(["agentes", "gasto"], world_on=("salud",)))[0] == ["salud"]
 
 
 def test_scan_http_routes_need_the_bearer_token(fake_root, hermes_home):
@@ -495,3 +515,18 @@ def test_gasto_card_cache_apart_and_cost_estimated():
         assert len(sub.encode()) <= 120
     sec["por_perfil"][0].update(cache_lectura=0, cache_escritura=0)
     assert all("caché" not in o["subtitulo"] for o in gasto.gasto_objects(sec).values())
+
+
+def test_version_card_exists_with_salud_on_and_is_absent_with_it_off(fake_root, tmp_path):
+    import re
+
+    from conftest import ROOT
+
+    b = _bridge(fake_root, tmp_path, on=["salud"])
+    card = b.mirror_objects()["salud/version"]
+    version = re.search(r"^version:\s*[\"']?([^\"'\s#]+)", (ROOT / "plugin.yaml").read_text(encoding="utf-8"), re.M).group(1)
+    assert card["tipo"] == "salud" and card["zona"] == "z0"
+    assert card["titulo"].startswith("Hermes 3D v") and card["titulo"] == f"Hermes 3D v{version}"
+    assert card["acciones"] == []  # a label, never a control
+    off = _bridge(fake_root, tmp_path, on=[])
+    assert "salud/version" not in off.mirror_objects()

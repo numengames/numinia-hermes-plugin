@@ -144,7 +144,7 @@ def test_bridge_publishes_projects_only_when_the_function_is_on(tmp_path):
 
     off = make(["salud"])
     asyncio.run(off.run_scan())
-    assert off.mirror_objects() == {}
+    assert set(off.mirror_objects()) == {"salud/version"}  # only the always-on card
     on = make(["salud", "proyectos"])
     asyncio.run(on.run_scan())
-    assert set(on.mirror_objects()) == {"proyecto/p-web", "proyecto/p-old"}
+    assert set(on.mirror_objects()) - {"salud/version"} == {"proyecto/p-web", "proyecto/p-old"}

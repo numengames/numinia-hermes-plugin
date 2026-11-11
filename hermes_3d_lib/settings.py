@@ -73,6 +73,7 @@ DEFAULTS: dict[str, Any] = {
     "engine_link": True,
     "embed_credential_ttl_s": EMBED_TTL_DEFAULT_S,
     "allow_direct_db_read": False,
+    "deadline_clock": False,
     "docs_viewer_path": "",
     "docs_viewer_port": DEFAULT_DOCS_PORT,
     **{key: DEFAULT_SWITCHES[name] for name, key in SWITCH_KEYS.items()},
@@ -188,6 +189,9 @@ class Hermes3DSettings:
     scan_days: int = SCAN_DAYS_DEFAULT
     engine_link: bool = True  # open the HMAC link to the engine (path B); false = the world lives inside Desktop only (path A)
     read_only: bool = False  # the world may not change anything in Hermes (see THREAT-MODEL, T15)
+    deadline_clock: bool = (
+        False  # off: the hackathon delivery clock and links are not published (a public install shows no countdown)
+    )
     allow_direct_db_read: bool = False  # opt-in: spend/kanban/session counts come from Hermes' private SQLite files
     switches: dict[str, bool] = field(default_factory=lambda: dict(DEFAULT_SWITCHES))
     docs_viewer_path: Path | None = None  # docs-visor checkout; None = the sibling folder (see docsviewer.default_path)
@@ -217,6 +221,7 @@ class Hermes3DSettings:
             engine_link=_flag(get("engine_link", None), True),
             read_only=read_only(get),
             allow_direct_db_read=_flag(get("allow_direct_db_read", None), False),
+            deadline_clock=_flag(get("deadline_clock", None), False),
             switches=switches(get),
             docs_viewer_path=checked_folder("docs_viewer_path", get("docs_viewer_path", ""), home=home),
             docs_viewer_port=_port("docs_viewer_port", get("docs_viewer_port", DEFAULT_DOCS_PORT)),

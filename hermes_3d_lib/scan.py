@@ -467,6 +467,33 @@ def _columns(con: sqlite3.Connection, days: int) -> dict[str, Any]:
     return out
 
 
+def _agent_lines(con: sqlite3.Connection, days: int, acc: dict[str, dict[str, Any]]) -> None:
+    """Per assignee: the title of what it is running now and of its latest done card, merged into ``acc``.
+
+    Titles only (redacted, <= 40 bytes). Nothing is inferred: an agent with no running card has no "doing" line."""
+    have = {str(r[1]) for r in con.execute("pragma table_info(tasks)")}
+    t_run = "started_at" if "started_at" in have else "created_at"
+    t_done = "completed_at" if "completed_at" in have else "created_at"
+    since = int(time.time()) - max(1, days) * 86400
+    # the only interpolated parts are column names picked from constants above: no user text in the SQL
+    for who, title, ts in con.execute(
+        f"select assignee, title, coalesce({t_run}, 0) from tasks where status = 'running' and assignee is not null "  # noqa: S608
+        f"order by {t_run} desc limit 200"
+    ):
+        a = acc.setdefault(clean_text(who, 40), {})
+        if int(ts or 0) >= a.get("_run_ts", -1):
+            a["haciendo"], a["_run_ts"] = fit_title(title, 40), int(ts or 0)
+    for who, title, ts in con.execute(
+        f"select assignee, title, coalesce({t_done}, 0) from tasks where status = 'done' and assignee is not null "  # noqa: S608
+        f"and coalesce({t_done}, 0) >= ? order by {t_done} desc limit 200",
+        (since,),
+    ):
+        a = acc.setdefault(clean_text(who, 40), {})
+        a["hechas"] = a.get("hechas", 0) + 1
+        if int(ts or 0) >= a.get("_done_ts", -1):
+            a["hecho"], a["_done_ts"] = fit_title(title, 40), int(ts or 0)
+
+
 def scan_kanban(root: Path, days: int = DEFAULT_DAYS) -> dict[str, Any]:
     """Boards -> counts per status; card titles + status + assignee only (no body, comments, results).
 
@@ -483,6 +510,7 @@ def scan_kanban(root: Path, days: int = DEFAULT_DAYS) -> dict[str, Any]:
             if d.is_dir() and (d / "kanban.db").is_file() and _NAME.match(d.name):
                 dbs.append((d.name, d / "kanban.db"))
     cards: list[dict[str, Any]] = []
+    per_agent: dict[str, dict[str, Any]] = {}
     for bname, path in dbs:
         try:
             con = _open_ro(path)
@@ -492,6 +520,10 @@ def scan_kanban(root: Path, days: int = DEFAULT_DAYS) -> dict[str, Any]:
         try:
             by = {s: n for s, n in con.execute("select status, count(*) from tasks group by status")}
             boards.append({"id": bname, "tarjetas": sum(by.values()), "por_estado": by, "columnas": _columns(con, days)})
+            try:  # noqa: SIM105  (suppress() does not take a tuple under mypy)
+                _agent_lines(con, days, per_agent)
+            except _EXPECTED:  # the per-agent lines are an extra: never lose the board for them
+                pass
             for tid, title, status, assignee in con.execute(
                 "select id, title, status, assignee from tasks "
                 "where status not in ('done','archived') order by priority desc, created_at desc limit 25"
@@ -521,6 +553,7 @@ def scan_kanban(root: Path, days: int = DEFAULT_DAYS) -> dict[str, Any]:
         "tarjetas": sum(b["tarjetas"] for b in boards),
         "items": boards[:MAX_ITEMS],
         "abiertas": cards[:MAX_ITEMS],
+        "por_agente": {k: {x: y for x, y in v.items() if not x.startswith("_")} for k, v in list(per_agent.items())[:MAX_ITEMS]},
         "error": "; ".join(errors)[:200],
     }
 

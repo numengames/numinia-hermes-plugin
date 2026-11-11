@@ -103,7 +103,7 @@ This is slower and less precise than a hook, so a pause or run may show up a few
 | `gasto` (`publish_spend`) | off | tokens and estimated cost per profile | nothing |
 | `habilidades` (`publish_skills`) | off | one tablet per skill in the workshop (name, group, on/off, first 140 characters of the description) | nothing |
 | `kanban` (`publish_kanban`) | off | the work board as one object: cards per column (to do / in progress / done) and up to 3 card titles each | nothing |
-| `documentos` (`publish_docs`) | off | a short fixed list of documentation pages in the library (title and address on the local docs viewer) **plus six fixed cards for the Nous plugin hackathon**: a deadline clock (rebuilt once a minute, from the system clock only, until 2026-11-11 22:00 UTC; then it reads «closed»), the three entry steps and the official links (catalog-submission guide, plugin developer guide, entry form, Discord). The plugin never fetches those pages; the world's viewer opens one only if its origin is in `documentos.origenes` | open a page (the world's viewer) |
+| `documentos` (`publish_docs`) | off | a short fixed list of documentation pages in the library (title and address on the local docs viewer) **plus, only if you set `deadline_clock: true` (off by default), six fixed cards for the Nous plugin hackathon**: a deadline clock (rebuilt once a minute, from the system clock only, until 2026-11-11 22:00 UTC; then it reads «closed»), the three entry steps and the official links (catalog-submission guide, plugin developer guide, entry form, Discord). The plugin never fetches those pages; the world's viewer opens one only if its origin is in `documentos.origenes` | open a page (the world's viewer) |
 
 `guia` (the in-world guide) is a switch of the world page only; if the engine lists it, the plugin passes the flag
 through and does nothing else with it.
@@ -227,6 +227,7 @@ file. **Precedence: `config.yaml` value → default.** There are no environment-
 | `scan_days` | `30` | Window for session and spend counts (1-365) |
 | `read_only` | `false` | The world can look but never change anything in Hermes (see below) |
 | `allow_direct_db_read` | `false` | Opt-in: let the plugin read Hermes' own `state.db` / `kanban.db` (spend, recent sessions, and kanban when the CLI fails; see "What is read from where") |
+| `deadline_clock` | `false` | Show the hackathon delivery countdown and official links in the world (off for everyone else) |
 | `cron_poll_seconds` | `15` | Cron poll interval (3-600) |
 | `engine_link` | `true` | Open the HMAC link to the engine (path B). Set `false` when the world lives inside Desktop (path A): an open link displaces the embedded page |
 | `embed_credential_ttl_s` | `3600` | Life of the credential that opens the world inside Desktop (60-86400; the engine refuses more than 24 h) |

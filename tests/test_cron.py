@@ -153,3 +153,61 @@ def test_failed_last_run_shows_as_fallo_but_keeps_the_pause_verb(sample):
     assert failed
     obj = cronsync.job_to_object(failed[0])
     assert obj["estado"] == "fallo" and obj["acciones"] == ["cron.pausar"]
+
+
+def test_card_texts_are_english_and_read_only_view_has_no_verbs():
+    """C2 read-only view: title/subtitle in English; the hub strips verbs when read_only is on."""
+    job = {"id": "abc123def456", "estado": "programado", "name": "", "schedule": "every 1h", "next_run": "2026-11-08T09:30:00"}
+    obj = cronsync.job_to_object(job)
+    assert obj["titulo"] == "(unnamed)"
+    assert "next 2026-11-08 09:30" in obj["subtitulo"]
+    assert "próxima" not in obj["subtitulo"] and "sin nombre" not in obj["titulo"]
+
+
+# ---- declutter: one summary per profile + at most 2 job cards (<= 3 things in the zone per profile) ----
+def _jobs(n_ok=40, n_paused=5, n_fail=4):
+    jobs = []
+    for i in range(n_ok):
+        jobs.append(
+            {
+                "id": f"ok{i:010d}",
+                "estado": "programado",
+                "name": f"ok {i}",
+                "schedule": "every 1h",
+                "next_run": f"2026-11-12T{(i % 24):02d}:{i // 24:02d}:00",
+            }
+        )
+    for i in range(n_paused):
+        jobs.append({"id": f"pa{i:010d}", "estado": "pausado", "name": f"paused {i}", "schedule": "every 1h"})
+    for i in range(n_fail):
+        jobs.append(
+            {
+                "id": f"fa{i:010d}",
+                "estado": "programado",
+                "ultimo": "fallo",
+                "name": f"fail {i}",
+                "schedule": "every 1h",
+                "next_run": "2026-11-12T01:00:00",
+            }
+        )
+    return jobs
+
+
+def test_declutter_keeps_at_most_three_cards_and_counts_the_rest():
+    out = cronsync.declutter(_jobs(), "ursa")
+    assert len(out) == 3
+    summary = out["cron-p-ursa"]
+    assert summary["titulo"] == "ursa · 49 jobs" and summary["acciones"] == [] and summary["estado"] == "fallo"
+    assert summary["subtitulo"] == "4 failing · 40 healthy · 5 paused · 47 folded"
+    singles = [o for k, o in out.items() if k != "cron-p-ursa"]
+    assert all(o["estado"] == "fallo" for o in singles)  # failing jobs come first
+    for o in out.values():
+        _engine_accepts(o)
+
+
+def test_declutter_healthy_profile_shows_the_soonest_jobs_and_empty_shows_nothing():
+    out = cronsync.declutter(_jobs(n_paused=0, n_fail=0), "doulos")
+    assert out["cron-p-doulos"]["estado"] == "programado" and len(out) == 3
+    singles = sorted(o["titulo"] for k, o in out.items() if k != "cron-p-doulos")
+    assert singles == ["ok 0", "ok 24"]
+    assert cronsync.declutter([], "x") == {}

@@ -292,7 +292,7 @@ def test_cmd_up_hands_the_stdin_fd_to_the_new_bridge_then_closes_it(rig, hermes_
     monkeypatch.setattr(mod, "_home", lambda: hermes_home)
     got: dict = {}
 
-    def spawn(home, read_only=False, demo=False, hold_fd=None):
+    def spawn(home, read_only=False, demo=False, hold_fd=None, world=None):
         got["fd"] = hold_fd
         os.fstat(hold_fd)  # still open while the bridge is being started
         return 4242
@@ -324,7 +324,9 @@ def test_cmd_up_with_an_old_bridge_replaces_it_so_the_new_engine_has_a_holder(ri
     monkeypatch.setattr(mod.client, "call", call)
     got: dict = {}
     monkeypatch.setattr(
-        supervisor, "spawn_bridge", lambda home, read_only=False, demo=False, hold_fd=None: got.update(fd=os.dup(hold_fd)) or 7
+        supervisor,
+        "spawn_bridge",
+        lambda home, read_only=False, demo=False, hold_fd=None, world=None: got.update(fd=os.dup(hold_fd)) or 7,
     )
     assert mod.cmd_up() == 0
     rig.started.append(config.read_engine_record(hermes_home)["pid"])

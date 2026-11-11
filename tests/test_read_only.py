@@ -96,10 +96,10 @@ def test_no_object_offers_a_verb_and_the_world_card_says_read_only(hermes_home):
         b = make_bridge(hermes_home, eng, Reader(listing("cron_list_many.txt")), read_only=True)
         await started(b, eng)
         await until(lambda: any(o["tipo"] == "cron" for o in _all_objects(eng)))
-        await until(lambda: any(o["tipo"] == "salud" for o in _all_objects(eng)))
+        await until(lambda: any(o["tipo"] == "salud" and o["id"] == "hermes" for o in _all_objects(eng)))
         objs = _all_objects(eng)
         assert [o for o in objs if o.get("acciones")] == [], "a read-only world must not offer buttons"
-        card = next(o for o in objs if o["tipo"] == "salud")
+        card = next(o for o in objs if o["tipo"] == "salud" and o["id"] == "hermes")
         assert "read-only" in card["titulo"] and "read-only" in card["subtitulo"]
         await stop(b, eng)
 
@@ -113,7 +113,7 @@ def test_without_read_only_the_cron_objects_keep_their_verbs_and_no_card(hermes_
         b = make_bridge(hermes_home, eng, Reader(listing("cron_list_many.txt")))
         await started(b, eng)
         await until(lambda: any(o["tipo"] == "cron" and o["acciones"] for o in _all_objects(eng)))
-        assert not any(o["tipo"] == "salud" for o in _all_objects(eng))
+        assert not any(o["tipo"] == "salud" and o["id"] == "hermes" for o in _all_objects(eng))
         assert b.hub.status()["read_only"] is False
         await stop(b, eng)
 
@@ -165,7 +165,9 @@ def _fake_start(monkeypatch, spawned):
         lambda cfg, **kw: {"reused": True, "port": cfg.engine_port, "link_port": 8791, "pid": None},
     )
     monkeypatch.setattr(
-        supervisor, "spawn_bridge", lambda home, read_only=False, demo=False, hold_fd=None: spawned.append(read_only) or 4242
+        supervisor,
+        "spawn_bridge",
+        lambda home, read_only=False, demo=False, hold_fd=None, world=None: spawned.append(read_only) or 4242,
     )
 
 
