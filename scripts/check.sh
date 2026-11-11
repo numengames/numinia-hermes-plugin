@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
+
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 # One entry point for every quality gate. Exit status is non-zero if any gate fails.
 #
-#   PY=/path/to/python          interpreter with pytest, pytest-cov, ruff, mypy, websockets, pyyaml (default: python3)
+#   PY=/path/to/python          interpreter with the `dev` group of pyproject.toml (uv sync --group dev; default: python3)
 #   REACT_DIR=/path/node_modules  folder with react + react-dom for the desktop test (the gate is skipped, loudly, if unset)
 #   HERMES_AGENT_DIR=/path/hermes-agent  a Hermes checkout whose venv runs `plugins validate`/`doctor` (skipped, loudly, if unset)
 #
@@ -27,6 +31,11 @@ gate "ruff lint"    "$py" -m ruff check .
 gate "mypy"         "$py" -m mypy
 gate "mypy --strict (new modules)" "$py" -m mypy --strict hermes_3d_lib/settings.py hermes_3d_lib/linkkey.py \
                                     hermes_3d_lib/procid.py hermes_3d_lib/logsafe.py hermes_3d_lib/worldtext.py
+if "$py" -m reuse --version >/dev/null 2>&1; then
+  gate "reuse lint (licence of every file)" "$py" -m reuse lint --quiet
+else
+  skipped+=("reuse lint (install the dev group: uv sync --group dev)")
+fi
 gate "pytest + coverage >= 90%" "$py" -m pytest -q --no-header --cov --cov-report=term-missing:skip-covered
 
 if [ -n "${REACT_DIR:-}" ] && command -v node >/dev/null; then

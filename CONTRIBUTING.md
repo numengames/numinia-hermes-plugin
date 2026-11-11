@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Numen Games S.L.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Contributing
 
 ## Rules
@@ -13,10 +18,11 @@
 
 ## Checks
 ```
-make check        # PY=… REACT_DIR=…/node_modules HERMES_AGENT_DIR=…/hermes-agent make check
+uv sync --locked --group dev   # the gate tools, pinned in uv.lock
+PY=.venv/bin/python REACT_DIR=…/node_modules HERMES_AGENT_DIR=…/hermes-agent make check
 ```
-Runs: `ruff format --check`, `ruff check`, `mypy` (+ `--strict` on the new modules), `pytest` with a 90 %
-coverage floor on `hermes_3d_lib`, the Desktop `node --test`, `plugins validate`, `plugins doctor --ci`.
+Runs: `ruff format --check`, `ruff check`, `mypy` (+ `--strict` on the new modules), `reuse lint`, `pytest` with a
+90 % coverage floor on `hermes_3d_lib`, the Desktop `node --test`, `plugins validate`, `plugins doctor --ci`.
 Gates whose tool is not configured are reported as SKIPPED, never as passed.
 
 ## Commits

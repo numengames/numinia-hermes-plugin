@@ -1,7 +1,13 @@
+<!--
+SPDX-FileCopyrightText: 2026 Numen Games S.L.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Security policy
 
 ## Supported versions
-Only the latest tagged version receives fixes. `v0.x` is local-only software that is not published.
+Only the latest released version receives fixes: the `version` in `plugin.yaml` at the commit the Hermes plugin
+catalog pins. Fixes ship as a new commit and a SHA-bump PR to the catalog; the plugin never updates itself.
 
 ## Reporting a vulnerability
 Do not open a public issue. Write privately to **security@numen.games** with: the version (`plugin.yaml`),
