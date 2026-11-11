@@ -65,7 +65,7 @@ def unpinned_lock(tmp_path):
 
 def test_the_shipped_lock_pins_the_real_release(hermes_home):
     lock = installer.load_lock()
-    assert lock.pinned and lock.tag == "motor-7c6c9a2" and len(lock.sha256) == 64 and lock.size_bytes == 14393001
+    assert lock.pinned and lock.tag == "motor-081334f" and len(lock.sha256) == 64 and lock.size_bytes == 15917840
     assert lock.entry == "packages/server/src/entrada.ts" and lock.asset == "instalar-motor.sh" and lock.node_min == (22, 18, 0)
     assert "{tag}" in lock.url_template and lock.url_template.startswith("https://github.com/numengames/")
 

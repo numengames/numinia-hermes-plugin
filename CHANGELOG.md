@@ -8,6 +8,15 @@ SPDX-License-Identifier: CC-BY-4.0
 Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer](https://semver.org).
 
 
+## [0.8.3] - 2026-11-11
+
+### Fixed
+- A fresh install no longer opens an empty world: when the world folder is the plugin's own (no `world_path` set), the first start turns on, in its `entorno/espejo.json`, every function whose switch is on (never off, never a folder you configured). The plan says so (it was written after #8 merged, so 0.8.2 did not carry it).
+
+### Changed
+- The engine pin moves to release `motor-081334f` (sha256 and size re-checked against the release's `SHA256SUMS`): English client UI (Greet, Dance, Pick up, Bag; Spanish second, by browser language).
+- A fresh own world also gets English zone names, signs and guide lines (the engine's `hermes` template still ships Spanish ones). Only the plugin's own world, only text, only when the first start creates it.
+
 ## [0.8.2] - 2026-11-11
 
 ### Changed

@@ -377,3 +377,56 @@ def test_seed_embed_edits_only_the_embed_key_and_survives_junk(tmp_path):
     assert supervisor.seed_embed(tmp_path) is False  # already on
     (f / "espejo.json").write_text("[1]")
     assert supervisor.seed_embed(tmp_path) is False
+
+
+def test_seed_functions_turns_on_only_what_the_switches_turned_on(tmp_path):
+    f = tmp_path / "entorno"
+    f.mkdir()
+    on = {"salud": True, "cron": True, "agentes": True, "habilidades": True, "documentos": True, "gasto": False}
+    assert supervisor.seed_functions(tmp_path, on) is False  # no file
+    (f / "espejo.json").write_text('{"funciones": {"salud": true, "cron": false, "uso": true, "sesiones": false}}')
+    assert supervisor.seed_functions(tmp_path, on) is True
+    got = json.loads((f / "espejo.json").read_text())["funciones"]
+    assert got == {
+        "salud": True,
+        "cron": True,
+        "uso": True,  # never switched off
+        "sesiones": False,
+        "perfiles": True,
+        "habilidades": True,
+        "documentos": True,
+    }
+    assert supervisor.seed_functions(tmp_path, on) is False  # already in step
+    (f / "espejo.json").write_text("[1]")
+    assert supervisor.seed_functions(tmp_path, on) is False
+
+
+def test_own_world_is_only_the_default_folder(tmp_path):
+    from hermes_3d_lib import config, settings
+
+    own = settings.Hermes3DSettings(home=tmp_path, world_path=config.data_dir_path(tmp_path) / "mundo")
+    assert supervisor.own_world(own)
+    assert not supervisor.own_world(settings.Hermes3DSettings(home=tmp_path, world_path=tmp_path / "mine"))
+
+
+def test_seed_english_replaces_only_the_template_texts(tmp_path):
+    f = tmp_path / "entorno"
+    f.mkdir()
+    assert supervisor.seed_english(tmp_path) is False  # no file
+    doc = {
+        "zonas": [
+            {"id": "z0", "nombre": "El umbral", "cartel": "EL UMBRAL · interruptores", "tipos": ["salud"]},
+            {"id": "t-mine", "nombre": "Mine", "cartel": "MINE", "tipos": ["proyecto"]},
+        ],
+        "guia": {"frases": {"saludo": "Buenos días.", "z0": "Aquí.", "z99": "keep"}, "recorrido": ["z0"]},
+    }
+    (f / "espejo.json").write_text(json.dumps(doc), encoding="utf-8")
+    assert supervisor.seed_english(tmp_path) is True
+    got = json.loads((f / "espejo.json").read_text())
+    assert got["zonas"][0]["nombre"] == "The threshold" and got["zonas"][0]["cartel"].startswith("THE THRESHOLD")
+    assert got["zonas"][0]["tipos"] == ["salud"] and got["zonas"][1]["cartel"] == "MINE"
+    assert got["guia"]["frases"]["saludo"].startswith("Hello") and got["guia"]["frases"]["z99"] == "keep"
+    assert "z7" not in got["guia"]["frases"] and got["guia"]["recorrido"] == ["z0"]
+    assert supervisor.seed_english(tmp_path) is False  # already English
+    (f / "espejo.json").write_text("[1]")
+    assert supervisor.seed_english(tmp_path) is False
