@@ -169,7 +169,7 @@ export function createBridge({ rest, getWindow, now = Date.now, schedule, onStat
     const t = now()
     tokens = Math.min(REQUEST_BURST, tokens + ((t - stamp) / 1000) * REQUEST_PER_SECOND)
     stamp = t
-    if (tokens < 1 || inflight.size >= MAX_INFLIGHT || inflight.has(id)) return answer(false, 'Demasiadas peticiones a la vez.')
+    if (tokens < 1 || inflight.size >= MAX_INFLIGHT || inflight.has(id)) return answer(false, LOCALES.en.tooMany)
     tokens -= 1
     inflight.add(id)
     const quien = isObject(m.quien) ? { id: text(m.quien.id, 80) || '', nombre: text(m.quien.nombre, 60) || '' } : undefined
@@ -178,7 +178,7 @@ export function createBridge({ rest, getWindow, now = Date.now, schedule, onStat
       const res = await rest('/action', { method: 'POST', body, timeoutMs: ACTION_TIMEOUT_MS })
       answer(!!(res && res.ok === true), String((res && (res.texto || res.text)) || '').slice(0, 200))
     } catch {
-      answer(false, 'Hermes no ha respondido.')
+      answer(false, LOCALES.en.noAnswer)
     } finally {
       inflight.delete(id)
     }
