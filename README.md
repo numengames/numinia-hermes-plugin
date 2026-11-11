@@ -2,7 +2,7 @@
 
 Turn your Hermes into a 3D game world you can walk through. Your scheduled jobs, conversations and system health become places to explore, right on your own computer. Anything that changes Hermes, like pausing a job, waits for your approval. Built on the Numinia Engine by Numen Games.
 
-![Hermes 3D](assets/banner-1200x600.png)
+![Hermes 3D](assets/hermes-3d.jpg)
 
 - Plugin: **MIT**. Engine: **AGPL-3.0**. Two separate programs that talk over a local WebSocket on
   `127.0.0.1`; the plugin never imports or copies engine code.

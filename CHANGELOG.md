@@ -10,7 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer]
   "Doing / Done" line from the Kanban (`hermes_3d_lib/cuerpos.py`, `docs/CUERPOS.md`, CC0 figure in `assets/`). Sown when
   an existing world starts; a brand-new world gets them on the next start.
 - Project workshops: each project folder and its boards are placed in a workshop zone of the world (`talleres.py`).
-- Screenshots and banner in `docs/images/`.
+- Cover image `assets/hermes-3d.jpg` and screenshots in `docs/images/`.
 - Setting `deadline_clock` (default `false`): the hackathon countdown card and links are published only when asked for.
 
 ### Changed
