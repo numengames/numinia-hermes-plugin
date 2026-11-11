@@ -191,17 +191,12 @@ def _setup_cli(parser: Any) -> None:
     ie.add_argument("--url", help=argparse.SUPPRESS)  # tests only: the sha256 of the lock still has to match
     st = sub.add_parser(
         "setup",
-        help="first run: checks what is missing, explains every switch, writes the default settings after you confirm",
+        help="first run: checks this computer, shows a plan, asks once, then installs and starts the world",
     )
     st.add_argument("--engine-path", help="folder of a Numinia Engine you already have, to remember as engine_path")
-    st.add_argument(
-        "--yes", action="store_true", help="do not ask (scripts): write the default settings and answer yes to every download"
-    )
-    st.add_argument(
-        "--first-run",
-        action="store_true",
-        help="the whole path: Node from Hermes, the engine, engine_link=false, then start the world",
-    )
+    st.add_argument("--yes", action="store_true", help="do not ask (scripts): go ahead with the plan")
+    st.add_argument("--first-run", action="store_true", help=argparse.SUPPRESS)  # alias: plain `setup` is the first run now
+    st.add_argument("--explain", action="store_true", help="list every switch in plain words, with where it reads from")
     sub.add_parser("status", help="show engine and bridge state")
     sub.add_parser("down", help="stop the bridge (and the engine if this plugin started it)")
     dv = sub.add_parser("docs", help="start the local documentation viewer (127.0.0.1 only) the world's library opens")

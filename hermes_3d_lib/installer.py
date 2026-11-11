@@ -199,7 +199,14 @@ def refuse_root(euid: int | None = None) -> None:
 
 # ---- download ------------------------------------------------------------------------------------------------------------
 def download(
-    url: str, dest: Path, *, expect_size: int, expect_sha: str, out: Out = print, timeout: float = CONNECT_TIMEOUT
+    url: str,
+    dest: Path,
+    *,
+    expect_size: int,
+    expect_sha: str,
+    out: Out = print,
+    timeout: float = CONNECT_TIMEOUT,
+    progress: Callable[[int], None] | None = None,
 ) -> int:
     """Fetch ``url`` into ``dest`` (0600), hashing while reading. Deletes ``dest`` and raises on ANY problem. Returns the size."""
     check_url(url)
@@ -222,6 +229,8 @@ def download(
                     raise fail("DOWNLOAD_TOO_LARGE", f"the download is larger than the {cap} bytes allowed; stopped and deleted")
                 digest.update(chunk)
                 fh.write(chunk)
+                if progress is not None:
+                    progress(total)
         if expect_size and total != expect_size:
             raise fail(
                 "DOWNLOAD_TRUNCATED",
@@ -248,6 +257,9 @@ def download(
         raise fail("DOWNLOAD_FAILED", f"download failed ({type(exc).__name__}); nothing was installed", retryable=True) from None
     out(f"  Downloaded {total / 1_000_000:.1f} MB. sha256 matches.")
     return total
+
+
+Step = Callable[..., None]  # on_step(name, **facts): download_start, downloaded, verified, unpack_start, unpacked
 
 
 SUMS_NAME = "SHA256SUMS"
@@ -582,6 +594,8 @@ def install_engine(
     platform: str | None = None,
     no_shortcut: bool = False,
     save_setting: bool = True,
+    on_step: Step | None = None,
+    progress: Callable[[int], None] | None = None,
 ) -> dict[str, Any]:
     refuse_root(euid)
     lock = load_lock(lock_path)
@@ -606,7 +620,7 @@ def install_engine(
             confirm is None or not confirm(f"Download {lock.size_text} from {urlsplit(url).netloc} and unpack it? [y/N] ")
         ):
             raise fail("NOT_CONFIRMED", "Not confirmed, so nothing was downloaded.")
-        _fetch_and_unpack(lock, url, root, dest, out)
+        _fetch_and_unpack(lock, url, root, dest, out, on_step, progress)
     seconds = round(time.monotonic() - t0, 1)
     how = set_engine_path(home, dest) if save_setting else "not saved"
     out(f"Saved engine_path: {dest} (via {how})." if save_setting else f"Engine at {dest}.")
@@ -636,7 +650,19 @@ def _size_mb(path: Path) -> float:
     return round(total / 1_000_000, 1)
 
 
-def _fetch_and_unpack(lock: Lock, url: str, root: Path, dest: Path, out: Out) -> None:
+def _fetch_and_unpack(
+    lock: Lock,
+    url: str,
+    root: Path,
+    dest: Path,
+    out: Out,
+    on_step: Step | None = None,
+    progress: Callable[[int], None] | None = None,
+) -> None:
+    def step(name: str, **facts: Any) -> None:
+        if on_step is not None:
+            on_step(name, **facts)
+
     root.mkdir(parents=True, exist_ok=True)
     root.chmod(0o700)
     stage = root / f"{lock.dir_name}.partial"
@@ -644,14 +670,18 @@ def _fetch_and_unpack(lock: Lock, url: str, root: Path, dest: Path, out: Out) ->
     stage.mkdir(mode=0o700)
     try:
         out("Downloading ...")
+        step("download_start")
         asset = stage / "asset"
-        download(url, asset, expect_size=lock.size_bytes, expect_sha=lock.sha256, out=out)
+        got = download(url, asset, expect_size=lock.size_bytes, expect_sha=lock.sha256, out=out, progress=progress)
+        step("downloaded", bytes=got)
         try:
-            check_against_sums(url, lock.asset, lock.sha256, out=out)
+            sums = check_against_sums(url, lock.asset, lock.sha256, out=out)
         except InstallError:
             asset.unlink(missing_ok=True)
             raise
+        step("verified", sums=sums)
         out("Unpacking app/ and www/ ...")
+        step("unpack_start")
         stats = extract_asset(asset, stage)
         asset.unlink()
         entry = stage / "app" / lock.entry
@@ -665,6 +695,7 @@ def _fetch_and_unpack(lock: Lock, url: str, root: Path, dest: Path, out: Out) ->
         shutil.rmtree(dest, ignore_errors=True)
         os.replace(stage, dest)
         out(f"  Unpacked {stats['files']} entries, {stats['bytes'] / 1_000_000:.1f} MB.")
+        step("unpacked", files=stats["files"], bytes=stats["bytes"], path=str(dest))
     except BaseException:
         shutil.rmtree(stage, ignore_errors=True)
         raise
