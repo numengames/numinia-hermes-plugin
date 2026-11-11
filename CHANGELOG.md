@@ -14,6 +14,8 @@ Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer]
 - Setting `deadline_clock` (default `false`): the hackathon countdown card and links are published only when asked for.
 
 ### Changed
+- Everything the plugin writes into the world is English now (replies, card titles and subtitles, `docs/WORLD-STRINGS.md`).
+  The engine's schema (object types, verbs, JSON keys, the `estado` enum) stays Spanish.
 - The plugin is now called **hermes-3d**, titled "Hermes 3D" (it was published under its working name). Install with
   `hermes plugins install hermes-3d`, enable with `hermes plugins enable hermes-3d`; every command is `hermes 3d <...>`
   (for example `hermes 3d install-engine`). The Python package is `hermes_3d_lib`, the tools are `hermes3d_state` and

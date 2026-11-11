@@ -556,7 +556,7 @@ def main() -> int:
 
 def link_url(cfg: S.Hermes3DSettings, key: str | None) -> str | None:
     """The engine link to open, or None. Path A (the world inside Desktop) needs ``engine_link: false``: an engine takes ONE source,
-    and a local link that connects displaces the embedded page (engine contract, «Quién toca»)."""
+    and a local link that connects displaces the embedded page (engine contract, "who touches")."""
     if not key or not cfg.engine_link:
         return None
     return f"ws://{config.HOST}:{supervisor.link_port(cfg)}{P.LINK_PATH}"
