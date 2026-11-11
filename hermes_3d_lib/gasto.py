@@ -91,12 +91,12 @@ def parse_insights(text: str) -> dict[str, Any]:
 
 
 def _card(name: str, tokens: int, cost: float, top: str, days: int, sessions: int, cache: int = 0) -> tuple[str, str]:
-    """Subtitle: ``tokens · caché N · $cost est. · ses. · days · model``. Cache tokens (read + write) are far larger than
+    """Subtitle: ``tokens · cache N · $cost est. · sessions · days · model``. Cache tokens (read + write) are far larger than
     in+out, so they travel as their OWN segment and are never added to ``tokens`` (the engine draws them apart); the cost is
     always followed by ``est.`` (an estimate, not what the provider billed)."""
-    title = f"Gasto · {name}"
-    mid = f" · caché {human(cache)}" if cache else ""
-    sub = f"{human(tokens)} tokens{mid} · {money(cost)} est. · {sessions} ses. · {days} d" + (f" · {top}" if top else "")
+    title = f"Spend · {name}"
+    mid = f" · cache {human(cache)}" if cache else ""
+    sub = f"{human(tokens)} tokens{mid} · {money(cost)} est. · {sessions} sessions · {days} d" + (f" · {top}" if top else "")
     return title, sub
 
 

@@ -12,9 +12,9 @@ from hermes_3d_lib.worldtext import MESSAGES
 
 def test_world_strings_table_matches_the_module():
     text = (ROOT / "docs" / "WORLD-STRINGS.md").read_text(encoding="utf-8")
-    rows = {code: (es, en) for code, es, en in re.findall(r"^\| `(\w+)` \| (.+?) \| (.+?) \|$", text, re.M)}
-    for code, (en, es) in MESSAGES.items():
-        assert rows.get(code) == (es, en), code
+    rows = dict(re.findall(r"^\| `(\w+)` \| (.+?) \|$", text, re.M))
+    for code, en in MESSAGES.items():
+        assert rows.get(code) == en, code
 
 
 def test_every_setting_is_documented_in_the_readme():

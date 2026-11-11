@@ -510,11 +510,11 @@ def test_gasto_card_cache_apart_and_cost_estimated():
     }
     for o in gasto.gasto_objects(sec).values():
         sub = o["subtitulo"]
-        assert "1,5 M tokens" in sub and "caché 42,0 M" in sub and "$12.50 est." in sub
-        assert sub.index("tokens") < sub.index("caché") < sub.index("$")
+        assert "1,5 M tokens" in sub and "cache 42,0 M" in sub and "$12.50 est." in sub
+        assert sub.index("tokens") < sub.index("cache") < sub.index("$")
         assert len(sub.encode()) <= 120
     sec["por_perfil"][0].update(cache_lectura=0, cache_escritura=0)
-    assert all("caché" not in o["subtitulo"] for o in gasto.gasto_objects(sec).values())
+    assert all("cache" not in o["subtitulo"] for o in gasto.gasto_objects(sec).values())
 
 
 def test_version_card_exists_with_salud_on_and_is_absent_with_it_off(fake_root, tmp_path):

@@ -112,7 +112,7 @@ def test_groups_are_folded_to_at_most_eight():
         items += _items(12 - g, group=f"grp{g:02d}")
     snap = habilidades.snapshot_from_scan({"items": [dict(i, nombre=f"{i['grupo']}-{k}") for k, i in enumerate(items)]})
     groups = {o["grupo"] for o in snap.values()}
-    assert len(groups) == 8 and "otros" in groups and "grp00" in groups and "grp11" not in groups
+    assert len(groups) == 8 and "other" in groups and "grp00" in groups and "grp11" not in groups
 
 
 def test_snapshot_caps_at_the_engine_limit_and_survives_an_odd_item(monkeypatch):

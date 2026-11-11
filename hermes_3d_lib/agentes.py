@@ -107,15 +107,13 @@ def agent_to_object(item: dict[str, Any], spend: str = "", activity: dict[str, s
     """One scanned/parsed profile -> an ``objeto`` of type ``agente`` (no verbs: v0 only shows)."""
     name = str(item.get("nombre") or item.get("name") or item.get("id") or "")
     model = str(item.get("modelo") or item.get("model") or "")
-    bits = [model or "sin modelo"]
+    bits = [model or "no model"]
     if item.get("tiene_cron") or item.get("cron_total"):
         bits.append(f"{item.get('cron_activos', 0)}/{item.get('cron_total', 0)} cron")
     if spend:
         bits.append(spend)  # the agent's spend for the period, with its "est." label
     gw = item.get("gateway")
-    bits.append(
-        "gateway " + ("activo" if gw is True or gw == "running" else "parado" if gw is False or gw == "stopped" else "¿?")
-    )
+    bits.append("gateway " + ("up" if gw is True or gw == "running" else "down" if gw is False or gw == "stopped" else "?"))
     subtitle = " · ".join(bits)
     line = activity_line(activity, max(0, MAX_SUBTITLE - len(subtitle.encode()) - len(" · ".encode())))
     if line:  # the existing state comes first and is never cut for it: the line only takes the bytes left over
@@ -123,7 +121,7 @@ def agent_to_object(item: dict[str, Any], spend: str = "", activity: dict[str, s
     return make_object(
         TYPE_AGENTE,
         agent_id(item.get("id") or name),
-        name or "(sin nombre)",
+        name or "(unnamed)",
         subtitulo=subtitle,
         estado=agent_state(item),
         zona=ZONE_AGENTES,

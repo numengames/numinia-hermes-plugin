@@ -129,7 +129,7 @@ def make_object(
     obj: dict[str, Any] = {
         "tipo": tipo,
         "id": id_,
-        "titulo": cut_bytes(titulo, MAX_TITLE).strip() or "(sin nombre)",
+        "titulo": cut_bytes(titulo, MAX_TITLE).strip() or "(unnamed)",
         "subtitulo": cut_bytes(subtitulo, MAX_SUBTITLE),
         "estado": estado if estado in ESTADOS else "desconocido",
         "zona": zona,

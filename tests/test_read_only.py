@@ -50,7 +50,7 @@ def test_every_world_request_is_refused_in_read_only(hermes_home, verb):
         await eng.send({**PAUSE, "verbo": verb})
         r = await eng.wait_for(lambda f: f["t"] == "resultado" and f["peticion"] == "p1")
         assert r["ok"] is False
-        assert "read-only" in r["texto"] and "solo lectura" in r["texto"]
+        assert "read-only" in r["texto"]
         assert b.queue.pending() == [], "nothing may be parked for approval"
         await stop(b, eng)
 
@@ -100,7 +100,7 @@ def test_no_object_offers_a_verb_and_the_world_card_says_read_only(hermes_home):
         objs = _all_objects(eng)
         assert [o for o in objs if o.get("acciones")] == [], "a read-only world must not offer buttons"
         card = next(o for o in objs if o["tipo"] == "salud" and o["id"] == "hermes")
-        assert "read-only" in card["titulo"] and "read-only" in card["subtitulo"]
+        assert "read-only" in card["titulo"] and "read-only" in card["subtitulo"].lower()
         await stop(b, eng)
 
     run(main())
@@ -253,4 +253,4 @@ def test_spawn_bridge_passes_the_flag_on_the_command_line(hermes_home, monkeypat
 
 def test_say_read_only_has_both_languages():
     r = say("read_only")
-    assert "read-only" in r["text"] and "solo lectura" in r["texto"]
+    assert "read-only" in r["text"] and "read-only" in r["texto"]

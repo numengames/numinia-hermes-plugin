@@ -68,7 +68,7 @@ def _expired(caduca: object) -> bool:
     """Has the engine's deadline already passed?
 
     The REAL engine stamps ``caduca`` as a SIM TICK number (``api.tick() + CADUCA_S * TICK_HZ``, features/espejo/server.ts), which
-    the plugin cannot compare with its own clock. Treating that tick as epoch milliseconds refused every real request as «ya caducó»
+    the plugin cannot compare with its own clock. Treating that tick as epoch milliseconds refused every real request as "already expired"
     (found by tools/e2e_pedir_plugin.py against the real engine). So only a value that is plausibly an epoch-ms wall time is judged;
     a tick (or anything else) is ignored and the plugin's own ``TTL_SECONDS`` (shorter than the engine's 30 s) bounds the wait.
     """
