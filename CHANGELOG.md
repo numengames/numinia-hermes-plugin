@@ -3,7 +3,7 @@
 Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer](https://semver.org).
 
 
-## Unreleased
+## [0.8.0] - 2026-11-11
 
 ### Added
 - Per-agent stick-figure bodies: one figure and one `pnj@1` per Hermes profile, with a fixed round, a spend line and a

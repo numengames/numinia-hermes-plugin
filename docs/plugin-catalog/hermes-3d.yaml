@@ -1,4 +1,5 @@
 # Catalog entry for NousResearch/hermes-agent -> plugin-catalog/hermes-3d.yaml
+# `image` and `screenshots` carry <SHA>: replace it with the same 40-hex sha at pin time.
 # `sha` is the commit that merges this rename; set it (40 hex) before opening the catalog PR.
 name: hermes-3d
 repo: https://github.com/numengames/numinia-hermes-plugin
@@ -9,10 +10,18 @@ maintainer: numengames
 tier: community
 category: desktop
 requires_hermes: ">=0.22.0, <0.24"
-version: "0.7.2-rc1"
+version: "0.8.0"
 docs_url: https://github.com/numengames/numinia-hermes-plugin#readme
 platforms: [linux, macos]
-screenshots: []
+image: https://raw.githubusercontent.com/numengames/numinia-hermes-plugin/<SHA>/assets/banner-1200x600.png
+screenshots:
+  - https://raw.githubusercontent.com/numengames/numinia-hermes-plugin/<SHA>/docs/images/hermes-3d-intro.png
+  - https://raw.githubusercontent.com/numengames/numinia-hermes-plugin/<SHA>/docs/images/hermes-3d-tower.png
+  - https://raw.githubusercontent.com/numengames/numinia-hermes-plugin/<SHA>/docs/images/hermes-3d-board.png
+  - https://raw.githubusercontent.com/numengames/numinia-hermes-plugin/<SHA>/docs/images/hermes-3d-workshop.png
+  - https://raw.githubusercontent.com/numengames/numinia-hermes-plugin/<SHA>/docs/images/hermes-3d-bodies.png
+  - https://raw.githubusercontent.com/numengames/numinia-hermes-plugin/<SHA>/docs/images/hermes-3d-clock.png
+  - https://raw.githubusercontent.com/numengames/numinia-hermes-plugin/<SHA>/docs/images/hermes-3d-engine.png
 known_issues:
   - "Disclosure: one download, only when you ask. `hermes 3d install-engine` fetches the pinned Numinia Engine release from github.com/numengames/numinia-engine, shows its size, asks you to confirm and checks its sha256 before unpacking. Nothing else leaves your machine."
   - "Disclosure: the 3D world is served on 127.0.0.1 only."

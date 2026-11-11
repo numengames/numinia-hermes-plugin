@@ -1,14 +1,12 @@
 # hermes-3d
 
-Hermes as a place. A [Hermes Agent](https://hermes-agent.nousresearch.com) plugin that mirrors your
-Hermes (health, scheduled jobs, sessions, agents, spend) into a local
-[Numinia Engine](https://numen.games) world of type `hermes`, so you can see it, walk through it and,
-with your approval, act on it.
+Turn your Hermes into a 3D game world you can walk through. Your scheduled jobs, conversations and system health become places to explore, right on your own computer. Anything that changes Hermes, like pausing a job, waits for your approval. Built on the Numinia Engine by Numen Games.
+
+![Hermes 3D](assets/banner-1200x600.png)
 
 - Plugin: **MIT**. Engine: **AGPL-3.0**. Two separate programs that talk over a local WebSocket on
   `127.0.0.1`; the plugin never imports or copies engine code.
 - Needs Hermes ≥ 0.22 and < 0.24, Python ≥ 3.11 (Hermes' own), Node 22.18 or later for the engine, **provided by Hermes** (its package manager), not by you.
-- Status: **v0.7.2-rc1, local only.** Not published, not in any catalog.
 
 ## Install in five minutes
 
@@ -92,7 +90,7 @@ Hermes exposes no public event for "a cron run started or ended". Until it does,
 
 This is slower and less precise than a hook, so a pause or run may show up a few seconds late. We asked upstream for observer hooks `cron_run_start` / `cron_run_end`: [NousResearch/hermes-agent#149341](https://github.com/NousResearch/hermes-agent/issues/149341), complementing #65401 (`on_cron_delivery`). A stable `hermes cron list --json` is requested in #118072. When either lands, the plugin will use it and the workaround becomes the fallback.
 
-## What it does
+## What you get
 
 | Function (setting) | Default | The world sees | The world may ask |
 |---|---|---|---|

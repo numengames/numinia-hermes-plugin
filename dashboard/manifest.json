@@ -2,6 +2,6 @@
   "name": "hermes-3d",
   "label": "Hermes 3D",
   "description": "Status and switches for the local Hermes 3D world bridge.",
-  "version": "0.1.0",
+  "version": "0.8.0",
   "api": "plugin_api.py"
 }
