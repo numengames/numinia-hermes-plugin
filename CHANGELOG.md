@@ -8,6 +8,14 @@ SPDX-License-Identifier: CC-BY-4.0
 Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer](https://semver.org).
 
 
+## [0.8.2] - 2026-11-11
+
+### Fixed
+- `hermes plugins install` no longer asks an empty "declares Python dependencies" question. The gate tools (ruff, mypy,
+  pytest, …) moved out of the root `pyproject.toml` into `tools/pyproject.toml` (+ `tools/uv.lock`), so Hermes sees a plugin
+  with no Python dependencies and does not install test tools into its shared plugin environment. Contributors now run
+  `uv sync --project tools --locked --group dev`.
+
 ## [0.8.1] - 2026-11-11
 
 ### Changed

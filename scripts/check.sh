@@ -5,7 +5,7 @@
 
 # One entry point for every quality gate. Exit status is non-zero if any gate fails.
 #
-#   PY=/path/to/python          interpreter with the `dev` group of pyproject.toml (uv sync --group dev; default: python3)
+#   PY=/path/to/python          interpreter with the `dev` group of tools/pyproject.toml (uv sync --project tools --group dev; default: python3)
 #   REACT_DIR=/path/node_modules  folder with react + react-dom for the desktop test (the gate is skipped, loudly, if unset)
 #   HERMES_AGENT_DIR=/path/hermes-agent  a Hermes checkout whose venv runs `plugins validate`/`doctor` (skipped, loudly, if unset)
 #
@@ -34,7 +34,7 @@ gate "mypy --strict (new modules)" "$py" -m mypy --strict hermes_3d_lib/settings
 if "$py" -m reuse --version >/dev/null 2>&1; then
   gate "reuse lint (licence of every file)" "$py" -m reuse lint --quiet
 else
-  skipped+=("reuse lint (install the dev group: uv sync --group dev)")
+  skipped+=("reuse lint (install the dev group: uv sync --project tools --group dev)")
 fi
 gate "pytest + coverage >= 90%" "$py" -m pytest -q --no-header --cov --cov-report=term-missing:skip-covered
 
