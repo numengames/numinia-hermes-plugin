@@ -9,9 +9,9 @@ import os
 from conftest import SAMPLES, run, until
 from fake_engine import FakeEngine
 
-from hermes_palace_lib import actions, config
-from hermes_palace_lib.bridge_main import Bridge
-from hermes_palace_lib.sessions import engine_id
+from hermes_3d_lib import actions, config
+from hermes_3d_lib.bridge_main import Bridge
+from hermes_3d_lib.sessions import engine_id
 
 
 def listing(name: str) -> str:
@@ -58,18 +58,17 @@ def test_first_connect_sends_lote_then_changes_as_alta_cambio_baja(hermes_home):
         reader = Reader(listing("cron_list_many.txt"))
         b = make_bridge(hermes_home, eng, reader)
         await started(b, eng)
-        lote = await eng.wait_for(lambda f: f["t"] == "lote" and len(f["objetos"]) == 5)
-        assert {o["tipo"] for o in lote["objetos"]} == {"cron"}
-        # a job disappears, one changes state, one appears
-        text = listing("cron_list_many.txt")
-        text = text.replace("  da4a429b66c8 [active]", "  zzzz0000aaaa [active]", 1).replace(
-            "  8bc0eecea9b5 [active]", "  8bc0eecea9b5 [paused]", 1
-        )
-        reader.text = text
-        await eng.wait_for(lambda f: f["t"] == "alta" and f["objeto"]["id"] == "zzzz0000aaaa")
-        await eng.wait_for(lambda f: f["t"] == "baja" and f["objeto"]["id"] == "da4a429b66c8")
-        cam = await eng.wait_for(lambda f: f["t"] == "cambio" and f["objeto"]["id"] == "8bc0eecea9b5")
-        assert cam["objeto"]["estado"] == "pausado" and cam["objeto"]["acciones"] == ["cron.reanudar"]
+        lote = await eng.wait_for(lambda f: f["t"] == "lote" and len([o for o in f["objetos"] if o["tipo"] == "cron"]) == 3)
+        # the always-on version card travels with the cron jobs
+        assert {o["tipo"] for o in lote["objetos"]} == {"cron", "salud"}
+        # declutter: 5 jobs fold into one summary card + the 2 soonest; the summary counts the rest
+        crons = {o["id"]: o for o in lote["objetos"] if o["tipo"] == "cron"}
+        summary = next(o for k, o in crons.items() if k.startswith("cron-p-"))
+        assert "1 paused" in summary["subtitulo"] and summary["acciones"] == []
+        # a job pauses: the (folded or shown) change reaches the world as a change of the summary at least
+        reader.text = listing("cron_list_many.txt").replace("  41a60d9a4541 [active]", "  41a60d9a4541 [paused]", 1)
+        cam = await eng.wait_for(lambda f: f["t"] == "cambio" and f["objeto"]["id"] == summary["id"])
+        assert "2 paused" in cam["objeto"]["subtitulo"]
         await stop(b, eng)
 
     run(main())
@@ -85,7 +84,9 @@ def test_cron_function_off_publishes_nothing_and_does_not_poll(hermes_home):
         await until(lambda: b.poll_cycles >= 3)  # several poll rounds really happened
         assert reader.calls == 0, "must not even run the CLI while the function is off"
         assert [f for f in eng.frames if f["t"] in ("alta", "cambio", "baja")] == []
-        assert all(not f.get("objetos") for f in eng.of_type("lote"))
+        assert all(
+            set(o["tipo"] for o in f.get("objetos", [])) <= {"salud"} for f in eng.of_type("lote")
+        )  # only the version and deadline cards
         await stop(b, eng)
 
     run(main())
@@ -288,7 +289,7 @@ def test_runtime_file_is_private_and_removed(hermes_home):
         rt = config.read_runtime(hermes_home)
         assert rt["port"] == b.hub.port and rt["pid"] == os.getpid() and len(rt["token"]) >= 40
         assert config.runtime_mode_ok(hermes_home)
-        assert oct(config.palace_dir(hermes_home).stat().st_mode & 0o777) == "0o700"
+        assert oct(config.plugin_data_dir(hermes_home).stat().st_mode & 0o777) == "0o700"
         b.hub._stop.set()
         await asyncio.wait_for(task, 5)
         assert config.read_runtime(hermes_home) is None

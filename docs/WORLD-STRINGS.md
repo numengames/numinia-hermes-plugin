@@ -1,7 +1,7 @@
 # Strings shown inside the world (Spanish, formal «usted»)
 
 The engine displays these to people in the world, so they stay Spanish. Kept identical to
-`hermes_palace_lib/worldtext.py` by `tests/test_docs.py`.
+`hermes_3d_lib/worldtext.py` by `tests/test_docs.py`.
 
 ## Replies to world requests (`worldtext.MESSAGES`)
 
@@ -34,13 +34,15 @@ The engine displays these to people in the world, so they stay Spanish. Kept ide
 | `read_only` | Hermes está en modo solo lectura (read-only): el mundo no puede cambiar nada | Hermes runs in read-only mode: the world cannot change anything |
 | `read_only_card_title` | Hermes · read-only | Hermes · read-only |
 | `read_only_card_sub` | Solo lectura (read-only): el mundo no puede cambiar nada en Hermes | Read-only: the world cannot change anything in Hermes |
+| `version_card_title` | Hermes 3D v{version} | Hermes 3D v{version} |
+| `version_card_sub` | Motor {engine} · Hermes {hermes} | Engine {engine} · Hermes {hermes} |
 
 ## Card text built by the plugin (engine objects)
 
 | Where | Text | Why Spanish |
 |---|---|---|
-| `cronsync.py` | `próxima <date>` (subtitle), `(sin nombre)` | card subtitle/title in the world |
-| `agentes.py` | `activo` / `apagado` / `desconocido` (state), `gateway activo/parado/¿?`, `sin modelo`, `(sin nombre)` | card state and subtitle |
+| `cronsync.py` | `next <date>` (subtitle), `(unnamed)` (title), `<profile> · N jobs` + `N failing · N healthy · N paused · N folded` (summary card): English, like the C7 projects zone | card subtitle/title in the world |
+| `agentes.py` | `activo` / `apagado` / `desconocido` (state), `gateway activo/parado/¿?`, `sin modelo`, `(sin nombre)`, `Doing:`, `Done:` | card state and subtitle (Doing/Done = latest Kanban card running / done for that profile; only in the bytes left over) |
 | `sessions.py` | `Sesión <id>`, `sin-id` | card title |
 | `protocol.py` | `(sin nombre)` | fallback title |
 | object types and verbs | `cron`, `sesion`, `perfil`, `uso`; `cron.pausar`, `cron.reanudar` | the engine's schema (`features/espejo/esquema.ts`) |

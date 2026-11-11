@@ -2,10 +2,10 @@
 
 ## Rules
 - **English everywhere** in code, comments, logs, CLI output, docs, commits and PRs. The only Spanish allowed
-  is text the engine shows to people in the world; it lives in `hermes_palace_lib/worldtext.py` and in the
+  is text the engine shows to people in the world; it lives in `hermes_3d_lib/worldtext.py` and in the
   card builders and is listed in [docs/WORLD-STRINGS.md](docs/WORLD-STRINGS.md).
 - No hardcoded paths. Everything derives from `HERMES_HOME`; settings come from `config.yaml` through
-  `hermes_palace_lib/settings.py`. The only environment variable is the secret `HERMES_PALACE_LINK_KEY`.
+  `hermes_3d_lib/settings.py`. The only environment variable is the secret `HERMES_3D_LINK_KEY`.
 - Never read another program's credential file. Never log a secret. Never use a shell: subprocesses take an argv list.
 - A bug fix starts with a failing test. Tests use a temporary `HERMES_HOME` (fixture `hermes_home`) and never
   sleep for a fixed time: use `until(...)` / events with timeouts.
@@ -16,7 +16,7 @@
 make check        # PY=… REACT_DIR=…/node_modules HERMES_AGENT_DIR=…/hermes-agent make check
 ```
 Runs: `ruff format --check`, `ruff check`, `mypy` (+ `--strict` on the new modules), `pytest` with a 90 %
-coverage floor on `hermes_palace_lib`, the Desktop `node --test`, `plugins validate`, `plugins doctor --ci`.
+coverage floor on `hermes_3d_lib`, the Desktop `node --test`, `plugins validate`, `plugins doctor --ci`.
 Gates whose tool is not configured are reported as SKIPPED, never as passed.
 
 ## Commits

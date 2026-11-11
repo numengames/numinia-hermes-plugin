@@ -16,9 +16,9 @@ from conftest import LOOP
 from fake_release import ASSET, ENTRY, FakeRelease, as_script, good_asset, good_members, tar_gz, zip_asset
 from test_entry import load_entry
 
-from hermes_palace_lib import installer
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.errors import PalaceError
+from hermes_3d_lib import installer
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.errors import Hermes3DError
 
 REAL_WHICH = installer.shutil.which
 
@@ -38,11 +38,11 @@ def run_install(home, lock, rel, **kw):
 
 
 def data_dir(home: Path) -> Path:
-    return home / "plugin-data" / "hermes-palace"
+    return home / "plugin-data" / "hermes-3d"
 
 
 def code_of(exc: pytest.ExceptionInfo) -> str:
-    assert isinstance(exc.value, PalaceError)
+    assert isinstance(exc.value, Hermes3DError)
     return exc.value.code
 
 
@@ -131,7 +131,7 @@ def test_full_flow_downloads_verifies_unpacks_and_saves_engine_path(hermes_home,
     assert stat.S_IMODE((data_dir(hermes_home) / "engine").stat().st_mode) == 0o700
     text = "\n".join(lines)
     assert rel.url in text and "MB" in text and rel.sha256 in text and "sha256 verified" in text
-    cfg = S.PalaceSettings.from_yaml(hermes_home)
+    cfg = S.Hermes3DSettings.from_yaml(hermes_home)
     assert cfg.engine_path == dest and cfg.engine_main() == dest / "app" / ENTRY and cfg.www_dir() == dest / "www"
 
 
@@ -312,7 +312,7 @@ def test_connection_refused_is_a_clean_retryable_error(hermes_home, tmp_path):
 HOSTILE = {
     "traversal": [("app/../../outside.txt", b"pwned", {})],
     "traversal-deep": [("www/a/../../../outside.txt", b"pwned", {})],
-    "absolute": [("/etc/palace-pwned", b"pwned", {})],
+    "absolute": [("/etc/hermes-3d-pwned", b"pwned", {})],
     "backslash": [("app\\..\\x", b"p", {})],
     "symlink-absolute": [("app/evil", None, {"type": tarfile.SYMTYPE, "linkname": "/etc"})],
     "symlink-escape": [("app/evil", None, {"type": tarfile.SYMTYPE, "linkname": "../../../etc"})],
@@ -436,15 +436,15 @@ def test_root_is_refused_before_anything_else(hermes_home, tmp_path):
 # ---- settings written -----------------------------------------------------------------------------------------------------
 def test_config_yaml_keeps_other_settings_and_gets_a_backup(hermes_home, tmp_path):
     (hermes_home / "config.yaml").write_text(
-        "model:\n  default: x\nplugins:\n  entries:\n    hermes-palace:\n      settings:\n        publish_cron: true\n    other:\n      enabled: true\n"
+        "model:\n  default: x\nplugins:\n  entries:\n    hermes-3d:\n      settings:\n        publish_cron: true\n    other:\n      enabled: true\n"
     )
     with FakeRelease(good_asset()) as rel:
         run_install(hermes_home, rel.lock(tmp_path), rel)
     data = yaml.safe_load((hermes_home / "config.yaml").read_text())
     assert data["model"] == {"default": "x"} and data["plugins"]["entries"]["other"] == {"enabled": True}
-    st = data["plugins"]["entries"]["hermes-palace"]["settings"]
+    st = data["plugins"]["entries"]["hermes-3d"]["settings"]
     assert st["publish_cron"] is True and st["engine_path"].endswith(rel.sha256[:12])
-    assert (hermes_home / "config.yaml.palace-backup").is_file()
+    assert (hermes_home / "config.yaml.hermes-3d-backup").is_file()
 
 
 def test_broken_config_yaml_is_found_before_downloading(hermes_home, tmp_path):
@@ -470,7 +470,7 @@ def test_engine_path_goes_through_hermes_config_set_when_hermes_is_on_the_path(h
     with FakeRelease(good_asset()) as rel:
         res = run_install(hermes_home, rel.lock(tmp_path), rel)
     assert calls[0][:3] == ["/fake/hermes", "config", "set"] and calls[0][4] == res["engine_path"]
-    assert calls[0][3] == "plugins.entries.hermes-palace.settings.engine_path"
+    assert calls[0][3] == "plugins.entries.hermes-3d.settings.engine_path"
 
 
 def test_hermes_config_set_failing_falls_back_to_the_yaml_edit(hermes_home, tmp_path, monkeypatch):
@@ -478,7 +478,7 @@ def test_hermes_config_set_failing_falls_back_to_the_yaml_edit(hermes_home, tmp_
     monkeypatch.setattr(installer.subprocess, "run", lambda argv, *a, **k: subprocess.CompletedProcess(argv, 1, "", "boom"))
     with FakeRelease(good_asset()) as rel:
         res = run_install(hermes_home, rel.lock(tmp_path), rel)
-    assert S.PalaceSettings.from_yaml(hermes_home).engine_path == Path(res["engine_path"])
+    assert S.Hermes3DSettings.from_yaml(hermes_home).engine_path == Path(res["engine_path"])
 
 
 def test_save_setting_false_leaves_config_alone(hermes_home, tmp_path):
@@ -505,7 +505,7 @@ def test_shortcut_contents_for_each_platform(tmp_path):
     m = installer.shortcut_text("darwin", "/usr/local/bin/hermes", url, None)
     assert m.startswith("#!/bin/bash") and "open " in m and url in m
     w = installer.shortcut_text("win32", "hermes", url, None)
-    assert "@echo off" in w and "palace up" in w and f"start {url}" in w
+    assert "@echo off" in w and "3d up" in w and f"start {url}" in w
     # a custom home is exported, and a hostile path cannot break out of the quoting
     nasty = "/tmp/a b'; touch /tmp/pwned #"
     m2 = installer.shortcut_text("darwin", "/usr/local/bin/hermes", url, nasty)
@@ -517,20 +517,20 @@ def test_shortcut_files_per_platform(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "share"))
     home = tmp_path / "userhome"
     p1 = installer.write_shortcut("linux", "hermes", f"http://{LOOP}:8790/", None, home=home)
-    assert p1 == tmp_path / "share" / "applications" / "hermes-palace.desktop" and p1.stat().st_mode & 0o111
+    assert p1 == tmp_path / "share" / "applications" / "hermes-3d.desktop" and p1.stat().st_mode & 0o111
     p2 = installer.write_shortcut("darwin", "hermes", f"http://{LOOP}:8790/", None, home=home)
-    assert p2 == home / "Desktop" / "Hermes Palace.command" and p2.stat().st_mode & 0o100
+    assert p2 == home / "Desktop" / "Hermes 3D.command" and p2.stat().st_mode & 0o100
     p3 = installer.write_shortcut("win32", "hermes", f"http://{LOOP}:8790/", None, home=home)
-    assert p3 == home / "Desktop" / "Hermes Palace.bat"
+    assert p3 == home / "Desktop" / "Hermes 3D.bat"
     monkeypatch.delenv("XDG_DATA_HOME")
     p4 = installer.write_shortcut("linux", "hermes", f"http://{LOOP}:8790/", None, home=home)
-    assert p4 == home / ".local/share/applications/hermes-palace.desktop"
+    assert p4 == home / ".local/share/applications/hermes-3d.desktop"
     assert installer.write_shortcut("plan9", "hermes", "u", None, home=home) is None
 
 
 # ---- the CLI ---------------------------------------------------------------------------------------------------------------------
 def cli_args(**kw):
-    base = {"palace_cmd": "install-engine", "yes": True, "no_shortcut": True, "url": None}
+    base = {"hermes3d_cmd": "install-engine", "yes": True, "no_shortcut": True, "url": None}
     return type("A", (), {**base, **kw})()
 
 
@@ -541,7 +541,7 @@ def test_cli_subcommand_parses_the_options(hermes_home):
     p = argparse.ArgumentParser()
     mod._setup_cli(p)
     a = p.parse_args(["install-engine", "--yes", "--no-shortcut", "--url", "http://x"])
-    assert a.palace_cmd == "install-engine" and a.yes and a.no_shortcut and a.url == "http://x"
+    assert a.hermes3d_cmd == "install-engine" and a.yes and a.no_shortcut and a.url == "http://x"
     assert p.parse_args(["install-engine"]).yes is False
 
 
@@ -586,4 +586,4 @@ def test_cli_happy_path_end_to_end(hermes_home, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr(installer, "default_lock_path", lambda: rel.lock(tmp_path))
         assert mod._cli(cli_args(url=rel.url)) == 0
     out = capsys.readouterr().out
-    assert "engine_path" in out and "hermes palace up" in out and "sha256 verified" in out
+    assert "engine_path" in out and "hermes 3d up" in out and "sha256 verified" in out

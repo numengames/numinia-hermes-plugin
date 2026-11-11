@@ -9,8 +9,8 @@ from types import SimpleNamespace
 
 from conftest import SAMPLES
 
-from hermes_palace_lib import hermes_api as H
-from hermes_palace_lib import scan
+from hermes_3d_lib import hermes_api as H
+from hermes_3d_lib import scan
 
 RECORDED = (SAMPLES / "kanban_list_json.txt").read_text()  # real `hermes kanban list --json` output, throwaway home (2026-11-05)
 BODY = "TOPSECRET body text"
@@ -264,7 +264,7 @@ def test_a_raising_api_is_contained_by_the_section_guard(tmp_path):
 def test_bridge_remembers_session_ids_for_the_first_layer(tmp_path):
     from conftest import run
 
-    from hermes_palace_lib.bridge_main import Bridge
+    from hermes_3d_lib.bridge_main import Bridge
 
     seen = {}
     api = SimpleNamespace(

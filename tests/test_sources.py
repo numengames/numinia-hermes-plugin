@@ -9,8 +9,8 @@ import time
 import yaml
 from conftest import LOOP, ROOT, run
 
-from hermes_palace_lib import bridge_main, scan
-from hermes_palace_lib import settings as S
+from hermes_3d_lib import bridge_main, scan
+from hermes_3d_lib import settings as S
 
 DB_SECTIONS = ("sesiones", "kanban", "proyectos", "arbol", "gasto")
 
@@ -32,8 +32,8 @@ def test_direct_db_read_is_off_by_default_everywhere():
     assert S.DEFAULTS["allow_direct_db_read"] is False
     schema = yaml.safe_load((ROOT / "plugin.yaml").read_text())["config_schema"]
     assert schema["allow_direct_db_read"]["default"] is False
-    assert S.PalaceSettings.from_getter(lambda k, d=None: d, ROOT).allow_direct_db_read is False
-    assert S.PalaceSettings.from_getter(lambda k, d=None: {"allow_direct_db_read": "on"}.get(k, d), ROOT).allow_direct_db_read
+    assert S.Hermes3DSettings.from_getter(lambda k, d=None: d, ROOT).allow_direct_db_read is False
+    assert S.Hermes3DSettings.from_getter(lambda k, d=None: {"allow_direct_db_read": "on"}.get(k, d), ROOT).allow_direct_db_read
 
 
 def test_scan_without_the_opt_in_opens_no_database(fake_root, monkeypatch):

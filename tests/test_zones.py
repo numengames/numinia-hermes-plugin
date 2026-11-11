@@ -5,10 +5,10 @@ from __future__ import annotations
 from conftest import run
 from fake_engine import FakeEngine
 
-from hermes_palace_lib import agentes, gasto
-from hermes_palace_lib.hub import Hub
-from hermes_palace_lib.protocol import make_object
-from hermes_palace_lib.zones import FALLBACK_ZONES, zone_for
+from hermes_3d_lib import agentes, gasto
+from hermes_3d_lib.hub import Hub
+from hermes_3d_lib.protocol import make_object
+from hermes_3d_lib.zones import FALLBACK_ZONES, zone_for
 
 # the zone map of the engine's ``hermes`` template (plantillas/hermes/entorno/espejo.json)
 TEMPLATE = [

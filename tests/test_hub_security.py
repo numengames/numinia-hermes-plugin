@@ -15,9 +15,9 @@ import stat
 import pytest
 from conftest import LOOP, run, until
 
-from hermes_palace_lib import hub as hub_mod
-from hermes_palace_lib import logsafe
-from hermes_palace_lib.hub import Hub
+from hermes_3d_lib import hub as hub_mod
+from hermes_3d_lib import logsafe
+from hermes_3d_lib.hub import Hub
 
 TOKEN = "tok-0123456789abcdef"
 
@@ -309,8 +309,7 @@ def test_unauthorized_never_runs_a_route():
 def test_redact_covers_known_values_and_the_shapes_secrets_travel_in():
     secret = "S3cr3t-value-0123456789"
     text = (
-        f"Authorization: Bearer {secret} MOTOR_ENLACE_CLAVE={secret} token={secret} "
-        f"HERMES_PALACE_LINK_KEY: {secret} plain {secret}"
+        f"Authorization: Bearer {secret} MOTOR_ENLACE_CLAVE={secret} token={secret} HERMES_3D_LINK_KEY: {secret} plain {secret}"
     )
     out = logsafe.redact(text, {secret})
     assert secret not in out and out.count(logsafe.REDACTED) >= 4
@@ -334,10 +333,8 @@ def test_every_log_line_is_redacted_and_the_file_is_private(tmp_path):
             assert (await raw(port, req))[0] == 500
 
         run(with_hub(main, on_route=boom))
-        logging.getLogger("hermes_palace").warning(
-            "link key is %s and header Authorization: Bearer %s", "abcdef0123456789xyz", TOKEN
-        )
-        logging.getLogger("hermes_palace").info("tuple arg %s", ("k=" + TOKEN,))
+        logging.getLogger("hermes_3d").warning("link key is %s and header Authorization: Bearer %s", "abcdef0123456789xyz", TOKEN)
+        logging.getLogger("hermes_3d").info("tuple arg %s", ("k=" + TOKEN,))
         for handler in root.handlers:
             handler.flush()
     finally:

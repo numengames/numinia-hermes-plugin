@@ -9,7 +9,7 @@ from conftest import run
 from fake_engine import FakeEngine
 from test_bridge import Reader, make_bridge, started, stop
 
-from hermes_palace_lib import crontable
+from hermes_3d_lib import crontable
 
 JOBS = {
     "jobs": [

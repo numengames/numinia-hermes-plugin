@@ -7,7 +7,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from hermes_palace_lib import proyectos
+from hermes_3d_lib import proyectos
 
 
 def _db(path: Path, projects: list[tuple], folders: list[tuple] | None = None) -> None:
@@ -71,7 +71,7 @@ def test_reader_never_writes(tmp_path):
     assert (hashlib.sha256(db.read_bytes()).hexdigest(), db.stat().st_mtime_ns) == before
     assert sorted(p.name for p in db.parent.iterdir()) == ["config.yaml", "projects.db"]  # no -wal/-journal left
     # and the connection it uses refuses writes
-    from hermes_palace_lib.scan import _open_ro
+    from hermes_3d_lib.scan import _open_ro
 
     con = _open_ro(db)
     try:
@@ -131,8 +131,8 @@ def test_project_objects_empty_or_failed_section():
 def test_bridge_publishes_projects_only_when_the_function_is_on(tmp_path):
     import asyncio
 
-    from hermes_palace_lib import bridge_main
-    from hermes_palace_lib import settings as S
+    from hermes_3d_lib import bridge_main
+    from hermes_3d_lib import settings as S
 
     root = _home(tmp_path)
 
@@ -144,7 +144,7 @@ def test_bridge_publishes_projects_only_when_the_function_is_on(tmp_path):
 
     off = make(["salud"])
     asyncio.run(off.run_scan())
-    assert off.mirror_objects() == {}
+    assert set(off.mirror_objects()) == {"salud/version"}  # only the always-on card
     on = make(["salud", "proyectos"])
     asyncio.run(on.run_scan())
-    assert set(on.mirror_objects()) == {"proyecto/p-web", "proyecto/p-old"}
+    assert set(on.mirror_objects()) - {"salud/version"} == {"proyecto/p-web", "proyecto/p-old"}

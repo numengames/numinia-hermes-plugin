@@ -9,7 +9,7 @@ what you did, what you expected and what happened. You get an acknowledgement wi
 Please allow 90 days before public disclosure; we will credit you if you wish.
 
 ## Scope
-In scope: the loopback bridge (`hermes_palace_lib/hub.py`), the handling of the link key and runtime files,
+In scope: the loopback bridge (`hermes_3d_lib/hub.py`), the handling of the link key and runtime files,
 anything that runs a subprocess, the scan's read-only guarantee, the Desktop front and dashboard routes.
 
 Out of scope: the Numinia Engine itself (report to its project), Hermes Agent itself, attacks that already

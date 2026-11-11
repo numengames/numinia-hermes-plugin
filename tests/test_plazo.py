@@ -8,9 +8,9 @@ from urllib.parse import urlparse
 
 from conftest import LOOP
 
-from hermes_palace_lib import plazo
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.protocol import MAX_TITLE, MAX_URL, OBJECT_KEYS
+from hermes_3d_lib import plazo
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.protocol import MAX_TITLE, MAX_URL, OBJECT_KEYS
 
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,31}$")
 D = plazo.DEADLINE
@@ -71,11 +71,16 @@ def test_links_are_the_official_https_pages_with_listed_origins():
 
 
 def test_documentos_switch_gates_the_clock(fake_root, tmp_path):
-    from hermes_palace_lib import bridge_main
+    from hermes_3d_lib import bridge_main
 
-    def bridge(on):
+    def bridge(on, clock=True):
         b = bridge_main.Bridge(
-            tmp_path / "home", engine_url=f"ws://{LOOP}:1", link_key="k", scan_root=fake_root, allow_direct_db=True
+            tmp_path / "home",
+            engine_url=f"ws://{LOOP}:1",
+            link_key="k",
+            scan_root=fake_root,
+            allow_direct_db=True,
+            deadline_clock=clock,
         )
         b.hub.engine_functions = {n: (n in on) for n in S.FUNCTIONS}
         b.hub.switches = {n: (n in on) for n in S.FUNCTIONS}
@@ -88,11 +93,28 @@ def test_documentos_switch_gates_the_clock(fake_root, tmp_path):
     assert len(got) == 6 and "documento/plazo-reloj" in got
 
 
-def test_a_tick_publishes_only_the_clock(fake_root, tmp_path):
-    from hermes_palace_lib import bridge_main
+def test_the_clock_is_off_by_default(fake_root, tmp_path):
+    from hermes_3d_lib import bridge_main
 
+    assert S.Hermes3DSettings.from_getter(lambda key, default=None: default, tmp_path).deadline_clock is False
     b = bridge_main.Bridge(
         tmp_path / "home", engine_url=f"ws://{LOOP}:1", link_key="k", scan_root=fake_root, allow_direct_db=True
+    )
+    b.hub.engine_functions = {n: True for n in S.FUNCTIONS}
+    b.hub.switches = {n: True for n in S.FUNCTIONS}
+    assert not [k for k in b.mirror_objects() if "plazo" in k]
+
+
+def test_a_tick_publishes_only_the_clock(fake_root, tmp_path):
+    from hermes_3d_lib import bridge_main
+
+    b = bridge_main.Bridge(
+        tmp_path / "home",
+        engine_url=f"ws://{LOOP}:1",
+        link_key="k",
+        scan_root=fake_root,
+        allow_direct_db=True,
+        deadline_clock=True,
     )
     b.hub.engine_functions = {n: (n == "documentos") for n in S.FUNCTIONS}
     b.hub.switches = {n: (n == "documentos") for n in S.FUNCTIONS}

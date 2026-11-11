@@ -1,5 +1,5 @@
 {
-  "_comment": "Pin of the Numinia Engine RELEASE that `hermes palace install-engine` may download. TODO-PUBLISH in `tag` or `sha256` makes the command refuse with a clear message until a release that contains the hermes template is published and pinned: set `tag` (e.g. motor-7b51e2c), `sha256` (the line of SHA256SUMS for `asset`), `size_bytes` (exact size of the asset; 0 = not pinned, then a 120 MB cap applies) and `entry` if it changed. `url` may use {tag} and {asset}.",
+  "_comment": "Pin of the Numinia Engine RELEASE that `hermes 3d install-engine` may download. TODO-PUBLISH in `tag` or `sha256` makes the command refuse with a clear message until a release that contains the hermes template is published and pinned: set `tag` (e.g. motor-7b51e2c), `sha256` (the line of SHA256SUMS for `asset`), `size_bytes` (exact size of the asset; 0 = not pinned, then a 120 MB cap applies) and `entry` if it changed. `url` may use {tag} and {asset}.",
   "source": "https://github.com/numengames/numinia-engine",
   "tag": "motor-7c6c9a2",
   "asset": "instalar-motor.sh",

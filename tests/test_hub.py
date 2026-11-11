@@ -7,8 +7,8 @@ import pytest
 from conftest import run, until
 from fake_engine import FakeEngine
 
-from hermes_palace_lib import protocol as P
-from hermes_palace_lib.hub import Hub
+from hermes_3d_lib import protocol as P
+from hermes_3d_lib.hub import Hub
 
 
 async def _http(
@@ -55,7 +55,7 @@ def test_handshake_ok_and_lote_on_connect():
         await asyncio.wait_for(hub.connected_event.wait(), 5)
         lote = await eng.wait_for(lambda f: f["t"] == "lote")
         assert lote["objetos"][0]["id"] == "abc12345"
-        assert eng.hellos[0]["plugin"] == "hermes-palace"
+        assert eng.hellos[0]["plugin"] == "hermes-3d"
         assert eng.origins_seen == [None]  # the plugin sends no Origin
         assert hub.engine_functions == {
             "salud": True,

@@ -1,4 +1,4 @@
-"""P3-3: ``hermes palace demo`` - your own Hermes as a world, read-only, with agents, spend and cron on."""
+"""P3-3: ``hermes 3d demo`` - your own Hermes as a world, read-only, with agents, spend and cron on."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from fake_engine import FakeEngine
 from test_bridge import Reader, listing, started, stop
 from test_entry import load_entry
 
-from hermes_palace_lib import client, config, supervisor
-from hermes_palace_lib.bridge_main import Bridge
+from hermes_3d_lib import client, config, supervisor
+from hermes_3d_lib.bridge_main import Bridge
 
 
 def make_home(home):
@@ -37,7 +37,7 @@ def fake_runtime(monkeypatch, bridge_status, spawned):
     monkeypatch.setattr(
         supervisor,
         "spawn_bridge",
-        lambda home, read_only=False, demo=False, hold_fd=None: spawned.append((read_only, demo)) or 4242,
+        lambda home, read_only=False, demo=False, hold_fd=None, world=None: spawned.append((read_only, demo)) or 4242,
     )
 
     def call(method, path, body=None, home=None, **kw):
@@ -102,7 +102,7 @@ def test_demo_does_not_reuse_a_running_read_write_bridge(hermes_home, monkeypatc
     fake_runtime(monkeypatch, {"connected": True, "read_only": False, "demo": False}, spawned)
     config.write_runtime({"pid": 1234, "port": 1, "token": "t"}, hermes_home)
     monkeypatch.setattr(config, "pid_alive", lambda pid: True)
-    with pytest.raises(supervisor.SupervisorError, match="palace down"):
+    with pytest.raises(supervisor.SupervisorError, match="3d down"):
         load_entry().cmd_demo()
     assert spawned == []
 
@@ -110,7 +110,7 @@ def test_demo_does_not_reuse_a_running_read_write_bridge(hermes_home, monkeypatc
 def test_demo_without_an_engine_says_what_is_missing(hermes_home, capsys):
     make_home(hermes_home)
     mod = load_entry()
-    assert mod._cli(type("A", (), {"palace_cmd": "demo"})()) == 1
+    assert mod._cli(type("A", (), {"hermes3d_cmd": "demo"})()) == 1
     assert "engine_path" in capsys.readouterr().err
 
 
@@ -120,13 +120,11 @@ def test_demo_is_a_cli_subcommand(hermes_home):
     mod = load_entry()
     p = argparse.ArgumentParser()
     mod._setup_cli(p)
-    assert p.parse_args(["demo"]).palace_cmd == "demo"
+    assert p.parse_args(["demo"]).hermes3d_cmd == "demo"
 
 
 def test_demo_bridge_is_read_only_whatever_the_settings_and_mirrors_agents_spend_cron(hermes_home):
-    (hermes_home / "config.yaml").write_text(
-        "plugins:\n  entries:\n    hermes-palace:\n      settings:\n        read_only: false\n"
-    )
+    (hermes_home / "config.yaml").write_text("plugins:\n  entries:\n    hermes-3d:\n      settings:\n        read_only: false\n")
     b = Bridge(hermes_home, demo=True)
     assert b.read_only is True and b.hub.status()["demo"] is True
     assert all(b.switches[f] for f in ("salud", "cron", "agentes", "gasto"))
@@ -165,7 +163,7 @@ def test_demo_bridge_refuses_world_requests_end_to_end(hermes_home):
 
 
 def test_bridge_main_demo_flag(hermes_home, monkeypatch):
-    from hermes_palace_lib import bridge_main
+    from hermes_3d_lib import bridge_main
 
     seen = {}
 

@@ -1,6 +1,6 @@
 """A FAKE Numinia Engine "enlace-espejo" server for tests.
 
-Speaks the protocol of A0 §3 / ``hermes_palace_lib.protocol`` exactly as the engine side is meant
+Speaks the protocol of A0 §3 / ``hermes_3d_lib.protocol`` exactly as the engine side is meant
 to: single-use nonce challenge, HMAC check, ``Origin`` rejection, 16 KB frames, ``hola`` with
 ``funciones`` (a list of what is ON), then collects every frame the plugin sends and can push ``peticion`` frames.
 
@@ -18,7 +18,7 @@ from typing import Any
 
 import websockets
 
-from hermes_palace_lib import protocol as P
+from hermes_3d_lib import protocol as P
 
 
 class FakeEngine:

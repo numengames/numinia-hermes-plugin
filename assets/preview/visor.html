@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>cargando</title>
+<style>body{margin:0;overflow:hidden;background:#000}</style>
+<script type="importmap">{"imports":{"three":"/motor-hermes/node_modules/three/build/three.module.js","three/addons/":"/motor-hermes/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+const q=new URLSearchParams(location.search);
+const clip=q.get("clip")||"Walking",t=parseFloat(q.get("t")||"0.25"),az=parseFloat(q.get("az")||"35");
+const r=new THREE.WebGLRenderer({antialias:true});r.setSize(innerWidth,innerHeight);document.body.appendChild(r.domElement);
+const s=new THREE.Scene();s.background=new THREE.Color(0x000000);
+s.add(new THREE.HemisphereLight(0xffffff,0x444444,2.2));
+const dl=new THREE.DirectionalLight(0xffffff,1.5);dl.position.set(2,3,4);s.add(dl);
+s.add(new THREE.GridHelper(4,8,0x555555,0x2a2a2a));
+const c=new THREE.PerspectiveCamera(35,innerWidth/innerHeight,0.1,50);
+const a=az*Math.PI/180;c.position.set(Math.sin(a)*3.4,1.0,Math.cos(a)*3.4);c.lookAt(0,0.85,0);
+try{
+  const gl=await new GLTFLoader().loadAsync(q.get("f")||"/plugin-hermes-3d/assets/muneco-palo.glb");
+  s.add(gl.scene);
+  const m=new THREE.AnimationMixer(gl.scene);
+  m.clipAction(gl.animations.find(x=>x.name===clip)).play();
+  m.setTime(t);
+  r.render(s,c);
+  document.title="listo "+gl.animations.map(x=>x.name+":"+x.duration).join(",");
+}catch(e){document.title="error: "+e}
+</script>

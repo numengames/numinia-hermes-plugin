@@ -7,7 +7,7 @@ import asyncio
 from conftest import run
 from test_hub_security import raw, request, with_hub
 
-from hermes_palace_lib import hub as hub_mod
+from hermes_3d_lib import hub as hub_mod
 
 
 async def raw_from(source: str, port: int, payload: bytes) -> int:

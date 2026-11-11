@@ -9,7 +9,7 @@ from conftest import run, until
 from fake_engine import FakeEngine
 from test_bridge import Reader, listing, make_bridge, started, stop
 
-from hermes_palace_lib import logsafe, scan
+from hermes_3d_lib import logsafe, scan
 
 
 def test_describe_keeps_the_class_and_a_redacted_bounded_message():

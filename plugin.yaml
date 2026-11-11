@@ -1,6 +1,6 @@
-name: hermes-palace
-version: 0.7.2-rc1
-description: "Bridge between Hermes and a local Numinia Engine 'hermes' world: cron, sessions and health as places you can walk through."
+name: hermes-3d
+version: 0.8.0
+description: "Turn your Hermes into a 3D game world you can walk through. Your scheduled jobs, conversations and system health become places to explore, right on your own computer. Anything that changes Hermes, like pausing a job, waits for your approval. Built on the Numinia Engine by Numen Games."
 author: "Numen (numengames)"
 license: MIT
 homepage: "https://numen.games"
@@ -12,8 +12,8 @@ requires_hermes: ">=0.22.0, <0.24"
 
 # Everything this plugin registers (kept equal to the code; the validator checks it).
 provides_tools:
-  - palace_state
-  - palace_cron_action
+  - hermes3d_state
+  - hermes3d_cron_action
 provides_hooks:
   - pre_tool_call
   - post_tool_call
@@ -28,19 +28,19 @@ provides_hooks:
 # Privileged host surfaces: none. No tool override, no ctx.llm, no platform actions.
 capabilities: []
 
-# Settings (Settings -> Plugins in Desktop; plugins.entries.hermes-palace.settings in config.yaml).
+# Settings (Settings -> Plugins in Desktop; plugins.entries.hermes-3d.settings in config.yaml).
 # Only `salud` is on by default, as in the world's function table.
 config_schema:
   engine_path:
     type: str
     default: ""
     label: "Numinia Engine folder"
-    description: "Folder of a Numinia Engine checkout (contains packages/server/src/main.ts). Needed for `hermes palace up`; the built page is expected at <folder>/dist/plaza."
+    description: "Folder of a Numinia Engine checkout (contains packages/server/src/main.ts). Needed for `hermes 3d up`; the built page is expected at <folder>/dist/plaza."
   world_path:
     type: str
     default: ""
     label: "World folder"
-    description: "Where the world lives. Empty = <HERMES_HOME>/hermes-palace/mundo. Must be an absolute path without symlinks."
+    description: "Where the world lives. Empty = <HERMES_HOME>/hermes-3d/mundo. Must be an absolute path without symlinks."
   engine_port:
     type: int
     default: 8790
@@ -105,7 +105,7 @@ config_schema:
     type: str
     default: ""
     label: "Docs viewer folder"
-    description: "Folder of the docs-visor repo (build-docs.sh, serve.mjs) for `hermes palace docs`. Empty = the folder docs-visor next to this plugin."
+    description: "Folder of the docs-visor repo (build-docs.sh, serve.mjs) for `hermes 3d docs`. Empty = the folder docs-visor next to this plugin."
   docs_viewer_port:
     type: int
     default: 8791
@@ -115,7 +115,7 @@ config_schema:
     type: int
     default: 30
     label: "Scan window (days)"
-    description: "Window for the spend and session counts of `hermes palace scan` (1-365)."
+    description: "Window for the spend and session counts of `hermes 3d scan` (1-365)."
   read_only:
     type: bool
     default: false
@@ -126,6 +126,11 @@ config_schema:
     default: false
     label: "Read Hermes' databases directly"
     description: "Spend (tokens, cost) has no public Hermes API, so the plugin reads state.db itself, read-only, numbers only, never message text, and only when it changed. The work board comes from `hermes kanban list --json` first; the database is the fallback for it. Off = Spend publishes nothing."
+  deadline_clock:
+    type: bool
+    default: false
+    label: "Show the hackathon delivery clock"
+    description: "Adds a countdown card and the official hackathon links to the world. Off by default; only useful during the Nous plugin hackathon."
   embed_credential_ttl_s:
     type: int
     default: 3600
@@ -140,15 +145,15 @@ config_schema:
     type: bool
     default: true
     label: "Open the engine link"
-    description: "Keep on for hosted worlds. Turn off when the world lives inside Hermes Desktop (Palace page): an open link would displace the embedded page."
+    description: "Keep on for hosted worlds. Turn off when the world lives inside Hermes Desktop (Hermes 3D page): an open link would displace the embedded page."
   link_key:
     type: secret
-    env: HERMES_PALACE_LINK_KEY
+    env: HERMES_3D_LINK_KEY
     label: "Engine link key"
     description: "Only needed to join an engine you started yourself: that engine's MOTOR_ENLACE_CLAVE. Stored in .env, never in config.yaml. Empty = the plugin generates and uses its own key."
 
 # Not `requires_env`: Hermes asks for those at install time and the plugin does not need any. It makes its own link key.
 optional_env:
-  - name: HERMES_PALACE_LINK_KEY
+  - name: HERMES_3D_LINK_KEY
     secret: true
     description: "Engine link key (see link_key)."

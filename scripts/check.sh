@@ -25,8 +25,8 @@ gate() { # gate <name> <command...>
 gate "ruff format"  "$py" -m ruff format --check .
 gate "ruff lint"    "$py" -m ruff check .
 gate "mypy"         "$py" -m mypy
-gate "mypy --strict (new modules)" "$py" -m mypy --strict hermes_palace_lib/settings.py hermes_palace_lib/linkkey.py \
-                                    hermes_palace_lib/procid.py hermes_palace_lib/logsafe.py hermes_palace_lib/worldtext.py
+gate "mypy --strict (new modules)" "$py" -m mypy --strict hermes_3d_lib/settings.py hermes_3d_lib/linkkey.py \
+                                    hermes_3d_lib/procid.py hermes_3d_lib/logsafe.py hermes_3d_lib/worldtext.py
 gate "pytest + coverage >= 90%" "$py" -m pytest -q --no-header --cov --cov-report=term-missing:skip-covered
 
 if [ -n "${REACT_DIR:-}" ] && command -v node >/dev/null; then

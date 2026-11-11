@@ -1,6 +1,6 @@
-// hermes-palace — desktop half. Plain ESM, no build step, no JSX.
+// hermes-3d — desktop half. Plain ESM, no build step, no JSX.
 // Imports only @hermes/plugin-sdk, react and react/jsx-runtime (catalog rule 8).
-// Talks only to its own backend namespace (/api/plugins/hermes-palace/) through ctx.rest, and
+// Talks only to its own backend namespace (/api/plugins/hermes-3d/) through ctx.rest, and
 // opens the world page through the curated OS door (ctx.os.openExternal).
 import { Badge, Button, Codicon, ROUTES_AREA, SIDEBAR_NAV_AREA, SandboxedFrame, StatusDot, host } from '@hermes/plugin-sdk'
 import { useEffect, useRef, useState } from 'react'
@@ -9,7 +9,7 @@ import { jsx, jsxs } from 'react/jsx-runtime'
 const POLL_MS = 5000
 // Path A: the world INSIDE Desktop. The page is a SandboxedFrame (opaque origin, no allow-same-origin); this file is the parent
 // and the only messenger: the engine trusts a short-lived credential in the frame's URL fragment, never `event.origin`.
-const EVENT_PREFIX = 'plugin.hermes-palace.'
+const EVENT_PREFIX = 'plugin.hermes-3d.'
 const FRAME_SANDBOX = 'allow-scripts allow-pointer-lock'
 const MAX_MESSAGE_BYTES = 16 * 1024 // the engine's cap for one message, either way
 const REFRESH_DEBOUNCE_MS = 1500
@@ -30,18 +30,18 @@ const LOCALES = {
     gasto: 'Spend — tokens and estimated cost per profile (read-only)',
     habilidades: 'Skills — every skill as a tablet in the workshop (read-only)',
     kanban: 'Kanban — the work board: cards per column (read-only)',
-    documentos: 'Documentation — curated pages in the library (needs `hermes palace docs`)',
+    documentos: 'Documentation — curated pages in the library (needs `hermes 3d docs`)',
     connected: 'connected', bridgeNoEngine: 'bridge, no engine', off: 'off',
     chipError: 'World · no answer', chipConnected: 'World · connected', chipNoEngine: 'World · no engine', chipOff: 'World · off',
     togglePanel: 'Show or hide the world panel', openBrowser: 'Open the world in the browser', notConnected: 'The world is not connected',
-    notRunning: 'The world is not running. Run `hermes palace up`.', couldNotOpen: 'Could not open the world',
+    notRunning: 'The world is not running. Run `hermes 3d up`.', couldNotOpen: 'Could not open the world',
     loading: 'Loading…',
     errorPrefix: 'No answer from the backend: ', errorSuffix: '. Is the plugin enabled in config.yaml?',
-    disconnected: 'The world is not connected. Start it with `hermes palace up`.',
+    disconnected: 'The world is not connected. Start it with `hermes 3d up`.',
     empty: 'The world is connected but reports no functions yet.',
     functionsHint: 'Functions (change them in Settings → Plugins)', active: 'active', waiting: 'waiting for the world',
     openWorld: 'Open the world', readOnly: 'read-only',
-    navLabel: 'Palace', frameTitle: 'Hermes Palace world', reload: 'Reload', retry: 'Try again',
+    navLabel: 'Hermes 3D', frameTitle: 'Hermes 3D world', reload: 'Reload', retry: 'Try again',
     embedLoading: 'Opening the world…', embedWaiting: 'Waiting for the world to say hello…', embedConnected: 'Connected',
     embedDown: 'The world is not running.', embedNoKey: 'The plugin has no link key yet.', embedOff: 'This world does not accept an embedded page yet.',
     embedBad: 'The plugin settings are not valid.', embedError: 'Could not open the world: ', runCommand: 'Run',
@@ -55,18 +55,18 @@ const LOCALES = {
     gasto: 'Gasto — tokens y coste estimado por perfil (solo lectura)',
     habilidades: 'Habilidades — cada habilidad como una tablilla en el taller (solo lectura)',
     kanban: 'Tablero — el tablero de trabajo: tarjetas por columna (solo lectura)',
-    documentos: 'Documentación — páginas elegidas en la biblioteca (necesita `hermes palace docs`)',
+    documentos: 'Documentación — páginas elegidas en la biblioteca (necesita `hermes 3d docs`)',
     connected: 'conectado', bridgeNoEngine: 'puente, sin motor', off: 'apagado',
     chipError: 'Mundo · sin respuesta', chipConnected: 'Mundo · conectado', chipNoEngine: 'Mundo · sin motor', chipOff: 'Mundo · apagado',
     togglePanel: 'Mostrar u ocultar el panel del mundo', openBrowser: 'Abrir el mundo en el navegador', notConnected: 'El mundo no está conectado',
-    notRunning: 'El mundo no está en marcha. Ejecute `hermes palace up`.', couldNotOpen: 'No se pudo abrir el mundo',
+    notRunning: 'El mundo no está en marcha. Ejecute `hermes 3d up`.', couldNotOpen: 'No se pudo abrir el mundo',
     loading: 'Cargando…',
     errorPrefix: 'Sin respuesta del servidor: ', errorSuffix: '. ¿Está activado el complemento en config.yaml?',
-    disconnected: 'El mundo no está conectado. Arránquelo con `hermes palace up`.',
+    disconnected: 'El mundo no está conectado. Arránquelo con `hermes 3d up`.',
     empty: 'El mundo está conectado pero aún no informa de ninguna función.',
     functionsHint: 'Funciones (cámbielas en Ajustes → Complementos)', active: 'activa', waiting: 'esperando al mundo',
     openWorld: 'Abrir el mundo', readOnly: 'solo lectura',
-    navLabel: 'Palace', frameTitle: 'Mundo de Hermes Palace', reload: 'Recargar', retry: 'Reintentar',
+    navLabel: 'Hermes 3D', frameTitle: 'Mundo de Hermes 3D', reload: 'Recargar', retry: 'Reintentar',
     embedLoading: 'Abriendo el mundo…', embedWaiting: 'Esperando a que el mundo salude…', embedConnected: 'Conectado',
     embedDown: 'El mundo no está en marcha.', embedNoKey: 'El complemento aún no tiene clave de enlace.', embedOff: 'Este mundo aún no admite una página incrustada.',
     embedBad: 'Los ajustes del complemento no son válidos.', embedError: 'No se pudo abrir el mundo: ', runCommand: 'Ejecute',
@@ -205,7 +205,7 @@ export function createBridge({ rest, getWindow, now = Date.now, schedule, onStat
 }
 
 // One shared, tiny poller so the chip and the pane never double-request.
-function usePalace(ctx) {
+function useHermes3D(ctx) {
   const [state, setState] = useState({ loading: true, status: null, switches: null, error: '' })
   useEffect(() => {
     let alive = true
@@ -240,7 +240,7 @@ async function openWorld(ctx) {
 }
 
 function Chip({ ctx }) {
-  const { status, error } = usePalace(ctx)
+  const { status, error } = useHermes3D(ctx)
   const bridgeUp = !!(status && status.bridge)
   const connected = !!(status && status.connected)
   const label = tr(ctx, error ? 'chipError' : connected ? 'chipConnected' : bridgeUp ? 'chipNoEngine' : 'chipOff')
@@ -274,7 +274,7 @@ function Chip({ ctx }) {
 }
 
 function Pane({ ctx }) {
-  const { loading, status, switches, error } = usePalace(ctx)
+  const { loading, status, switches, error } = useHermes3D(ctx)
   const rows = (switches && switches.functions) || []
   const view = viewState({ loading, status, switches, error })
   const note = {
@@ -290,7 +290,7 @@ function Pane({ ctx }) {
       jsxs('div', {
         className: 'flex items-center justify-between',
         children: [
-          jsx('div', { className: 'font-medium', children: 'Hermes Palace' }),
+          jsx('div', { className: 'font-medium', children: 'Hermes 3D' }),
           jsxs('span', {
             className: 'flex items-center gap-1',
             children: [
@@ -324,7 +324,7 @@ function Pane({ ctx }) {
 // ---- the page: the world inside Desktop ----
 function commandOf(hint) {
   const m = /`([^`]+)`/.exec(String(hint || ''))
-  return m ? m[1] : 'hermes palace up'
+  return m ? m[1] : 'hermes 3d up'
 }
 
 // loading -> (down | error | ready); ready is "connected" once the world has said hello.
@@ -333,7 +333,7 @@ function pageView(state) {
   return state.phase
 }
 
-function PalacePage({ ctx }) {
+function Hermes3DPage({ ctx }) {
   const [state, setState] = useState({ phase: 'loading', url: '', code: '', hint: '', error: '', hola: false, readOnly: false, note: '', n: 0 })
   const frameRef = useRef(null)
   const bridgeRef = useRef(null)
@@ -375,7 +375,7 @@ function PalacePage({ ctx }) {
   const head = jsxs('div', {
     className: 'flex items-center justify-between gap-2 border-b border-(--ui-border) px-3 py-1.5 text-sm',
     children: [
-      jsx('div', { className: 'font-medium', children: 'Hermes Palace' }),
+      jsx('div', { className: 'font-medium', children: 'Hermes 3D' }),
       jsxs('span', {
         className: 'flex items-center gap-1',
         children: [
@@ -412,8 +412,8 @@ function PalacePage({ ctx }) {
 }
 
 export default {
-  id: 'hermes-palace', // must equal the folder name
-  name: 'Hermes Palace',
+  id: 'hermes-3d', // must equal the folder name
+  name: 'Hermes 3D',
   defaultEnabled: false, // opt-in, like the Python half
   register(ctx) {
     ctx.registerMany([
@@ -423,8 +423,8 @@ export default {
         data: { placement: 'right', width: '300px' },
         render: () => jsx(Pane, { ctx })
       },
-      { id: 'page', area: ROUTES_AREA, data: { path: '/palace' }, render: () => jsx(PalacePage, { ctx }) },
-      { id: 'nav', area: SIDEBAR_NAV_AREA, data: { path: '/palace', label: tr(ctx, 'navLabel'), codicon: 'globe' } }
+      { id: 'page', area: ROUTES_AREA, data: { path: '/hermes-3d' }, render: () => jsx(Hermes3DPage, { ctx }) },
+      { id: 'nav', area: SIDEBAR_NAV_AREA, data: { path: '/hermes-3d', label: tr(ctx, 'navLabel'), codicon: 'globe' } }
     ])
   }
 }

@@ -13,9 +13,9 @@ from fake_engine import FakeEngine
 from test_bridge import Reader, _http, listing, make_bridge, started, stop
 from test_entry import FakeCtx, load_entry
 
-from hermes_palace_lib import actions, client, config, supervisor
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.worldtext import say
+from hermes_3d_lib import actions, client, config, supervisor
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.worldtext import say
 
 PAUSE = {
     "t": "peticion",
@@ -31,8 +31,8 @@ PAUSE = {
 # ---- settings -------------------------------------------------------------------------------------------
 def test_read_only_defaults_to_false_and_reads_the_setting(hermes_home):
     assert S.DEFAULTS["read_only"] is False
-    assert S.PalaceSettings.from_getter(lambda k, d=None: d, hermes_home).read_only is False
-    on = S.PalaceSettings.from_getter(lambda k, d=None: {"read_only": True}.get(k, d), hermes_home)
+    assert S.Hermes3DSettings.from_getter(lambda k, d=None: d, hermes_home).read_only is False
+    on = S.Hermes3DSettings.from_getter(lambda k, d=None: {"read_only": True}.get(k, d), hermes_home)
     assert on.read_only is True
     assert S.read_only(lambda k, d=None: "yes") is True
     assert S.read_only(lambda k, d=None: "banana") is False  # unknown text keeps the default
@@ -96,10 +96,10 @@ def test_no_object_offers_a_verb_and_the_world_card_says_read_only(hermes_home):
         b = make_bridge(hermes_home, eng, Reader(listing("cron_list_many.txt")), read_only=True)
         await started(b, eng)
         await until(lambda: any(o["tipo"] == "cron" for o in _all_objects(eng)))
-        await until(lambda: any(o["tipo"] == "salud" for o in _all_objects(eng)))
+        await until(lambda: any(o["tipo"] == "salud" and o["id"] == "hermes" for o in _all_objects(eng)))
         objs = _all_objects(eng)
         assert [o for o in objs if o.get("acciones")] == [], "a read-only world must not offer buttons"
-        card = next(o for o in objs if o["tipo"] == "salud")
+        card = next(o for o in objs if o["tipo"] == "salud" and o["id"] == "hermes")
         assert "read-only" in card["titulo"] and "read-only" in card["subtitulo"]
         await stop(b, eng)
 
@@ -113,7 +113,7 @@ def test_without_read_only_the_cron_objects_keep_their_verbs_and_no_card(hermes_
         b = make_bridge(hermes_home, eng, Reader(listing("cron_list_many.txt")))
         await started(b, eng)
         await until(lambda: any(o["tipo"] == "cron" and o["acciones"] for o in _all_objects(eng)))
-        assert not any(o["tipo"] == "salud" for o in _all_objects(eng))
+        assert not any(o["tipo"] == "salud" and o["id"] == "hermes" for o in _all_objects(eng))
         assert b.hub.status()["read_only"] is False
         await stop(b, eng)
 
@@ -128,7 +128,7 @@ def test_the_tool_refuses_without_touching_the_bridge_or_hermes(hermes_home, mon
     ctx = FakeCtx({"read_only": True})
     mod = load_entry()
     mod.register(ctx)
-    out = json.loads(ctx.tools["palace_cron_action"].handler({"job_id": "8bc0eecea9b5", "verb": "cron.pausar"}))
+    out = json.loads(ctx.tools["hermes3d_cron_action"].handler({"job_id": "8bc0eecea9b5", "verb": "cron.pausar"}))
     assert out["ok"] is False and "read-only" in out["text"]
     assert calls == []
 
@@ -139,7 +139,7 @@ def test_the_tool_obeys_a_bridge_that_was_started_read_only_by_flag(hermes_home,
     monkeypatch.setattr(actions, "run_cron_cli", lambda *a, **k: ran.append(1) or {"ok": True, "text": "x"})
     ctx = FakeCtx()  # config.yaml says read_only false; the bridge says otherwise
     load_entry().register(ctx)
-    out = json.loads(ctx.tools["palace_cron_action"].handler({"job_id": "8bc0eecea9b5", "verb": "cron.pausar"}))
+    out = json.loads(ctx.tools["hermes3d_cron_action"].handler({"job_id": "8bc0eecea9b5", "verb": "cron.pausar"}))
     assert out["ok"] is False and "read-only" in out["text"] and ran == []
 
 
@@ -165,7 +165,9 @@ def _fake_start(monkeypatch, spawned):
         lambda cfg, **kw: {"reused": True, "port": cfg.engine_port, "link_port": 8791, "pid": None},
     )
     monkeypatch.setattr(
-        supervisor, "spawn_bridge", lambda home, read_only=False, demo=False, hold_fd=None: spawned.append(read_only) or 4242
+        supervisor,
+        "spawn_bridge",
+        lambda home, read_only=False, demo=False, hold_fd=None, world=None: spawned.append(read_only) or 4242,
     )
 
 
@@ -181,9 +183,7 @@ def test_up_flag_reaches_the_bridge_process(hermes_home, monkeypatch, capsys):
 def test_the_setting_alone_also_starts_the_bridge_read_only(hermes_home, monkeypatch):
     spawned: list[bool] = []
     _fake_start(monkeypatch, spawned)
-    (hermes_home / "config.yaml").write_text(
-        "plugins:\n  entries:\n    hermes-palace:\n      settings:\n        read_only: true\n"
-    )
+    (hermes_home / "config.yaml").write_text("plugins:\n  entries:\n    hermes-3d:\n      settings:\n        read_only: true\n")
     assert load_entry().cmd_up() == 0
     assert spawned == [True]
 
@@ -193,7 +193,7 @@ def test_up_refuses_to_reuse_a_bridge_that_is_not_read_only(hermes_home, monkeyp
     config.write_runtime({"pid": 1234, "port": 1, "token": "t"}, hermes_home)
     monkeypatch.setattr(config, "pid_alive", lambda pid: True)
     monkeypatch.setattr(client, "call", lambda *a, **k: {"ok": True, "data": {"read_only": False}})
-    with pytest.raises(supervisor.SupervisorError, match="palace down"):
+    with pytest.raises(supervisor.SupervisorError, match="3d down"):
         load_entry().cmd_up(read_only=True)
 
 
@@ -210,15 +210,13 @@ def test_status_prints_the_mode(hermes_home, monkeypatch, capsys):
     mod.cmd_status()
     assert "read-write" in capsys.readouterr().out
     monkeypatch.setattr(client, "call", lambda *a, **k: {"ok": False, "error": "bridge-not-running"})
-    (hermes_home / "config.yaml").write_text(
-        "plugins:\n  entries:\n    hermes-palace:\n      settings:\n        read_only: true\n"
-    )
+    (hermes_home / "config.yaml").write_text("plugins:\n  entries:\n    hermes-3d:\n      settings:\n        read_only: true\n")
     mod.cmd_status()
     assert "read-only (setting" in capsys.readouterr().out
 
 
 def test_bridge_main_reads_the_flag_and_records_it(hermes_home, monkeypatch):
-    from hermes_palace_lib import bridge_main
+    from hermes_3d_lib import bridge_main
 
     seen = {}
 

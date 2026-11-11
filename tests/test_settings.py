@@ -9,17 +9,17 @@ import pytest
 import yaml
 from conftest import LOOP, ROOT
 
-from hermes_palace_lib import settings as S
+from hermes_3d_lib import settings as S
 
 
 def write_config(home: Path, settings: dict) -> None:
-    (home / "config.yaml").write_text(yaml.safe_dump({"plugins": {"entries": {"hermes-palace": {"settings": settings}}}}))
+    (home / "config.yaml").write_text(yaml.safe_dump({"plugins": {"entries": {"hermes-3d": {"settings": settings}}}}))
 
 
 def test_defaults_when_nothing_is_configured(hermes_home):
-    cfg = S.PalaceSettings.from_yaml(hermes_home)
+    cfg = S.Hermes3DSettings.from_yaml(hermes_home)
     assert cfg.engine_path is None and cfg.engine_main() is None and cfg.www_dir() is None
-    assert cfg.world_path == hermes_home / "plugin-data" / "hermes-palace" / "mundo"
+    assert cfg.world_path == hermes_home / "plugin-data" / "hermes-3d" / "mundo"
     assert (cfg.engine_port, cfg.link_port, cfg.world_url) == (8790, 0, "")
     assert cfg.page_url() == f"http://{LOOP}:8790/"
 
@@ -42,7 +42,7 @@ def test_config_yaml_round_trip(hermes_home, tmp_path):
             "scan_days": 9999,
         },
     )
-    cfg = S.PalaceSettings.from_yaml(hermes_home)
+    cfg = S.Hermes3DSettings.from_yaml(hermes_home)
     assert cfg.engine_main() == engine.resolve() / S.ENGINE_MAIN and cfg.www_dir() == engine.resolve() / S.ENGINE_WWW
     assert (cfg.engine_port, cfg.link_port, cfg.page_url()) == (9000, 9100, "http://localhost:9000/x")
     assert cfg.switches["cron"] is True and cfg.switches["salud"] is True
@@ -51,25 +51,25 @@ def test_config_yaml_round_trip(hermes_home, tmp_path):
 
 def test_ctx_getter_and_yaml_reader_agree(hermes_home):
     write_config(hermes_home, {"engine_port": 9001, "publish_sessions": "on"})
-    from_file = S.PalaceSettings.from_getter(S.yaml_getter(hermes_home), hermes_home)
+    from_file = S.Hermes3DSettings.from_getter(S.yaml_getter(hermes_home), hermes_home)
     values = {"engine_port": 9001, "publish_sessions": "on"}
-    from_ctx = S.PalaceSettings.from_getter(lambda k, d=None: values.get(k, d), hermes_home)
+    from_ctx = S.Hermes3DSettings.from_getter(lambda k, d=None: values.get(k, d), hermes_home)
     assert from_file == from_ctx
 
 
 def test_old_environment_variables_are_ignored(hermes_home, monkeypatch, tmp_path):
     for name in ("ENGINE", "WORLD", "ENGINE_PORT", "LINK_PORT", "WORLD_URL"):
-        monkeypatch.setenv(f"HERMES_PALACE_{name}", "garbage:///")
-    cfg = S.PalaceSettings.from_yaml(hermes_home)
+        monkeypatch.setenv(f"HERMES_3D_{name}", "garbage:///")
+    cfg = S.Hermes3DSettings.from_yaml(hermes_home)
     assert cfg.engine_path is None and cfg.engine_port == 8790 and cfg.world_url == ""
 
 
 def test_only_the_link_key_is_read_from_the_environment():
-    """Allow-list: the secret is the one HERMES_PALACE_* variable in the code base."""
+    """Allow-list: the secret is the one HERMES_3D_* variable in the code base."""
     found = set()
-    for path in [ROOT / "__init__.py", ROOT / "dashboard" / "plugin_api.py", *(ROOT / "hermes_palace_lib").glob("*.py")]:
-        found |= set(re.findall(r"HERMES_PALACE_[A-Z_]+", path.read_text(encoding="utf-8")))
-    assert found == {"HERMES_PALACE_LINK_KEY"}
+    for path in [ROOT / "__init__.py", ROOT / "dashboard" / "plugin_api.py", *(ROOT / "hermes_3d_lib").glob("*.py")]:
+        found |= set(re.findall(r"HERMES_3D_[A-Z_]+", path.read_text(encoding="utf-8")))
+    assert found == {"HERMES_3D_LINK_KEY"}
 
 
 @pytest.mark.parametrize(
@@ -91,7 +91,7 @@ def test_only_the_link_key_is_read_from_the_environment():
 def test_invalid_values_name_the_key(hermes_home, key, value):
     write_config(hermes_home, {key: value})
     with pytest.raises(S.SettingsError, match=key):
-        S.PalaceSettings.from_yaml(hermes_home)
+        S.Hermes3DSettings.from_yaml(hermes_home)
 
 
 def test_world_path_refuses_symlink_home_and_parents(hermes_home, tmp_path, monkeypatch):
@@ -102,17 +102,17 @@ def test_world_path_refuses_symlink_home_and_parents(hermes_home, tmp_path, monk
     for bad in (link, hermes_home, hermes_home.parent, Path("/")):
         write_config(hermes_home, {"world_path": str(bad)})
         with pytest.raises(S.SettingsError, match="world_path"):
-            S.PalaceSettings.from_yaml(hermes_home)
+            S.Hermes3DSettings.from_yaml(hermes_home)
     monkeypatch.setenv("HOME", str(tmp_path))
     write_config(hermes_home, {"world_path": str(tmp_path)})
     with pytest.raises(S.SettingsError, match="world_path"):
-        S.PalaceSettings.from_yaml(hermes_home)
+        S.Hermes3DSettings.from_yaml(hermes_home)
     write_config(hermes_home, {"world_path": str(real / "w")})
-    assert S.PalaceSettings.from_yaml(hermes_home).world_path == (real / "w").resolve()
+    assert S.Hermes3DSettings.from_yaml(hermes_home).world_path == (real / "w").resolve()
 
 
 def test_unreadable_config_yaml_is_logged_and_defaults_apply(hermes_home, caplog):
     (hermes_home / "config.yaml").write_text("plugins: [unclosed")
-    with caplog.at_level("WARNING", logger="hermes_palace.settings"):
-        cfg = S.PalaceSettings.from_yaml(hermes_home)
+    with caplog.at_level("WARNING", logger="hermes_3d.settings"):
+        cfg = S.Hermes3DSettings.from_yaml(hermes_home)
     assert cfg.engine_port == 8790 and "cannot read plugin settings" in caplog.text

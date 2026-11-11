@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import stat
 
-from hermes_palace_lib import linkkey
+from hermes_3d_lib import linkkey
 
 
 def test_no_key_anywhere_is_none(hermes_home):
@@ -40,7 +40,7 @@ def test_environment_wins_and_short_values_are_ignored(hermes_home, monkeypatch)
     own = linkkey.ensure(hermes_home)
     monkeypatch.setenv(linkkey.ENV_LINK_KEY, "k3y-from-env-0123456789")
     assert linkkey.resolve(hermes_home) == "k3y-from-env-0123456789"
-    assert linkkey.source(hermes_home) == "environment (HERMES_PALACE_LINK_KEY)"
+    assert linkkey.source(hermes_home) == "environment (HERMES_3D_LINK_KEY)"
     monkeypatch.setenv(linkkey.ENV_LINK_KEY, "short")
     assert linkkey.resolve(hermes_home) == own
 

@@ -10,9 +10,9 @@ import time
 import pytest
 from conftest import LOOP
 
-from hermes_palace_lib import documentos, habilidades, logsafe, scan, tablero
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.protocol import MAX_TITLE, MAX_URL, OBJECT_KEYS, make_object
+from hermes_3d_lib import documentos, habilidades, logsafe, scan, tablero
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.protocol import MAX_TITLE, MAX_URL, OBJECT_KEYS, make_object
 
 SECRET = "sk-" + "a1b2c3d4e5f6g7h8i9j0"
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,31}$")
@@ -259,11 +259,20 @@ def test_make_object_accepts_the_m6_fields_and_cuts_oversize():
 
 
 # ------------------------------------------------------------------------------------- bridge and settings
-def _bridge(fake_root, tmp_path, on):
-    from hermes_palace_lib import bridge_main
+VERSION_KEYS = {"salud/version"}  # the always-on card, not part of any function (the deadline card is opt-in)
+
+
+def _bridge(fake_root, tmp_path, on, clock=False):
+    from hermes_3d_lib import bridge_main
 
     b = bridge_main.Bridge(
-        tmp_path / "home", engine_url=f"ws://{LOOP}:1", link_key="k", scan_root=fake_root, allow_direct_db=True, docs_port=8800
+        tmp_path / "home",
+        engine_url=f"ws://{LOOP}:1",
+        link_key="k",
+        scan_root=fake_root,
+        allow_direct_db=True,
+        docs_port=8800,
+        deadline_clock=clock,
     )
     b.hub.engine_functions = {n: (n in on) for n in S.FUNCTIONS}
     b.hub.switches = {n: (n in on) for n in S.FUNCTIONS}
@@ -273,29 +282,29 @@ def _bridge(fake_root, tmp_path, on):
 @pytest.mark.parametrize(("fn", "prefix"), [("habilidades", "habilidad/"), ("kanban", "tablero/"), ("documentos", "documento/")])
 def test_each_function_publishes_only_its_own_type(fake_root, tmp_path, fn, prefix):
     _skill(fake_root, "alpha", "g/one", "---\nname: one\ndescription: d\n---\n")
-    b = _bridge(fake_root, tmp_path, on=["salud", fn])
+    b = _bridge(fake_root, tmp_path, on=["salud", fn], clock=fn == "documentos")
     asyncio.run(b.run_scan())
-    keys = set(b.mirror_objects())
+    keys = set(b.mirror_objects()) - VERSION_KEYS - {"salud/plazo"}
     assert keys and all(k.startswith(prefix) for k in keys)
     if fn == "documentos":
-        for key, o in b.mirror_objects().items():
+        for key, o in {k: v for k, v in b.mirror_objects().items() if k not in VERSION_KEYS | {"salud/plazo"}}.items():
             if key.startswith("documento/plazo-"):  # C12 deadline links point at public https pages, not the local docs server
                 assert o["url"].startswith("https://")
             else:
                 assert o["url"].startswith(f"http://{LOOP}:8800/")
     off = _bridge(fake_root, tmp_path, on=["salud"])
     asyncio.run(off.run_scan())
-    assert off.mirror_objects() == {}
+    assert set(off.mirror_objects()) == VERSION_KEYS
 
 
 def test_a_function_needs_both_sides(fake_root, tmp_path):
     b = _bridge(fake_root, tmp_path, on=["salud", "kanban"])
     b.hub.switches["kanban"] = False  # the plugin side is off
     asyncio.run(b.run_scan())
-    assert b.mirror_objects() == {}
+    assert set(b.mirror_objects()) == VERSION_KEYS
     b.hub.switches["kanban"] = True
     b.hub.engine_functions["kanban"] = False  # the world side is off
-    assert b.mirror_objects() == {}
+    assert set(b.mirror_objects()) == VERSION_KEYS
 
 
 def test_new_switches_default_off_and_map_to_settings():
@@ -305,7 +314,7 @@ def test_new_switches_default_off_and_map_to_settings():
 
 
 def test_guia_flag_passes_through_the_hub():
-    from hermes_palace_lib.hub import _functions_on, _guide_on
+    from hermes_3d_lib.hub import _functions_on, _guide_on
 
     assert _guide_on(["salud", "guia"]) is True and _guide_on(["salud"]) is False and _guide_on(None) is False
     assert "guia" not in _functions_on(["salud", "guia"])  # not a source switch: never acted on
@@ -320,3 +329,39 @@ def test_fit_title_cuts_at_a_word_with_an_ellipsis():
     assert len(logsafe.fit_title("ñ " * 40, 32).encode()) <= 32
     assert logsafe.fit_title("ab " * 10 + "ab", 32) == "ab " * 10 + "ab"  # exactly fits: untouched
     assert logsafe.fit_title(None, 32) == ""  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------------------------- tableros: layout
+def _cols(n):
+    return {"hacer": {"n": n, "top": ["t"]}, "curso": {"n": 0, "top": []}, "hecho": {"n": 0, "top": []}}
+
+
+@pytest.mark.parametrize("n", [1, 2, 3, 4, 5, 6, 9])
+def test_boards_never_overlap_or_touch(n):
+    section = {"items": [{"id": f"Board {i}", "columnas": _cols(50 - i)} for i in range(n)]}
+    snap = tablero.snapshot_boards(section)
+    assert len(snap) == min(n, tablero.MAX_BOARDS)
+    W, DEPTH = 10.8, 1.0  # board width (engine formas-extra.ts) and a generous thickness
+    objs = list(snap.values())
+    for o in objs:
+        assert valid_object(o) and o["zona"] == "z9"
+        assert abs(o["x"] - 30) <= 12 and abs(o["z"] - 30) <= 10  # inside the ORIGINAL z9 (24 x 20)
+    for i, a in enumerate(objs):
+        for b in objs[i + 1 :]:
+            gap_x, gap_z = abs(a["x"] - b["x"]) - W, abs(a["z"] - b["z"]) - DEPTH
+            assert gap_x >= 3 or gap_z >= 8, (a["id"], b["id"], gap_x, gap_z)  # clear room to stand and read
+
+
+def test_boards_are_named_ordered_and_ids_unique():
+    section = {
+        "items": [
+            {"id": "small", "columnas": _cols(1)},
+            {"id": "Numinia.com", "columnas": _cols(9)},
+            {"id": "empty", "columnas": _cols(0)},
+            {"id": "numinia-com", "columnas": _cols(5)},
+        ]
+    }
+    snap = tablero.snapshot_boards(section)
+    assert list(snap) == ["numinia.com", "numinia-com", "small"]  # most open first, empty board left out
+    assert [o["titulo"] for o in snap.values()] == ["Numinia.com", "numinia-com", "small"]
+    assert tablero.snapshot_boards({"items": [{"id": "x", "columnas": _cols(1)}]})["x"]["x"] == 30.0  # a lone board is centred

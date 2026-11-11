@@ -46,15 +46,15 @@ def sample():
 
 
 @pytest.fixture(autouse=True)
-def _clean_palace_env(monkeypatch):
+def _clean_hermes3d_env(monkeypatch):
     """No developer-shell variable (engine path, ports, keys) may leak into a test."""
     for k in (
-        "HERMES_PALACE_ENGINE",
-        "HERMES_PALACE_WORLD",
-        "HERMES_PALACE_LINK_KEY",
-        "HERMES_PALACE_ENGINE_PORT",
-        "HERMES_PALACE_LINK_PORT",
-        "HERMES_PALACE_WORLD_URL",
+        "HERMES_3D_ENGINE",
+        "HERMES_3D_WORLD",
+        "HERMES_3D_LINK_KEY",
+        "HERMES_3D_ENGINE_PORT",
+        "HERMES_3D_LINK_PORT",
+        "HERMES_3D_WORLD_URL",
         "MOTOR_ENLACE_CLAVE",
         "MOTOR_ENLACE_PUERTO",
     ):
@@ -64,7 +64,7 @@ def _clean_palace_env(monkeypatch):
 @pytest.fixture(autouse=True)
 def _never_touch_a_real_pm(monkeypatch):
     """No test may reach Hermes' package manager (``pm.ensure`` would download a real Node): tests that care pass a fake."""
-    from hermes_palace_lib import nodebin
+    from hermes_3d_lib import nodebin
 
     monkeypatch.setattr(nodebin, "_load_pm", lambda: None)
 
@@ -75,14 +75,14 @@ def hermes_home(tmp_path, monkeypatch):
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
     for k in (
-        "HERMES_PALACE_ENGINE",
-        "HERMES_PALACE_WORLD",
-        "HERMES_PALACE_LINK_KEY",
-        "HERMES_PALACE_ENGINE_PORT",
-        "HERMES_PALACE_LINK_PORT",
+        "HERMES_3D_ENGINE",
+        "HERMES_3D_WORLD",
+        "HERMES_3D_LINK_KEY",
+        "HERMES_3D_ENGINE_PORT",
+        "HERMES_3D_LINK_PORT",
         "MOTOR_ENLACE_CLAVE",
         "MOTOR_ENLACE_PUERTO",
-        "HERMES_PALACE_WORLD_URL",
+        "HERMES_3D_WORLD_URL",
     ):
         monkeypatch.delenv(k, raising=False)
     return home

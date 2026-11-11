@@ -6,8 +6,8 @@ import re
 
 from conftest import ROOT
 
-from hermes_palace_lib import settings as S
-from hermes_palace_lib.worldtext import MESSAGES
+from hermes_3d_lib import settings as S
+from hermes_3d_lib.worldtext import MESSAGES
 
 
 def test_world_strings_table_matches_the_module():
@@ -32,6 +32,6 @@ def test_docs_index_links_exist():
 
 def test_readme_names_no_removed_environment_variable():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    for gone in ("HERMES_PALACE_ENGINE", "HERMES_PALACE_WORLD", "HERMES_PALACE_ENGINE_PORT", "HERMES_PALACE_LINK_PORT"):
+    for gone in ("HERMES_3D_ENGINE", "HERMES_3D_WORLD", "HERMES_3D_ENGINE_PORT", "HERMES_3D_LINK_PORT"):
         assert gone not in readme
-    assert "HERMES_PALACE_LINK_KEY" in readme
+    assert "HERMES_3D_LINK_KEY" in readme
