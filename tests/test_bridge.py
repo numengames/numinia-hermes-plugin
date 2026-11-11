@@ -245,7 +245,7 @@ def test_request_with_cron_function_off_is_refused(hermes_home):
             }
         )
         r = await eng.wait_for(lambda f: f["t"] == "resultado" and f["peticion"] == "p9")
-        assert r["ok"] is False and "apagada" in r["texto"]
+        assert r["ok"] is False and "switched off" in r["texto"]
         await stop(b, eng)
 
     run(main())
@@ -272,7 +272,7 @@ def test_unattended_no_approver_fails_cleanly_after_ttl(hermes_home, monkeypatch
             }
         )
         r = await eng.wait_for(lambda f: f["t"] == "resultado" and f["peticion"] == "p7", timeout=5)
-        assert r["ok"] is False and "aprob" in r["texto"]
+        assert r["ok"] is False and "approved" in r["texto"]
         assert b.queue.pending() == []
         await stop(b, eng)
 
@@ -323,7 +323,7 @@ def test_request_already_expired_in_the_world_is_not_queued(hermes_home):
             }
         )
         r = await eng.wait_for(lambda f: f["t"] == "resultado" and f["peticion"] == "old")
-        assert r["ok"] is False and "caduc" in r["texto"] and not b.queue.pending()
+        assert r["ok"] is False and "expired" in r["texto"] and not b.queue.pending()
         await stop(b, eng)
 
     run(main())

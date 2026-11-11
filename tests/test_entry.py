@@ -106,11 +106,11 @@ class Runner:
 def test_run_cron_cli_runs_an_argv_list_without_a_shell():
     run = Runner()
     out = actions.run_cron_cli("8bc0eecea9b5", "cron.pausar", runner=run, hermes="/usr/bin/hermes")
-    assert out["ok"] is True and out["texto"] == "tarea pausada" and out["text"] == "job paused"
+    assert out["ok"] is True and out["texto"] == "job paused" and out["text"] == "job paused"
     argv, kw = run.calls[0]
     assert argv == ["/usr/bin/hermes", "cron", "pause", "8bc0eecea9b5"] and isinstance(argv, list)
     assert not kw.get("shell") and kw["timeout"] == actions.CLI_TIMEOUT
-    assert actions.run_cron_cli("8bc0eecea9b5", "cron.reanudar", runner=run, hermes="h")["texto"] == "tarea reanudada"
+    assert actions.run_cron_cli("8bc0eecea9b5", "cron.reanudar", runner=run, hermes="h")["texto"] == "job resumed"
 
 
 @pytest.mark.parametrize(

@@ -104,7 +104,7 @@ def test_activity_line_from_kanban_only(tmp_path):
     assert act["beta"] == {"hecho": "Only done"} and "gamma" not in act
     obj = agentes.agent_to_object({"nombre": "alpha", "modelo": "m", "gateway": True}, "", act["alpha"])
     assert "Doing: Build the thing" in obj["subtitulo"] and "Done: Newest done card" in obj["subtitulo"]
-    assert len(obj["subtitulo"].encode()) <= 120 and obj["subtitulo"].startswith("m · gateway activo")
+    assert len(obj["subtitulo"].encode()) <= 120 and obj["subtitulo"].startswith("m · gateway up")
     assert "Doing" not in agentes.agent_to_object({"nombre": "g", "modelo": "m"}, "", None)["subtitulo"]
     body = cuerpos.body_for("alpha", 0, "x" * 64, "", act["alpha"])
     assert "Doing: Build the thing." in body["dialogo"]["nodos"]["hola"]["texto"]

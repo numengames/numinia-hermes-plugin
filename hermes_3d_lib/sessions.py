@@ -20,16 +20,16 @@ MAX_SESSIONS = 50  # recent places kept; older ones are removed (baja) to bound 
 def engine_id(session_id: str) -> str:
     """Stable engine id from whatever Hermes calls the session: ``s-`` + 16 hex of its SHA-256.
     (Hermes ids can be long or carry characters the engine's id rule refuses.)"""
-    return "s-" + hashlib.sha256(str(session_id or "sin-id").encode("utf-8")).hexdigest()[:16]
+    return "s-" + hashlib.sha256(str(session_id or "no-id").encode("utf-8")).hexdigest()[:16]
 
 
 def session_object(session_id: str, *, model: str = "", platform: str = "", active: bool = True) -> dict[str, Any]:
-    sid = str(session_id or "")[:64] or "sin-id"
+    sid = str(session_id or "")[:64] or "no-id"
     short = "".join(ch for ch in sid[-8:] if ch.isalnum())
     return make_object(
         TYPE_SESSION,
         engine_id(sid),
-        f"Sesión {short}",
+        f"Session {short}",
         subtitulo=" · ".join(p for p in (str(platform or "")[:20], str(model or "")[:40]) if p),
         estado="activo" if active else "apagado",
         zona=ZONE_SESSIONS,
@@ -63,7 +63,7 @@ class SessionBook:
         return msgs
 
     def end(self, session_id: str) -> list[dict[str, Any]]:
-        key = engine_id(str(session_id or "")[:64] or "sin-id")
+        key = engine_id(str(session_id or "")[:64] or "no-id")
         prev = self._objs.get(key)
         if prev is None:
             return []

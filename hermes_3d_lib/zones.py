@@ -19,7 +19,7 @@ from typing import Any
 FALLBACK_ZONES: dict[str, str] = {
     "salud": "z0",  # El umbral
     "documento": "z1",  # La biblioteca
-    "uso": "z2",  # La sala de máquinas
+    "uso": "z2",  # the machine room
     "sesion": "z3",  # Las sesiones
     "habilidad": "z4",  # El taller
     "perfil": "z6",  # La torre de control
