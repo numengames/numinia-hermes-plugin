@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """The bridge process: ``python -m hermes_3d_lib.bridge_main`` (one per Hermes profile).
 
 Started by ``hermes 3d up`` (or auto-started on demand). It owns:
@@ -15,6 +18,7 @@ It exits on ``POST /stop``, SIGTERM, or when its parent runtime file is replaced
 from __future__ import annotations
 
 import asyncio
+import importlib.metadata
 import json
 import logging
 import os
@@ -57,12 +61,14 @@ logger = logging.getLogger("hermes_3d.bridge")
 
 
 def _hermes_version() -> str:
-    """The running Hermes' version, or "?" when this process cannot import it."""
-    try:
-        import hermes_cli
+    """The installed Hermes' version from its package metadata, or "?" when it is not installed as a package.
 
-        return str(hermes_cli.__version__)
-    except (ImportError, AttributeError):  # a version label must never stop the bridge
+    Read through ``importlib.metadata`` (standard library), not by importing Hermes internals: catalog rule 9
+    asks plugins to use public surfaces only, and a version label is not worth a coupling to ``hermes_cli``.
+    """
+    try:
+        return importlib.metadata.version("hermes-agent")
+    except importlib.metadata.PackageNotFoundError:  # a version label must never stop the bridge
         return "?"
 
 

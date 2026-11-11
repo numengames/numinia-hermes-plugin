@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Numen Games S.L.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Changelog
 
 Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer](https://semver.org).
@@ -22,6 +27,14 @@ Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer]
   `hermes3d_cron_action`, the data folder is `<HERMES_HOME>/plugin-data/hermes-3d/`, the environment variables start with
   `HERMES_3D_`, the Desktop route is `/hermes-3d`.
 - The one-time migration of the pre-0.5 data folder is removed (that folder never shipped in a release).
+- The Hermes version label the bridge sends to the engine is read from package metadata (`importlib.metadata`), not by
+  importing `hermes_cli`: `hermes plugins validate` now passes with no warning (catalog rule 9).
+- Every file states its licence (`reuse lint`: REUSE 3.3 compliant; MIT for code, CC-BY-4.0 for texts and images, CC0 for
+  the figure), and `make check` runs `reuse lint` as a gate.
+- The gate tools are a `dev` dependency group in `pyproject.toml`, locked in `uv.lock` with a 3-day release quarantine.
+- New tests: the committed figure is rebuilt byte for byte by its generator; no shipped module imports Hermes outside
+  the published plugin API.
+- `AGENTS.md`, `CONTRIBUTING.md` and `SECURITY.md` describe the current plugin (name, gates, supported version).
 
 ## [0.7.2-rc1] - 2026-11-05
 
