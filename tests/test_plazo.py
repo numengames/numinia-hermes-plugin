@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """C12: delivery clock, requirements and official links (``plazo``). Pure: the clock is passed in."""
 
 from __future__ import annotations

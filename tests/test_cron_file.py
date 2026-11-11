@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Cron state from ``cron/jobs.json`` first, ``hermes cron list --all`` only as the fallback (review point b)."""
 
 from __future__ import annotations

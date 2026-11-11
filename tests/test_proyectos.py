@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """C7: the project shelf-tree reader. Synthetic homes only; the run against the real Hermes is C7-evidence/run_c7.py."""
 
 from __future__ import annotations

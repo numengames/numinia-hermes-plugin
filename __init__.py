@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """hermes-3d — Hermes plugin entry point (MIT).
 
 Registers, and nothing more (the manifest declares exactly this):

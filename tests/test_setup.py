@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """`hermes 3d setup`: guided, idempotent, writes only after confirmation, never prompts with --yes."""
 
 from __future__ import annotations

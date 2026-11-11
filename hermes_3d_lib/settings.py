@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Plugin settings: the one place that turns ``plugins.entries.hermes-3d.settings`` into typed values.
 
 Precedence (highest first), identical in every process that needs a setting:

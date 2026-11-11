@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """P3-1: ``read_only`` mode. The world can look; it can never change anything in Hermes."""
 
 from __future__ import annotations

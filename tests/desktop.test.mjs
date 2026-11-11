@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Numen Games S.L.
+// SPDX-License-Identifier: MIT
+
 // Desktop half test: loads desktop/plugin.js exactly as the Desktop loader does (ESM, only the
 // three allowed specifiers) and drives it with a fake PluginContext. No Electron needed.
 //

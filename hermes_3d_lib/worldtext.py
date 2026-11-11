@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Every sentence that is shown INSIDE the Numinia world (English).
 
 The engine draws these strings to the people in the world. The JSON keys, object types and verbs stay the

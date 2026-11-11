@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Mirror ``gasto``: everything that is SPENT, as ``uso`` things (one per profile + one overall).
 
 Sources: the scan (``scan.scan_gasto``: read-only SQLite sums, the same numbers ``hermes insights`` uses) and

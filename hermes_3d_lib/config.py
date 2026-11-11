@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Locations, the per-start runtime file of the bridge, and owner-only file helpers.
 
 Nothing is hardcoded: everything derives from ``HERMES_HOME`` (the active profile). Settings live in

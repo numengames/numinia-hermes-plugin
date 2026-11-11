@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """``hermes 3d docs``: a fake docs-visor (build-docs.sh + serve.mjs) stands in for the real viewer."""
 
 from __future__ import annotations

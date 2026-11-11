@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Parse the text printed by ``hermes cron list --all`` (Hermes 0.22.x).
 
 Hermes has no ``--json`` for ``cron list`` (B0-SUPERFICIES, request 2), so the public route is

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Plugin settings: config.yaml section -> typed values, precedence, validation, no env vars."""
 
 from __future__ import annotations

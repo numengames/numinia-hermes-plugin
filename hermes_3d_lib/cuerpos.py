@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Bodies for the bots: one black-and-white stick figure per Hermes profile, walking a short round.
 
 Reuses the engine's own piece for people, ``pnj@1`` with ``ronda`` (docs/extender/misiones-y-personas-pnj.md): the plugin

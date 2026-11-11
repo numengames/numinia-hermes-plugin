@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """T9: the host's own plugin validator and doctor run as part of pytest when a Hermes checkout is available.
 
 Set ``HERMES_AGENT_DIR`` to a hermes-agent checkout that has ``venv/bin/python`` (the same variable ``make check`` uses).

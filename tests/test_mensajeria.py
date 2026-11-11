@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """C10: the messaging-platform status reader. Synthetic homes only; the run against the real Hermes is C10-evidence/run_c10.py."""
 
 from __future__ import annotations

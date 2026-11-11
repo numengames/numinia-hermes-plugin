@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Mirror ``documentos``: a small CURATED list of documentation pages as ``documento`` things (the library, zone z1).
 
 Each thing carries the page's address on the local docs viewer (``docs-visor``, lite build; origin

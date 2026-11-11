@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Bugs found by tools/integration against the REAL engine (INT-02, INT-03), pinned with the fake engine.
 
 INT-02: the engine tells the source `{t:"funciones", funciones:[...]}` whenever a person flips a switch inside the world; the plugin

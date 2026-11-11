@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Locate, start, reuse and stop the Numinia Engine world, and the bridge process.
 
 Nothing is hardcoded: the engine folder, the world folder and the ports are plugin settings

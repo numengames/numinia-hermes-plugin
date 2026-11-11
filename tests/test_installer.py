@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """``install-engine`` against a FAKE release server on the loopback: nothing here touches the internet or a real Node."""
 
 from __future__ import annotations

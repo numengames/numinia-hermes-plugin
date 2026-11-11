@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """N-S4: a per-client token bucket on the bridge's loopback face (429 when a client floods it)."""
 
 from __future__ import annotations

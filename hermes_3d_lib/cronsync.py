@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Cron adapter: snapshot -> world objects, and snapshot diff -> alta / cambio / baja / lote.
 
 Pure functions (no I/O) so they are tested with real ``hermes cron list --all`` samples.

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """P3-5 (C5, C6): specific exceptions in leaves, loud boundaries, and a ``last_error`` that says what happened."""
 
 from __future__ import annotations

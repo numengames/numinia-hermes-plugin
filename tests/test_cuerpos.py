@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Bodies for the bots: 14 stick figures, one ``pnj@1`` round each (decision on t_a55cdae9: fixed round, partial)."""
 
 from __future__ import annotations

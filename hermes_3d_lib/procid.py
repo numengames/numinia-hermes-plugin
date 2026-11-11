@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Process identity: prove a pid is still *the process we started* before signalling it.
 
 A bare pid can be recycled by the kernel after the process dies; ``os.killpg(pid, ...)`` on a recycled pid

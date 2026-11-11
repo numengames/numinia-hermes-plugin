@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """First layer for kanban and sessions: Hermes' own CLI / SessionDB, metadata only, soft failure to the opt-in direct read."""
 
 from __future__ import annotations

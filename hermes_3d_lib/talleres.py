@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Project workshops: one zone of the world per project, with its project card, its Kanban board and its agents.
 
 A world opts in by drawing zones whose id is ``t-<project slug>`` in ``entorno/espejo.json`` (one per project it

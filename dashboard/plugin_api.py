@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Dashboard/desktop backend routes of hermes-3d, mounted at /api/plugins/hermes-3d/.
 
 Loaded by Hermes as a separate module by file path (and possibly in another process), so it
