@@ -137,8 +137,13 @@ def test_the_whole_path_works_against_the_fake_release_and_is_fast(env, monkeypa
         rc, text, setter = run(env, rel)
     seconds = time.monotonic() - t0
     assert rc == 0, text
-    assert "ready: open the Hermes 3D page in Hermes Desktop." in text
-    assert "1/4 Node" in text and "2/4 engine" in text and "3/4 settings" in text and "4/4 start" in text
+    assert "Ready. Open the Hermes 3D page in Hermes Desktop." in text
+    assert (
+        "Step 1 of 4: Node" in text
+        and "Step 2 of 4: Engine" in text
+        and "Step 3 of 4: Settings" in text
+        and "Step 4 of 4: Start" in text
+    )
     cfg = S.Hermes3DSettings.from_yaml(env.home)
     assert cfg.engine_link is False and cfg.engine_main() is not None and cfg.engine_path.name == rel.sha256[:12]
     assert [c for c in setter.calls] == [("plugins.entries.hermes-3d.settings.engine_link", "false")]
@@ -156,7 +161,7 @@ def test_second_run_downloads_nothing_and_reuses_the_running_engine(env, monkeyp
         assert run(env, rel)[0] == 0
         hits = len(rel.hits)
         rc, text, setter = run(env, rel)
-        assert rc == 0 and len(rel.hits) == hits and "engine already set" in text and setter.calls == []
+        assert rc == 0 and len(rel.hits) == hits and "Engine already installed" in text and setter.calls == []
 
 
 def test_node_missing_asks_then_lets_pm_install_it(env, monkeypatch):
@@ -181,7 +186,7 @@ def test_declining_the_node_download_stops_before_anything_else(env, monkeypatch
     monkeypatch.setattr(nodebin, "resolve_node", resolve)
     with FakeRelease(stub_asset()) as rel:
         rc, text, _ = run(env, rel, yes=False, answers=["n"])
-        assert rc == 1 and "stopped: no Node" in text and rel.hits == []
+        assert rc == 1 and "Stopped. Without Node" in text and rel.hits == []
 
 
 def test_pm_failing_to_install_node_is_a_typed_stop(env, monkeypatch):
@@ -227,7 +232,7 @@ def test_settings_write_failure_stops(env, monkeypatch):
     monkeypatch.setattr(nodebin, "resolve_node", lambda ensure=True, **kw: PYNODE)
     with FakeRelease(stub_asset()) as rel:
         rc, text, _ = run(env, rel, setter=YamlSetter(env.home, ok=False))
-    assert rc == 1 and "could not write engine_link" in text
+    assert rc == 1 and "Could not write engine_link" in text
 
 
 def test_world_without_embed_gets_the_hint_not_a_false_ready(env, monkeypatch):
@@ -279,7 +284,7 @@ def test_no_terminal_without_yes_is_a_clear_stop(env, monkeypatch):
 def test_cmd_setup_flag_runs_the_first_run_and_plain_setup_points_to_it(env, monkeypatch, capsys):
     called = {}
     monkeypatch.setattr(setup_cmd, "first_run", lambda **kw: called.update(kw) or 0)
-    args = SimpleNamespace(yes=True, profile=None, engine_path=None, first_run=True)
+    args = SimpleNamespace(yes=True, engine_path=None, first_run=True)
     assert setup_cmd.cmd_setup(args, home=env.home, setter=YamlSetter(env.home)) == 0 and called["yes"] is True
     capsys.readouterr()
     args.first_run = False

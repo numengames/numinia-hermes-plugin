@@ -182,18 +182,16 @@ reads and its query plan on a throwaway 1M-message database), and only when the 
 
 ## First run: `hermes 3d setup`
 
-After installing, run `hermes 3d setup`. It checks Node (22.18 or later), the engine folder, the built page, the docs viewer and
-the link key, lists every switch in plain words with where it reads from, and asks before it writes anything (through
-`hermes config set`, never by editing `config.yaml` itself). It is idempotent, and with `--yes` it never prompts and changes
-only what `--profile` / `--engine-path` name.
+One path, no choices. `hermes 3d setup` checks Node (22.18 or later), the engine, the built page, the docs viewer and the
+link key. It lists every switch in plain words with where it reads from, then asks once before it writes anything (through
+`hermes config set`, never by editing `config.yaml` itself). It is idempotent, and with `--yes` it never prompts.
 
-| Profile | Switches | Why |
-|---|---|---|
-| (catalog default) | health only | what an install does without asking you anything |
-| `minimal` | health only | the same, written explicitly |
-| `showcase` | health, cron, agents, skills, docs, **read-only** | a first impression in one minute: names, states and counts from Hermes' own files and CLI; the world cannot change anything. No sessions feed, no spend, no kanban, `allow_direct_db_read` off |
+What it turns on is one default set: **Health, Cron jobs, Agents, Skills and the Docs library, read-only.** Names, states and
+counts from Hermes' own files and CLI; the world cannot change anything. Sessions feed, Spend, Kanban and Projects stay off.
+The last three need `allow_direct_db_read`, which stays off until you turn it on yourself. It is even better with a Kanban
+board running: turn on `allow_direct_db_read` and Kanban or Projects in Settings > Plugins > Hermes 3D whenever you want them.
 
-`showcase` is a choice you make, not a default: the catalog stance stays "everything off but health". Without an engine,
+The catalog default (what the plugin does before you run setup) stays "everything off but health". Without an engine,
 `hermes 3d scan` shows what the world would mirror, and `hermes 3d demo` is the one-command look once an engine is set.
 
 ## Install and use

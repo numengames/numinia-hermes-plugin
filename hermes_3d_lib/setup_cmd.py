@@ -1,16 +1,15 @@
 # SPDX-FileCopyrightText: 2026 Numen Games S.L.
 # SPDX-License-Identifier: MIT
 
-"""``hermes 3d setup``: a guided first run. Checks what is missing, explains every switch, writes settings after you say yes.
+"""``hermes 3d setup``: the first run. One path, no questions about presets.
 
 Design rules
-* Nothing is written without a confirmation, except with ``--yes`` (scripts), and ``--yes`` never *chooses* for you: with no
-  ``--profile`` and no ``--engine-path`` it changes nothing.
+* Nothing is written without a confirmation, except with ``--yes`` (scripts).
+* ``setup`` applies ONE default set (``DEFAULT_SET``: health, cron, agents, skills and docs, read-only, no direct database
+  reads). More switches are chosen later, in the plugin settings; the catalog default stays "everything off but health".
 * Settings are written through Hermes' own ``hermes config set`` (argv list, no shell), never by editing ``config.yaml`` here,
   so comments and the schema checks of Hermes stay intact.
 * Idempotent: only the keys whose value differs are written; a second run says "nothing to change".
-* Profiles are metadata only and never open a Hermes database (``allow_direct_db_read`` stays off in all of them).
-  The catalog default stays "everything off but health"; ``showcase`` is the opt-in first impression.
 """
 
 from __future__ import annotations
@@ -30,63 +29,59 @@ from .errors import Hermes3DError, NodeMissing
 
 CONFIG_TIMEOUT = 20
 
-# What each profile sets (only the keys that differ from "everything off but health").
-PROFILES: dict[str, dict[str, Any]] = {
-    "minimal": {
-        "publish_health": True,
-        "publish_cron": False,
-        "publish_sessions": False,
-        "publish_agents": False,
-        "publish_spend": False,
-        "publish_skills": False,
-        "publish_kanban": False,
-        "publish_projects": False,
-        "publish_docs": False,
-        "read_only": False,
-        "allow_direct_db_read": False,
-    },
-    # A first impression a person can judge in one minute: profiles, cron jobs, skills and the docs library, all read from
-    # Hermes' own files or CLI (names, states, counts), the world cannot change anything. No sessions feed, no spend, no kanban.
-    "showcase": {
-        "publish_health": True,
-        "publish_cron": True,
-        "publish_sessions": False,
-        "publish_agents": True,
-        "publish_spend": False,
-        "publish_skills": True,
-        "publish_kanban": False,
-        "publish_projects": False,
-        "publish_docs": True,
-        "read_only": True,
-        "allow_direct_db_read": False,
-    },
-}
-PROFILE_TEXT = {
-    "minimal": "only the health card (what the plugin does out of the box)",
-    "showcase": "health + cron + agents + skills + docs, read-only; no sessions, spend or kanban",
+# What setup turns on. A first impression a person can judge in one minute: agents, cron jobs, skills and the docs library,
+# all read from Hermes' own files or CLI (names, states, counts). The world cannot change anything. No sessions feed, no
+# spend, no Kanban, no projects: those three need allow_direct_db_read, which stays off until you turn it on yourself.
+DEFAULT_SET: dict[str, Any] = {
+    "publish_health": True,
+    "publish_cron": True,
+    "publish_sessions": False,
+    "publish_agents": True,
+    "publish_spend": False,
+    "publish_skills": True,
+    "publish_kanban": False,
+    "publish_projects": False,
+    "publish_docs": True,
+    "read_only": True,
+    "allow_direct_db_read": False,
 }
 
-# key -> (what it shows, where it reads from)
-SWITCH_TEXT: dict[str, tuple[str, str]] = {
-    "publish_health": ("a card saying the bridge is alive", "nothing of yours"),
-    "publish_cron": ("your scheduled jobs: name, schedule, state, next run", "cron/jobs.json, else `hermes cron list`"),
-    "publish_sessions": ("sessions starting and ending, and the live activity feed (tool names only)", "Hermes hooks"),
-    "publish_agents": ("your profiles: name, model, gateway up or down, job counts", "files in the Hermes home"),
-    "publish_spend": ("tokens and estimated cost per period", "DIRECT read of state.db (needs allow_direct_db_read)"),
-    "publish_skills": ("skill names, groups and short descriptions", "SKILL.md files"),
-    "publish_kanban": ("cards per column and up to 3 titles", "DIRECT read of kanban.db (needs allow_direct_db_read)"),
-    "publish_projects": (
-        "project names, active/archived and folder labels",
-        "DIRECT read of projects.db (needs allow_direct_db_read)",
+# key -> (name, what it shows, where it reads from)
+SWITCH_TEXT: dict[str, tuple[str, str, str]] = {
+    "publish_health": ("Health", "a card saying the bridge is alive", "nothing of yours"),
+    "publish_cron": (
+        "Cron jobs",
+        "your scheduled jobs: name, schedule, state, next run",
+        "cron/jobs.json, else `hermes cron list`",
     ),
-    "publish_docs": ("a library of the Hermes documentation", "a list inside the plugin"),
-    "read_only": ("the world can look but never change anything in Hermes", "setting"),
-    "allow_direct_db_read": ("lets spend and kanban read Hermes' private SQLite files, read-only, counts and titles", "setting"),
+    "publish_sessions": (
+        "Sessions",
+        "sessions starting and ending, and the live activity feed (tool names only)",
+        "Hermes hooks",
+    ),
+    "publish_agents": ("Agents", "your Hermes profiles: name, model, gateway up or down, job counts", "files in the Hermes home"),
+    "publish_spend": ("Spend", "tokens and estimated cost per period", "state.db, read directly (needs allow_direct_db_read)"),
+    "publish_skills": ("Skills", "skill names, groups and short descriptions", "SKILL.md files"),
+    "publish_kanban": ("Kanban", "cards per column and up to 3 titles", "kanban.db, read directly (needs allow_direct_db_read)"),
+    "publish_projects": (
+        "Projects",
+        "project names, active or archived, and folder labels",
+        "projects.db, read directly (needs allow_direct_db_read)",
+    ),
+    "publish_docs": ("Docs library", "a library of the Hermes documentation", "a list inside the plugin"),
+    "read_only": ("Read-only", "the world can look but never change anything in Hermes", "setting"),
+    "allow_direct_db_read": (
+        "Direct database read",
+        "lets Spend, Kanban and Projects read Hermes' private SQLite files, read-only: counts and titles",
+        "setting",
+    ),
 }
+
+FIRST_RUN_NEXT_TIME = "Want more, like Kanban or Projects? Turn on `allow_direct_db_read` and the switch you want, in Settings > Plugins > Hermes 3D."
 
 
 class SetupError(RuntimeError):
-    """A bad argument to ``setup`` (unknown profile, engine folder that is not an engine)."""
+    """A bad argument to ``setup`` (an engine folder that is not an engine)."""
 
 
 @dataclass
@@ -95,13 +90,18 @@ class Check:
     ok: bool
     detail: str
     fix: str = ""
+    kind: str = ""  # "pending": expected on a first run, setup does it; "optional": not needed yet
+
+    @property
+    def mark(self) -> str:
+        return "ok" if self.ok else {"pending": "  ", "optional": "--"}.get(self.kind, "!!")
 
 
 def describe_switches() -> str:
-    """Every switch in plain words, with where it reads from."""
+    """Every switch in plain words: the name first, the config key in brackets, then what it shows and where it reads from."""
     lines = []
-    for key, (shows, source) in SWITCH_TEXT.items():
-        lines.append(f"  {key:<22} {shows}\n  {'':<22} reads: {source}")
+    for key, (name, shows, source) in SWITCH_TEXT.items():
+        lines.append(f"  {name} ({key})\n      {shows}\n      reads: {source}")
     return "\n".join(lines)
 
 
@@ -127,8 +127,9 @@ def run_checks(cfg: S.Hermes3DSettings) -> list[Check]:
         Check(
             "node",
             node_ok(),
-            ver or "Hermes has no Node installed yet",
+            ver or "not installed yet; setup asks Hermes to install it",
             "" if node_ok() else "hermes 3d setup --first-run   (Hermes' package manager installs Node 22.18 or newer)",
+            kind="pending",
         )
     )
     main = cfg.engine_main()
@@ -136,10 +137,11 @@ def run_checks(cfg: S.Hermes3DSettings) -> list[Check]:
         Check(
             "engine",
             main is not None,
-            str(cfg.engine_path) if main else "engine_path is not set or is not an engine checkout",
+            str(cfg.engine_path) if main else "not installed yet; setup downloads it",
             ""
             if main
             else "hermes 3d setup --first-run   (or: hermes 3d install-engine, or setup --engine-path /path/to/engine)",
+            kind="pending",
         )
     )
     if main is not None:
@@ -158,21 +160,23 @@ def run_checks(cfg: S.Hermes3DSettings) -> list[Check]:
             Check(
                 "docs viewer",
                 built or bool(dv.get("running")),
-                "running" if dv.get("running") else ("built" if built else "not built yet"),
+                "running" if dv.get("running") else ("built" if built else "optional; built the first time you open the library"),
                 "" if built or dv.get("running") else "hermes 3d docs   (builds it on first use)",
+                kind="optional",
             )
         )
     except (OSError, ValueError, KeyError, RuntimeError, S.SettingsError) as exc:
         rows.append(Check("docs viewer", False, f"cannot tell ({type(exc).__name__})", "hermes 3d docs"))
     try:
-        rows.append(Check("link key", True, linkkey.source(cfg.home)))
+        where = linkkey.source(cfg.home)
+        rows.append(Check("link key", True, "created on first start" if where == "missing" else where))
     except (OSError, ValueError, RuntimeError) as exc:
         rows.append(Check("link key", False, f"cannot tell ({type(exc).__name__})"))
     rows.append(
         Check(
             "hermes CLI",
             shutil.which("hermes") is not None,
-            "on PATH" if shutil.which("hermes") else "not on PATH (cron falls back to the jobs file only)",
+            "on PATH" if shutil.which("hermes") else "not on PATH; cron reads the jobs file only",
         )
     )
     return rows
@@ -226,20 +230,24 @@ def plan(wanted: dict[str, Any], get: S.Getter) -> dict[str, Any]:
 def _engine_folder(raw: str, home: Path) -> str:
     folder = S.checked_folder("engine_path", raw, home=home)
     if folder is None or not (folder / S.ENGINE_MAIN).is_file():
-        raise SetupError(f"{raw!r} is not a Numinia Engine checkout (no {S.ENGINE_MAIN} inside)")
+        raise SetupError(f"{raw!r} is not a Numinia Engine folder (no {S.ENGINE_MAIN} inside)")
     return str(folder)
 
 
 def _say_checks(rows: list[Check]) -> None:
-    print("what I found:")
+    print("What I found")
     for r in rows:
-        print(f"  [{'ok' if r.ok else '!!'}] {r.name:<12} {r.detail}")
-        if r.fix and not r.ok:
+        print(f"  [{r.mark}] {r.name:<12} {r.detail}")
+        if r.fix and not r.ok and r.kind == "":
             print(f"       -> {r.fix}")
 
 
 def _ask(prompt: str) -> str:
     return input(prompt).strip().lower()
+
+
+def _shown(value: Any) -> str:
+    return str(value).lower() if isinstance(value, bool) else str(value)
 
 
 def cmd_setup(
@@ -251,67 +259,58 @@ def cmd_setup(
     starter: Callable[[S.Hermes3DSettings], int] | None = None,
     ask: Callable[[str], str] | None = None,
 ) -> int:
-    """``hermes 3d setup [--profile minimal|showcase] [--engine-path DIR] [--yes]``."""
+    """``hermes 3d setup [--engine-path DIR] [--yes] [--first-run]``. One path: the default set, no preset to choose."""
     yes = bool(getattr(args, "yes", False))
-    profile = getattr(args, "profile", None)
     engine_arg = getattr(args, "engine_path", None)
-    if profile is not None and profile not in PROFILES:
-        raise SetupError(f"unknown profile {profile!r}; choose one of: {', '.join(PROFILES)}")
     get = get or S.yaml_getter(home)
     setter = setter or hermes_config_set(home)
     cfg = S.Hermes3DSettings.from_getter(get, home)
 
-    print("Hermes 3D setup. Nothing is changed until you confirm; everything it publishes is metadata only.\n")
+    print("Hermes 3D setup. Nothing changes until you say yes.")
+    print("The world shows names, counts and states, never your messages.\n")
     _say_checks(run_checks(cfg))
-    print("\nthe switches (all off but health unless you choose a profile):")
+    print("\nSwitches")
     print(describe_switches())
 
-    wanted: dict[str, Any] = {}
+    wanted: dict[str, Any] = dict(DEFAULT_SET)
     if engine_arg:
         wanted["engine_path"] = _engine_folder(engine_arg, home)
     try:
-        if profile is None and not yes:
-            print("\nprofiles:")
-            for name, text in PROFILE_TEXT.items():
-                print(f"  {name:<9} {text}")
-            choice = _ask("choose a profile (minimal / showcase) or press Enter to skip: ")
-            if choice in PROFILES:
-                profile = choice
-            elif choice:
-                raise SetupError(f"unknown profile {choice!r}")
-        if profile is not None:
-            wanted.update(PROFILES[profile])
         changes = plan(wanted, get)
         if not changes:
-            print("\nnothing to change." if wanted else "\nnothing chosen, nothing changed.")
+            print("\nNothing to change. Your settings already match.")
         else:
-            print("\nI would set:")
+            print("\nSetup will set:")
             for name, value in changes.items():
-                print(f"  {name} = {str(value).lower() if isinstance(value, bool) else value}")
-            print("  (allow_direct_db_read stays off: spend and kanban stay closed unless you turn it on yourself)")
-            if not yes and _ask("write these settings? [y/N] ") not in ("y", "yes"):
-                print("not written.")
+                label = SWITCH_TEXT[name][0] if name in SWITCH_TEXT else name
+                print(f"  {label} ({name}) = {_shown(value)}")
+            print("Direct database read stays off. Spend, Kanban and Projects stay closed until you turn it on yourself.")
+            if not yes and _ask("Write these settings? [y/N] ") not in ("y", "yes"):
+                print("Not written.")
                 changes = {}
         failed = []
         for name, value in changes.items():
-            if not setter(_key(name), str(value).lower() if isinstance(value, bool) else str(value)):
+            if not setter(_key(name), _shown(value)):
                 failed.append(name)
         if changes and not failed:
-            print(f"written: {len(changes)} setting(s).")
+            print(f"Wrote {len(changes)} setting{'s' if len(changes) != 1 else ''}. {FIRST_RUN_NEXT_TIME}")
         if failed:
-            print(f"could not write: {', '.join(failed)} (is `hermes` on PATH? set them in Settings -> Plugins)", file=sys.stderr)
+            print(
+                f"Could not write: {', '.join(failed)}. Is `hermes` on your PATH? You can also set them in Settings > Plugins.",
+                file=sys.stderr,
+            )
             return 1
     except EOFError:
-        print("no terminal to ask on; nothing written. Run again with --yes and --profile/--engine-path.", file=sys.stderr)
+        print("No terminal to ask on, so nothing was written. Run it again with --yes.", file=sys.stderr)
         return 1
 
     if getattr(args, "first_run", False):
         return first_run(home=home, yes=yes, setter=setter, starter=starter, ask=ask or _ask, out=print)
-    print("\nnext:")
-    print("  hermes 3d setup --first-run   one command: Node from Hermes, the engine, start it (Camino A)")
-    print("  hermes 3d demo   see your own Hermes as a world, read-only (needs an engine)")
-    print("  hermes 3d scan   what the world would mirror, without an engine")
-    print("  hermes 3d up     start the engine and the bridge with your settings")
+    print("\nNext")
+    print("  hermes 3d setup --first-run   one command: Node from Hermes, the engine, then start the world")
+    print("  hermes 3d demo                see your own Hermes as a world, read-only (needs the engine)")
+    print("  hermes 3d scan                what the world would show, without the engine")
+    print("  hermes 3d up                  start the engine and the bridge with your settings")
     return 0
 
 
@@ -327,64 +326,66 @@ def first_run(
     url: str | None = None,
     probe: Callable[[str], dict[str, Any]] | None = None,
 ) -> int:
-    """The whole path for the Camino A user, in order, stopping at the first step that cannot pass.
+    """The whole path, in order, stopping at the first step that cannot pass.
 
     1 Node from Hermes' package manager  2 the pinned engine  3 ``engine_link: false`` (the world lives inside Desktop)
-    4 start engine + bridge  5 say where to click. Each download or write is asked first; ``yes`` answers for scripts.
+    4 start engine + bridge, then say where to click. Each download or write is asked first; ``yes`` answers for scripts.
     """
 
     def confirm(prompt: str) -> bool:
         return yes or ask(prompt) in ("y", "yes")
 
     try:
-        out("\nfirst run: 1/4 Node")
+        out("\nStep 1 of 4: Node")
         try:
             node = nodebin.resolve_node(ensure=False)
         except NodeMissing:
-            if not confirm("Hermes has no Node yet. Let Hermes' package manager download its pinned Node? [y/N] "):
-                out("stopped: no Node, nothing else was done.")
+            if not confirm("Hermes has no Node yet. Let Hermes' package manager download the one it pins? [y/N] "):
+                out("Stopped. Without Node nothing else was done.")
                 return 1
             node = nodebin.resolve_node(ensure=True)
-        out(f"  node {node.version_text} from {'Hermes (pm)' if node.source == 'pm' else 'PATH (this Hermes has no pm)'}")
+        out(
+            f"  Node {node.version_text} from {'Hermes' if node.source == 'pm' else 'your PATH (this Hermes has no package manager)'}."
+        )
         for warning in node.warnings:
-            out(f"  warning: {warning}")
+            out(f"  Note: {warning}")
 
-        out("first run: 2/4 engine")
+        out("\nStep 2 of 4: Engine")
         cfg = S.Hermes3DSettings.from_yaml(home)
         if cfg.engine_main() is None:
             res = installer.install_engine(home, lock_path=lock_path, url=url, yes=yes, confirm=confirm, out=out)
-            out(f"  engine ready ({res['seconds']} s, {res['size_mb']} MB)")
+            out(f"  Engine ready ({res['seconds']} s, {res['size_mb']} MB).")
         else:
-            out(f"  engine already set: {cfg.engine_path}")
+            out(f"  Engine already installed at {cfg.engine_path}.")
 
-        out("first run: 3/4 settings")
+        out("\nStep 3 of 4: Settings")
         cfg = S.Hermes3DSettings.from_yaml(home)
-        if cfg.engine_link and confirm("Set engine_link=false so the world opens inside Hermes Desktop? [y/N] "):
+        if cfg.engine_link and confirm("Open the world inside Hermes Desktop? This sets engine_link to false. [y/N] "):
             if not setter(_key("engine_link"), "false"):
-                out("could not write engine_link (is `hermes` on PATH?). Set it in Settings -> Plugins and run again.")
+                out("  Could not write engine_link. Is `hermes` on your PATH? Set it in Settings > Plugins, then run this again.")
                 return 1
             cfg = S.Hermes3DSettings.from_yaml(home)
-        out(f"  engine_link = {str(cfg.engine_link).lower()}, engine port {cfg.engine_port}")
+        out(f"  engine_link = {str(cfg.engine_link).lower()}, engine port {cfg.engine_port}.")
         if cfg.engine_link:
-            out("  note: engine_link is still true, so the embedded page cannot be used (an engine takes one source).")
+            out("  engine_link is still true, so the page cannot open inside Hermes Desktop (the engine takes one source).")
 
-        out("first run: 4/4 start")
+        out("\nStep 4 of 4: Start")
         rc = starter(cfg) if starter is not None else 0
         if rc != 0:
             return rc
         seen = (probe or embed.probe_engine)(cfg.page_url())
         if seen.get("up") and seen.get("embed"):
-            out("\nready: open the Hermes 3D page in Hermes Desktop.")
+            out("\nReady. Open the Hermes 3D page in Hermes Desktop.")
         elif seen.get("up"):
-            out("\nthe engine is running but this world does not accept an embedded page yet:")
+            out("\nThe engine is running, but this world does not accept an embedded page yet.")
             out(f"  {embed.HINT_EMBED}")
         else:
-            out("\nthe engine did not answer after starting; see `hermes 3d status`.")
+            out("\nThe engine did not answer after starting. Run `hermes 3d status` to see why.")
             return 1
         return 0
     except Hermes3DError as exc:
-        out(f"\nstopped: {exc}")
+        out(f"\nStopped. {exc}")
         return 1
     except EOFError:
-        out("\nno terminal to ask on; run again with --yes.")
+        out("\nNo terminal to ask on. Run it again with --yes.")
         return 1

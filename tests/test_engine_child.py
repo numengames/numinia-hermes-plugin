@@ -305,7 +305,7 @@ def test_cmd_up_hands_the_stdin_fd_to_the_new_bridge_then_closes_it(rig, hermes_
     rig.started.append(json.loads(config.engine_pid_path(hermes_home).read_text())["pid"])
     with pytest.raises(OSError):
         os.fstat(got["fd"])  # the plugin side closed its copy; only the bridge holds the engine's stdin now
-    assert "started the engine" in capsys.readouterr().out
+    assert "Engine started" in capsys.readouterr().out
 
 
 def test_cmd_up_with_an_old_bridge_replaces_it_so_the_new_engine_has_a_holder(rig, hermes_home, monkeypatch):

@@ -39,14 +39,23 @@ def engine_checkout(tmp_path):
     return root
 
 
-# ---- profiles ----------------------------------------------------------------------------------------------
-def test_profiles_are_metadata_only_read_only_and_never_open_a_database():
-    for name, prof in setup_cmd.PROFILES.items():
-        assert prof["allow_direct_db_read"] is False, name
-        assert prof.get("publish_spend", False) is False and prof.get("publish_kanban", False) is False, name
-        assert prof["publish_sessions"] is False, name  # the live feed is its own decision
-    assert setup_cmd.PROFILES["showcase"]["read_only"] is True
-    assert setup_cmd.PROFILES["showcase"]["publish_cron"] is True
+# ---- the default set ---------------------------------------------------------------------------------------
+def test_default_set_is_metadata_only_read_only_and_never_opens_a_database():
+    d = setup_cmd.DEFAULT_SET
+    assert d["allow_direct_db_read"] is False
+    assert d["publish_spend"] is False and d["publish_kanban"] is False and d["publish_projects"] is False
+    assert d["publish_sessions"] is False  # the live feed is its own decision
+    assert d["read_only"] is True and d["publish_cron"] is True and d["publish_health"] is True
+
+
+def test_there_is_no_preset_question_or_flag():
+    import argparse
+
+    assert not hasattr(setup_cmd, "PROFILES") and not hasattr(setup_cmd, "PROFILE_TEXT")
+    p = argparse.ArgumentParser()
+    load_entry()._setup_cli(p)
+    with pytest.raises(SystemExit):
+        p.parse_args(["setup", "--profile", "showcase"])
 
 
 def test_catalog_default_stays_everything_off_except_health():
@@ -63,7 +72,9 @@ def test_every_switch_has_a_plain_description():
     text = setup_cmd.describe_switches()
     for key in S.SWITCH_KEYS.values():
         assert key in text
-    assert "direct" in text.lower()  # the two that read Hermes' databases say so
+    assert "direct" in text.lower()  # the ones that read Hermes' databases say so
+    assert "Health (publish_health)" in text  # the human name comes before the config key
+    assert "Spend, Kanban and Projects" in text  # allow_direct_db_read names all three
 
 
 # ---- checks -------------------------------------------------------------------------------------------------
@@ -73,6 +84,8 @@ def test_checks_report_node_engine_docs_and_hermes(hermes_home, tmp_path, monkey
     assert not rows["node"].ok and "22.18" in rows["node"].fix
     assert not rows["engine"].ok and "install-engine" in rows["engine"].fix
     assert "docs viewer" in rows and "link key" in rows
+    assert rows["engine"].mark == "  " and rows["docs viewer"].mark == "--"  # expected on a first run, not errors
+    assert "checkout" not in rows["engine"].detail and rows["link key"].ok and "missing" not in rows["link key"].detail
 
 
 def test_node_version_is_parsed_and_compared(monkeypatch):
@@ -89,51 +102,59 @@ def test_node_version_is_parsed_and_compared(monkeypatch):
 
 
 # ---- the command --------------------------------------------------------------------------------------------
-def test_dry_flow_with_yes_and_a_profile_writes_exactly_the_diff(hermes_home, capsys):
+def test_yes_writes_exactly_the_diff_of_the_default_set(hermes_home, capsys):
     rec = Recorder()
-    rc = setup_cmd.cmd_setup(SimpleNamespace(yes=True, profile="showcase", engine_path=None), home=hermes_home, setter=rec)
+    rc = setup_cmd.cmd_setup(SimpleNamespace(yes=True, engine_path=None), home=hermes_home, setter=rec)
     assert rc == 0
     keys = {k.rsplit(".", 1)[1] for k, _ in rec.calls}
     assert keys == {"publish_cron", "publish_agents", "publish_skills", "publish_docs", "read_only"}  # health is already on
     assert all(k.startswith("plugins.entries.hermes-3d.settings.") for k, _ in rec.calls)
     out = capsys.readouterr().out
-    assert "metadata only" in out and "allow_direct_db_read" in out and "off" in out
+    assert "never your messages" in out and "Direct database read stays off" in out
+    assert "Presets" not in out and "profile" not in out.lower().replace("hermes profiles", "")
 
 
 def test_second_run_changes_nothing(hermes_home, capsys):
     store: dict = {}
     rec = Recorder(store)
-    setup_cmd.cmd_setup(
-        SimpleNamespace(yes=True, profile="showcase", engine_path=None), home=hermes_home, setter=rec, get=getter(store)
-    )
+    setup_cmd.cmd_setup(SimpleNamespace(yes=True, engine_path=None), home=hermes_home, setter=rec, get=getter(store))
     rec2 = Recorder(store)
-    setup_cmd.cmd_setup(
-        SimpleNamespace(yes=True, profile="showcase", engine_path=None), home=hermes_home, setter=rec2, get=getter(store)
-    )
-    assert rec2.calls == [] and "nothing to change" in capsys.readouterr().out
+    setup_cmd.cmd_setup(SimpleNamespace(yes=True, engine_path=None), home=hermes_home, setter=rec2, get=getter(store))
+    assert rec2.calls == [] and "Nothing to change" in capsys.readouterr().out
 
 
-def test_yes_without_a_profile_or_engine_path_changes_nothing_and_never_prompts(hermes_home, monkeypatch, capsys):
+def test_yes_never_prompts(hermes_home, monkeypatch, capsys):
     monkeypatch.setattr("builtins.input", lambda *a: (_ for _ in ()).throw(AssertionError("prompted")))
     rec = Recorder()
-    assert setup_cmd.cmd_setup(SimpleNamespace(yes=True, profile=None, engine_path=None), home=hermes_home, setter=rec) == 0
-    assert rec.calls == [] and "hermes 3d demo" in capsys.readouterr().out
+    assert setup_cmd.cmd_setup(SimpleNamespace(yes=True, engine_path=None), home=hermes_home, setter=rec) == 0
+    assert rec.calls and "hermes 3d demo" in capsys.readouterr().out
 
 
-def test_interactive_no_answers_writes_nothing(hermes_home, monkeypatch):
-    answers = iter(["showcase", "n"])
-    monkeypatch.setattr("builtins.input", lambda *a: next(answers))
+def test_interactive_asks_one_question_only_and_no_writes_nothing(hermes_home, monkeypatch):
+    prompts = []
+
+    def fake_input(prompt=""):
+        prompts.append(prompt)
+        return "n"
+
+    monkeypatch.setattr("builtins.input", fake_input)
     rec = Recorder()
-    assert setup_cmd.cmd_setup(SimpleNamespace(yes=False, profile=None, engine_path=None), home=hermes_home, setter=rec) == 0
-    assert rec.calls == []
+    assert setup_cmd.cmd_setup(SimpleNamespace(yes=False, engine_path=None), home=hermes_home, setter=rec) == 0
+    assert rec.calls == [] and len(prompts) == 1 and "profile" not in prompts[0].lower()
 
 
-def test_interactive_yes_writes_after_the_confirmation(hermes_home, monkeypatch):
-    answers = iter(["minimal", "y"])
-    monkeypatch.setattr("builtins.input", lambda *a: next(answers))
+def test_interactive_yes_writes_after_the_confirmation_and_says_how_to_change_later(hermes_home, monkeypatch, capsys):
+    monkeypatch.setattr("builtins.input", lambda *a: "y")
     rec = Recorder()
-    setup_cmd.cmd_setup(SimpleNamespace(yes=False, profile=None, engine_path=None), home=hermes_home, setter=rec)
-    assert rec.calls == [] or all(not k.endswith("publish_spend") for k, _ in rec.calls)  # minimal = what is already the default
+    setup_cmd.cmd_setup(SimpleNamespace(yes=False, engine_path=None), home=hermes_home, setter=rec)
+    assert {k.rsplit(".", 1)[1] for k, _ in rec.calls} == {
+        "publish_cron",
+        "publish_agents",
+        "publish_skills",
+        "publish_docs",
+        "read_only",
+    }
+    assert "Settings > Plugins" in capsys.readouterr().out
 
 
 def test_no_terminal_means_no_write(hermes_home, monkeypatch):
@@ -142,35 +163,24 @@ def test_no_terminal_means_no_write(hermes_home, monkeypatch):
 
     monkeypatch.setattr("builtins.input", eof)
     rec = Recorder()
-    assert (
-        setup_cmd.cmd_setup(SimpleNamespace(yes=False, profile="showcase", engine_path=None), home=hermes_home, setter=rec) == 1
-    )
+    assert setup_cmd.cmd_setup(SimpleNamespace(yes=False, engine_path=None), home=hermes_home, setter=rec) == 1
     assert rec.calls == []
 
 
 def test_engine_path_is_validated_before_it_is_written(hermes_home, tmp_path, capsys):
     rec = Recorder()
     with pytest.raises((setup_cmd.SetupError, S.SettingsError)):
-        setup_cmd.cmd_setup(
-            SimpleNamespace(yes=True, profile=None, engine_path=str(tmp_path / "nope")), home=hermes_home, setter=rec
-        )
+        setup_cmd.cmd_setup(SimpleNamespace(yes=True, engine_path=str(tmp_path / "nope")), home=hermes_home, setter=rec)
     assert rec.calls == []
     good_root = engine_checkout(tmp_path)
-    ok = setup_cmd.cmd_setup(SimpleNamespace(yes=True, profile=None, engine_path=str(good_root)), home=hermes_home, setter=rec)
-    assert ok == 0 and rec.calls == [("plugins.entries.hermes-3d.settings.engine_path", str(good_root))]
+    ok = setup_cmd.cmd_setup(SimpleNamespace(yes=True, engine_path=str(good_root)), home=hermes_home, setter=rec)
+    assert ok == 0 and ("plugins.entries.hermes-3d.settings.engine_path", str(good_root)) in rec.calls
 
 
 def test_a_failed_write_is_reported_not_hidden(hermes_home, capsys):
     rec = Recorder(fail=True)
-    rc = setup_cmd.cmd_setup(SimpleNamespace(yes=True, profile="showcase", engine_path=None), home=hermes_home, setter=rec)
+    rc = setup_cmd.cmd_setup(SimpleNamespace(yes=True, engine_path=None), home=hermes_home, setter=rec)
     assert rc == 1 and "could not" in capsys.readouterr().err.lower()
-
-
-def test_unknown_profile_is_refused(hermes_home):
-    with pytest.raises(setup_cmd.SetupError):
-        setup_cmd.cmd_setup(
-            SimpleNamespace(yes=True, profile="everything", engine_path=None), home=hermes_home, setter=Recorder()
-        )
 
 
 def test_setter_uses_an_argv_list_without_a_shell(hermes_home, monkeypatch):
@@ -194,8 +204,8 @@ def test_setup_is_a_registered_subcommand(hermes_home):
     mod = load_entry()
     p = argparse.ArgumentParser()
     mod._setup_cli(p)
-    ns = p.parse_args(["setup", "--yes", "--profile", "showcase"])
-    assert ns.hermes3d_cmd == "setup" and ns.yes and ns.profile == "showcase"
+    ns = p.parse_args(["setup", "--yes"])
+    assert ns.hermes3d_cmd == "setup" and ns.yes
 
 
 def test_up_without_an_engine_points_to_setup_and_to_what_works_without_one(hermes_home, capsys):

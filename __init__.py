@@ -191,17 +191,16 @@ def _setup_cli(parser: Any) -> None:
     ie.add_argument("--url", help=argparse.SUPPRESS)  # tests only: the sha256 of the lock still has to match
     st = sub.add_parser(
         "setup",
-        help="guided first run: checks Node, the engine and the docs viewer, explains the switches, writes settings after you confirm",
+        help="first run: checks what is missing, explains every switch, writes the default settings after you confirm",
+    )
+    st.add_argument("--engine-path", help="folder of a Numinia Engine you already have, to remember as engine_path")
+    st.add_argument(
+        "--yes", action="store_true", help="do not ask (scripts): write the default settings and answer yes to every download"
     )
     st.add_argument(
-        "--profile",
-        choices=("minimal", "showcase"),
-        help="minimal = health only; showcase = health, cron, agents, skills, docs, read-only",
-    )
-    st.add_argument("--engine-path", help="folder of a Numinia Engine checkout to remember as engine_path")
-    st.add_argument("--yes", action="store_true", help="do not ask (scripts); changes only what --profile/--engine-path name")
-    st.add_argument(
-        "--first-run", action="store_true", help="the whole path: Node from Hermes, pinned engine, engine_link=false, start it"
+        "--first-run",
+        action="store_true",
+        help="the whole path: Node from Hermes, the engine, engine_link=false, then start the world",
     )
     sub.add_parser("status", help="show engine and bridge state")
     sub.add_parser("down", help="stop the bridge (and the engine if this plugin started it)")
@@ -270,25 +269,25 @@ def _up_rest(
     home: Any, cfg: Any, started: dict[str, Any], rt: Any, bridge_running: bool, stdin_fd: Any, read_only: bool, demo: bool
 ) -> int:
     for warning in started.get("node_warnings", []):
-        print(f"warning: {warning}", file=sys.stderr)
+        print(f"Warning: {warning}", file=sys.stderr)
     print(
-        ("reusing the engine already running" if started["reused"] else "started the engine")
-        + f" (game 127.0.0.1:{cfg.engine_port}, link 127.0.0.1:{started['link_port']})"
+        ("Reusing the engine that is already running" if started["reused"] else "Engine started")
+        + f" (game 127.0.0.1:{cfg.engine_port}, link 127.0.0.1:{started['link_port']})."
     )
     if started["reused"]:
         print(
-            f"note: the engine was not started by this plugin; if the bridge cannot connect, set {linkkey.ENV_LINK_KEY} "
-            "to that engine's MOTOR_ENLACE_CLAVE (see README, Configuration)"
+            f"Note: this plugin did not start that engine. If the bridge cannot connect, set {linkkey.ENV_LINK_KEY} "
+            "to the engine's MOTOR_ENLACE_CLAVE (see the README, Configuration)."
         )
     elif not started.get("link_enabled", True):
         print(
-            f"note: {cfg.world_path / supervisor.SWITCH_FILE} is missing or not active, so the engine opens no link; "
-            "the bridge keeps retrying until the world turns the mirror on"
+            f"Note: {cfg.world_path / supervisor.SWITCH_FILE} is missing or not active, so the engine opens no link. "
+            "The bridge keeps retrying until the world turns the mirror on."
         )
     if not started["reused"] and not started.get("serves_page", False):
         print(
-            "note: no built page found under the engine folder (dist/plaza/index.html), so the engine serves no page; "
-            "build the engine's page or serve it yourself"
+            "Note: no built page found under the engine folder (dist/plaza/index.html), so the engine serves no page. "
+            "Build the engine's page or serve it yourself."
         )
     if bridge_running and rt:
         running = client.call("GET", "/status", home=home).get("data", {})
@@ -297,17 +296,17 @@ def _up_rest(
                 "a bridge is already running in another mode; run `hermes 3d down` and then start it again "
                 f"(`hermes 3d {'demo' if demo else 'up --read-only'}`)"
             )
-        print(f"bridge already running (pid {rt['pid']})")
+        print(f"Bridge already running (pid {rt['pid']}).")
     else:
         pid = supervisor.spawn_bridge(home, read_only=read_only, demo=demo, hold_fd=stdin_fd, world=cfg.world_path)
-        print(f"bridge started (pid {pid}); log: {config.plugin_data_dir(home) / 'bridge.log'}")
+        print(f"Bridge started (pid {pid}). Log: {config.plugin_data_dir(home) / 'bridge.log'}")
     if demo:
         _require_read_only(home)
     if read_only:
-        print("mode: read-only (the world can look; it cannot change anything in Hermes)")
+        print("Mode: read-only. The world can look, but it cannot change anything in Hermes.")
     if started.get("pid"):
         config.write_engine_pid(started["pid"], home)
-    print(f"open the world: {cfg.page_url()}")
+    print(f"Open the world: {cfg.page_url()}")
     return 0
 
 
@@ -349,7 +348,7 @@ def cmd_install_engine(args: Any) -> int:
         confirm=_ask,
         no_shortcut=bool(getattr(args, "no_shortcut", False)),
     )
-    print(f"installed {res['tag']} ({res['sha256'][:12]}); start the world with: hermes 3d up")
+    print(f"Installed {res['tag']} ({res['sha256'][:12]}). Start the world with: hermes 3d up")
     return 0
 
 
