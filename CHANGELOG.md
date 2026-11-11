@@ -10,6 +10,9 @@ Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer]
 
 ## [0.8.2] - 2026-11-11
 
+### Fixed
+- A fresh install no longer opens an empty world: when the world folder is the plugin's own (no `world_path` set), the first start turns on, in its `entorno/espejo.json`, every function whose switch is on (never off, never a folder you configured). The plan says so.
+
 ### Changed
 - `hermes 3d setup` is now the whole first run, as three blocks: Checking this computer, The plan, Doing it, then a closing.
   One question after the plan (default yes; `--yes` skips it). Figures are measured at run time: Hermes version (from
