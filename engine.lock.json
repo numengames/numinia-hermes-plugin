@@ -1,11 +1,11 @@
 {
   "_comment": "Pin of the Numinia Engine RELEASE that `hermes 3d install-engine` may download. TODO-PUBLISH in `tag` or `sha256` makes the command refuse with a clear message until a release that contains the hermes template is published and pinned: set `tag` (e.g. motor-7b51e2c), `sha256` (the line of SHA256SUMS for `asset`), `size_bytes` (exact size of the asset; 0 = not pinned, then a 120 MB cap applies) and `entry` if it changed. `url` may use {tag} and {asset}.",
   "source": "https://github.com/numengames/numinia-engine",
-  "tag": "motor-7c6c9a2",
+  "tag": "motor-081334f",
   "asset": "instalar-motor.sh",
   "url": "https://github.com/numengames/numinia-engine/releases/download/{tag}/{asset}",
-  "sha256": "c217c005b48c53ced34e37af9e909e6dc4d8afd1a35afa48b5a37e067ca20f05",
-  "size_bytes": 14393001,
+  "sha256": "e1a73921411e31a8975cb915279528004d3c7666ff334633da6b1d4359427933",
+  "size_bytes": 15917840,
   "entry": "packages/server/src/entrada.ts",
   "node": ">=22.18"
 }

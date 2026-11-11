@@ -262,6 +262,69 @@ def seed_functions(world: Path, switches: dict[str, bool]) -> bool:
     return changed
 
 
+# English words for the plugin's OWN world: the engine's ``hermes`` template still ships Spanish zone names, signs
+# and guide lines. Keys are the template's zone ids and guide keys; only text changes, never ids, types or routes.
+ENGLISH_ZONES: dict[str, tuple[str, str]] = {
+    "z0": ("The threshold", "THE THRESHOLD · switches"),
+    "z7": ("The clock", "THE CLOCK · scheduled jobs"),
+    "z3": ("The sessions", "THE SESSIONS · conversations"),
+    "z8": ("The square", "THE SQUARE · chat (coming soon)"),
+    "z6": ("The control tower", "THE CONTROL TOWER · profiles"),
+    "z2": ("The engine room", "THE ENGINE ROOM · usage"),
+    "z1": ("The library", "THE LIBRARY · documentation"),
+    "z4": ("The skills workshop", "THE WORKSHOP · skills"),
+    "z9": ("The board", "THE BOARD · work"),
+}
+ENGLISH_GUIDE: dict[str, str] = {
+    "saludo": "Hello. I am your guide: I walk with you and tell you what each place is. I do not touch anything.",
+    "z0": "This is the switch panel. Each lamp is a function of this world; switch them on or off here.",
+    "z1": 'This is the library. Touch a shelf and press "Open" to read the documentation.',
+    "z2": "This is the engine room. Each gauge shows how much an agent spends.",
+    "z3": "These are the sessions, Hermes's conversations. Each cube is one.",
+    "z4": "This is the skills workshop. Each tablet is a skill; its lamp shows whether it is on.",
+    "z6": "This is the control tower. Each figure is an agent: white if it is working, empty if it rests.",
+    "z7": "This is the clock. Each dial is a scheduled Hermes job.",
+    "z8": "This is the square, where the chat will be. It is not available yet.",
+    "z9": "This is the work board: to do, in progress and done. You can only look here.",
+    "tocar:documento": 'That is a document. Press "Open" to read it right here, without leaving the world.',
+    "tocar:habilidad": "That is a skill: something Hermes knows how to do. You can read it here, not change it.",
+    "tocar:tablero": "That is the work board. It shows how many tasks are in each column.",
+    "tocar:cron": "That is a scheduled job. You can pause it or run it now, with your confirmation.",
+    "tocar:sesion": "That is a session, a conversation of Hermes.",
+    "tocar:perfil": "That is an agent. If it is white, it is working.",
+    "tocar:uso": "That gauge shows an agent's estimated spend, not what was billed.",
+    "tocar:salud": "That is the switch panel. Each lamp is a function of the world.",
+}
+
+
+def seed_english(world: Path) -> bool:
+    """Replace the template's Spanish zone names, signs and guide lines with English ones. True when changed.
+
+    Only text, only for the template's own zone ids and guide keys, and only where the value is not already the
+    English one (so a line the owner rewrote is overwritten only on the first start that creates the world).
+    """
+    data = _world_json(world, SWITCH_FILE)
+    if data is None:
+        return False
+    changed = False
+    zonas = data.get("zonas")
+    for zone in zonas if isinstance(zonas, list) else []:
+        words = ENGLISH_ZONES.get(zone.get("id")) if isinstance(zone, dict) else None
+        if words and (zone.get("nombre"), zone.get("cartel")) != words:
+            zone["nombre"], zone["cartel"] = words
+            changed = True
+    guia = data.get("guia")
+    frases = guia.get("frases") if isinstance(guia, dict) else None
+    if isinstance(frases, dict):
+        for key, line in ENGLISH_GUIDE.items():
+            if key in frases and frases[key] != line:
+                frases[key] = line
+                changed = True
+    if changed:
+        _write_world_json(world, data)
+    return changed
+
+
 def start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = True) -> dict[str, Any]:
     """Start the engine; on a world it just created for Path A (``engine_link`` off) turn embed on and restart it once.
 
@@ -278,8 +341,9 @@ def start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = True) -> dict[str, 
     if not fresh or started.get("reused"):
         return started
     seeded_fn = ours and seed_functions(cfg.world_path, cfg.switches)
+    seeded_en = ours and seed_english(cfg.world_path)
     seeded_embed = not cfg.engine_link and seed_embed(cfg.world_path)
-    if not (seeded_fn or seeded_embed):
+    if not (seeded_fn or seeded_embed or seeded_en):
         return started
     if started.get("stdin_fd") is not None:
         os.close(started["stdin_fd"])
@@ -287,6 +351,7 @@ def start_engine(cfg: S.Hermes3DSettings, hold_stdin: bool = True) -> dict[str, 
     again = _start_engine(cfg, hold_stdin)
     again["embed_seeded"] = seeded_embed
     again["functions_seeded"] = seeded_fn
+    again["english_seeded"] = seeded_en
     return again
 
 
