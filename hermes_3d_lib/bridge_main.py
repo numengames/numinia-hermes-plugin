@@ -88,7 +88,7 @@ def run_cron_list(timeout: float = CRON_TIMEOUT) -> str | None:
         return None
     try:
         out = subprocess.run(
-            [exe, *CRON_ARGS], capture_output=True, text=True, timeout=timeout, check=False, env={**os.environ, "NO_COLOR": "1"}
+            [exe, *CRON_ARGS], capture_output=True, text=True, timeout=timeout, check=False, env=config.hermes_child_env()
         )
     except (OSError, subprocess.SubprocessError):
         return None
