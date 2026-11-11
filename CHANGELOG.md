@@ -8,6 +8,17 @@ SPDX-License-Identifier: CC-BY-4.0
 Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer](https://semver.org).
 
 
+## [0.8.1] - 2026-11-11
+
+### Changed
+- First run is one path with no choices. `hermes 3d setup` no longer asks for a preset (and `--profile` is gone): it applies
+  one default set (Health, Cron jobs, Agents, Skills, Docs library, read-only, no direct database reads), asks once to write
+  it, and says where to change the switches later. `--yes` still answers for scripts, and now writes that set.
+- Setup copy reads the same from the first line to the world: capitalised headings ("What I found", "Switches"), steps that
+  are expected on a first run (engine, Node, docs viewer) are no longer shown as `[!!]` errors, "link key" no longer reads
+  "ok / missing", every switch shows its name before its config key, and `allow_direct_db_read` says it covers Spend, Kanban
+  and Projects. No jargon ("checkout"), short sentences, and each step says what happens next.
+
 ## [0.8.0] - 2026-11-11
 
 ### Added

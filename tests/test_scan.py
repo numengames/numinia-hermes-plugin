@@ -451,10 +451,10 @@ def test_hermes3d_up_prints_the_exact_world_url(hermes_home, monkeypatch, capsys
 
     configure(engine_port=18999)
     assert mod.cmd_up() == 0
-    assert f"open the world: http://{LOOP}:18999/" in capsys.readouterr().out
+    assert f"Open the world: http://{LOOP}:18999/" in capsys.readouterr().out
     configure(engine_port=18999, world_url=f"http://{LOOP}:18999/?mundo=hermes")
     assert mod.cmd_up() == 0
-    assert f"open the world: http://{LOOP}:18999/?mundo=hermes" in capsys.readouterr().out
+    assert f"Open the world: http://{LOOP}:18999/?mundo=hermes" in capsys.readouterr().out
 
 
 def test_world_function_names_are_the_engines_own():

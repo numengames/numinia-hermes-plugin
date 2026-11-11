@@ -246,7 +246,7 @@ def download(
     except (OSError, http.client.HTTPException) as exc:
         dest.unlink(missing_ok=True)
         raise fail("DOWNLOAD_FAILED", f"download failed ({type(exc).__name__}); nothing was installed", retryable=True) from None
-    out(f"  downloaded {total / 1_000_000:.1f} MB, sha256 verified")
+    out(f"  Downloaded {total / 1_000_000:.1f} MB. sha256 matches.")
     return total
 
 
@@ -276,7 +276,7 @@ def check_against_sums(url: str, asset_name: str, sha: str, *, timeout: float = 
                     "SUMS_MISMATCH",
                     f"the release's {SUMS_NAME} lists {parts[0][:16]}… for {asset_name}, the pin is {sha[:16]}…; nothing was unpacked",
                 )
-            out(f"  {SUMS_NAME} agrees with the pin")
+            out(f"  {SUMS_NAME} agrees with the pin.")
             return True
     return False
 
@@ -592,30 +592,30 @@ def install_engine(
 
     dest = engine_dir(home, lock)
     root = dest.parent
-    out(f"release : {lock.tag} ({lock.asset})")
-    out(f"url     : {url}")
-    out(f"size    : {lock.size_text}")
-    out(f"sha256  : {lock.sha256}  (the download is checked against it before anything is unpacked)")
-    out(f"into    : {dest}")
+    out(f"Release : {lock.tag} ({lock.asset})")
+    out(f"From    : {url}")
+    out(f"Size    : {lock.size_text}")
+    out(f"sha256  : {lock.sha256}  (checked before anything is unpacked)")
+    out(f"Into    : {dest}")
     reused = is_installed(dest, lock)
     t0 = time.monotonic()
     if reused:
-        out("already installed with that sha256; nothing to download")
+        out("Already installed with that sha256. Nothing to download.")
     else:
         if not yes and (
             confirm is None or not confirm(f"Download {lock.size_text} from {urlsplit(url).netloc} and unpack it? [y/N] ")
         ):
-            raise fail("NOT_CONFIRMED", "not confirmed; nothing was downloaded")
+            raise fail("NOT_CONFIRMED", "Not confirmed, so nothing was downloaded.")
         _fetch_and_unpack(lock, url, root, dest, out)
     seconds = round(time.monotonic() - t0, 1)
     how = set_engine_path(home, dest) if save_setting else "not saved"
-    out(f"engine_path set to {dest} (via {how})" if save_setting else f"engine at {dest}")
+    out(f"Saved engine_path: {dest} (via {how})." if save_setting else f"Engine at {dest}.")
     shortcut = None
     if not no_shortcut:
         hermes_bin = shutil.which("hermes") or "hermes"
         page = S.Hermes3DSettings.from_yaml(home).page_url()
         shortcut = write_shortcut(platform or sys.platform, hermes_bin, page, os.environ.get("HERMES_HOME"))
-        out(f"shortcut: {shortcut}" if shortcut else "shortcut: not created (unsupported platform)")
+        out(f"Shortcut: {shortcut}" if shortcut else "No shortcut created (this platform is not supported).")
     return {
         "engine_path": str(dest),
         "tag": lock.tag,
@@ -643,7 +643,7 @@ def _fetch_and_unpack(lock: Lock, url: str, root: Path, dest: Path, out: Out) ->
     shutil.rmtree(stage, ignore_errors=True)
     stage.mkdir(mode=0o700)
     try:
-        out("downloading ...")
+        out("Downloading ...")
         asset = stage / "asset"
         download(url, asset, expect_size=lock.size_bytes, expect_sha=lock.sha256, out=out)
         try:
@@ -651,7 +651,7 @@ def _fetch_and_unpack(lock: Lock, url: str, root: Path, dest: Path, out: Out) ->
         except InstallError:
             asset.unlink(missing_ok=True)
             raise
-        out("unpacking app/ and www/ ...")
+        out("Unpacking app/ and www/ ...")
         stats = extract_asset(asset, stage)
         asset.unlink()
         entry = stage / "app" / lock.entry
@@ -664,7 +664,7 @@ def _fetch_and_unpack(lock: Lock, url: str, root: Path, dest: Path, out: Out) ->
         stage.chmod(0o700)
         shutil.rmtree(dest, ignore_errors=True)
         os.replace(stage, dest)
-        out(f"  {stats['files']} entries, {stats['bytes'] / 1_000_000:.1f} MB unpacked")
+        out(f"  Unpacked {stats['files']} entries, {stats['bytes'] / 1_000_000:.1f} MB.")
     except BaseException:
         shutil.rmtree(stage, ignore_errors=True)
         raise

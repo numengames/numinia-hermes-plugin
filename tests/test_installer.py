@@ -133,7 +133,7 @@ def test_full_flow_downloads_verifies_unpacks_and_saves_engine_path(hermes_home,
     assert stat.S_IMODE((dest / "app/package.json").stat().st_mode) == 0o644
     assert stat.S_IMODE((data_dir(hermes_home) / "engine").stat().st_mode) == 0o700
     text = "\n".join(lines)
-    assert rel.url in text and "MB" in text and rel.sha256 in text and "sha256 verified" in text
+    assert rel.url in text and "MB" in text and rel.sha256 in text and "sha256 matches" in text
     cfg = S.Hermes3DSettings.from_yaml(hermes_home)
     assert cfg.engine_path == dest and cfg.engine_main() == dest / "app" / ENTRY and cfg.www_dir() == dest / "www"
 
@@ -184,7 +184,7 @@ def test_the_confirmation_gate(hermes_home, tmp_path):
         with pytest.raises(installer.InstallError) as e:
             run_install(hermes_home, lock, rel, yes=False, confirm=lambda q: asked.append(q) or False)
         assert code_of(e) == "NOT_CONFIRMED" and rel.hits == [] and "MB" in asked[0] and f"{LOOP}:" in asked[0]
-        with pytest.raises(installer.InstallError, match="not confirmed"):
+        with pytest.raises(installer.InstallError, match="Not confirmed"):
             run_install(hermes_home, lock, rel, yes=False, confirm=None)
         assert rel.hits == []
         run_install(hermes_home, lock, rel, yes=False, confirm=lambda q: True)
@@ -564,7 +564,7 @@ def test_cli_asks_on_the_terminal_and_stops_on_no(hermes_home, tmp_path, monkeyp
         monkeypatch.setattr("builtins.input", lambda prompt="": "n")
         assert mod._cli(cli_args(yes=False, url=rel.url)) == 1
         assert rel.hits == []
-    assert "not confirmed" in capsys.readouterr().err
+    assert "Not confirmed" in capsys.readouterr().err
 
 
 def test_cli_without_a_terminal_refuses_instead_of_assuming_yes(hermes_home, tmp_path, monkeypatch, capsys):
@@ -589,4 +589,4 @@ def test_cli_happy_path_end_to_end(hermes_home, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr(installer, "default_lock_path", lambda: rel.lock(tmp_path))
         assert mod._cli(cli_args(url=rel.url)) == 0
     out = capsys.readouterr().out
-    assert "engine_path" in out and "hermes 3d up" in out and "sha256 verified" in out
+    assert "engine_path" in out and "hermes 3d up" in out and "sha256 matches" in out

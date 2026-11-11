@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 name: hermes-3d
-version: 0.8.0
+version: 0.8.1
 description: "Turn your Hermes into a 3D game world you can walk through. Your scheduled jobs, conversations and system health become places to explore, right on your own computer. Anything that changes Hermes, like pausing a job, waits for your approval. Built on the Numinia Engine by Numen Games."
 author: "Numen (numengames)"
 license: MIT
