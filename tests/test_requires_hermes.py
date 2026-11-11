@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """The Hermes version range is the same string in plugin.yaml, pyproject.toml and the catalog draft, and Hermes accepts it."""
 
 from __future__ import annotations

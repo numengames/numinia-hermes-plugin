@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Supervisor: engine start-up environment, link port, world safety, and safe stopping of processes."""
 
 from __future__ import annotations

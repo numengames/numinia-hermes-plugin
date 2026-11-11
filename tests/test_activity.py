@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Live-activity feed (metadata only), requires_env / requires_hermes (review points a, c, d)."""
 
 from __future__ import annotations

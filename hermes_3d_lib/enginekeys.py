@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """The engine's own secrets (``MOTOR_SECRET`` signs, ``MOTOR_ADMIN`` is the owner code), made once per engine install.
 
 They live in ``<plugin data dir>/engine-keys.json`` (0600, created atomically, never followed through a symlink), are handed to the

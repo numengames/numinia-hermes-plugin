@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Session adapter: "new session = new place" (F0 row 2, A0 §2.5).
 
 Hooks give us ids and metadata only (on_session_start / on_session_end). We never read message

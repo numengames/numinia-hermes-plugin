@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Node comes from Hermes' package manager (``pm``); PATH is only the fallback when ``pm`` itself is unavailable."""
 
 from __future__ import annotations

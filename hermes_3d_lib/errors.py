@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Typed, user-facing errors with a stable ``code`` and a ``retryable`` flag.
 
 The CLI prints ``hermes 3d: <CODE>: <message>``; a machine caller can branch on ``code``. Nothing here carries a secret.

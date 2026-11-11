@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Live-activity feed: Hermes observer hooks -> a small bounded spool -> ``GET /api/plugins/hermes-3d/events``.
 
 Metadata only. An event carries its kind, the platform (``cli``/``cron``/``telegram``/...; ``subagent`` for a

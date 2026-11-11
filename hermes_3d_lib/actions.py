@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """World -> Hermes actions (``cron.pausar`` / ``cron.reanudar``), through Hermes' own approval.
 
 Why the shape is what it is (all verified against the installed Hermes 0.22.7 source):

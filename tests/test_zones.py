@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Zone alignment (M6): the engine's ``hola.zonas`` decides, a documented table is only the fallback."""
 
 from __future__ import annotations

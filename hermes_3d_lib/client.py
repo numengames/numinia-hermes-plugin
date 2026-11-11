@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Tiny client for the loopback bridge, used by the dashboard router and by `hermes 3d status`.
 
 It reads ``<HERMES_HOME>/hermes-3d/runtime.json`` (0600, written by the bridge at start) and

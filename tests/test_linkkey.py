@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Link key: environment first, else the plugin's own 0600 key file. Never another program's credential file."""
 
 from __future__ import annotations

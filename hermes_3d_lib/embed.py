@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Path A (the world inside Hermes Desktop): the embed credential and the engine probe.
 
 The Desktop page puts the world in a sandboxed frame with an opaque origin. The engine does not trust that origin (every

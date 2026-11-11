@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Path A, bridge half: /snapshot (same serializers as the link) and /action/submit (same approval road as a link `peticion`)."""
 
 from __future__ import annotations

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Which zone of the world a thing goes to.
 
 The engine says which zones exist and which types each one admits in its ``hola`` (``zonas``); that is the source of

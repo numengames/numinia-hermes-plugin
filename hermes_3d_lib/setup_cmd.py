@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """``hermes 3d setup``: a guided first run. Checks what is missing, explains every switch, writes settings after you say yes.
 
 Design rules

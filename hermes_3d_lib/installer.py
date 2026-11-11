@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """``hermes 3d install-engine``: a USER-initiated, pinned, checksum-verified download of the Numinia Engine release.
 
 The plugin catalog forbids bundling the engine, so nothing here runs unless the user types the command (or answers yes inside

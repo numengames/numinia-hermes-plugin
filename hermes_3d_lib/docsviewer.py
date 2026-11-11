@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """``hermes 3d docs``: start and stop the lite documentation viewer of the ``docs-visor`` repo.
 
 The viewer is a separate program (``serve.mjs``, MIT, no dependencies) that serves an offline copy of the Hermes

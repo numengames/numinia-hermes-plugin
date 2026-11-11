@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Messaging-platform status reader (C10): one status light per platform (Telegram, Discord, ...) per profile.
 
 Source, per Hermes home (the default home and every ``profiles/<name>``):

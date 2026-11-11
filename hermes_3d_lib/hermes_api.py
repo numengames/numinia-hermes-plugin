@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """First layer for Kanban and sessions: Hermes' OWN interfaces, before any direct read of its SQLite files.
 
 * **Kanban** -- ``hermes kanban list --json`` (a public CLI). The JSON carries task bodies and results, so every row is projected

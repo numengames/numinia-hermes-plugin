@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """C12: the delivery clock, the entry requirements and the official links, as ``documento`` things in the library (z1).
 
 No engine change: a ``documento`` already carries a title, a subtitle, a description and an address. The clock is ONE

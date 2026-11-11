@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Numen Games S.L.
+// SPDX-License-Identifier: MIT
+
 // hermes-3d — desktop half. Plain ESM, no build step, no JSX.
 // Imports only @hermes/plugin-sdk, react and react/jsx-runtime (catalog rule 8).
 // Talks only to its own backend namespace (/api/plugins/hermes-3d/) through ctx.rest, and

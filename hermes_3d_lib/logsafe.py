@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Logging that cannot leak a secret and writes an owner-only file.
 
 * The log file is created 0600 whatever the umask (``config.open_log`` semantics).

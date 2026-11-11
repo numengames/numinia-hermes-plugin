@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """A FAKE Numinia Engine "enlace-espejo" server for tests.
 
 Speaks the protocol of A0 §3 / ``hermes_3d_lib.protocol`` exactly as the engine side is meant

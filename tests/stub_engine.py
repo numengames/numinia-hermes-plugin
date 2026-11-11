@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """A node-less STAND-IN for the engine entry file, run by the tests with the Python interpreter as the "node".
 
 It serves ``GET /health`` on ``HOST:PORT`` like the real engine, behaves as the file ``mode`` next to it says

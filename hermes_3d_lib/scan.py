@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """``hermes 3d scan``: the FIRST thing the plugin does when the world opens — a full READ-ONLY scan of the
 user's Hermes (HISTORIA-DE-USUARIO §4): profiles/agents, cron jobs, sessions, skills, MCP servers,
 kanban, projects, documents and spend.

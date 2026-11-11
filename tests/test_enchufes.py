@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """C9: the installed-plugins reader. Synthetic homes only; the run against the real Hermes is C9-evidence/run_c9.py."""
 
 from __future__ import annotations

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Mirror ``kanban``: the work board as ONE ``tablero`` thing (zone z9), read-only.
 
 Source: the scan (``scan.scan_kanban``), which opens ``kanban.db`` read-only and keeps, for the board with most open

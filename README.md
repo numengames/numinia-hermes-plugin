@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Numen Games S.L.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # hermes-3d
 
 Turn your Hermes into a 3D game world you can walk through. Your scheduled jobs, conversations and system health become places to explore, right on your own computer. Anything that changes Hermes, like pausing a job, waits for your approval. Built on the Numinia Engine by Numen Games.

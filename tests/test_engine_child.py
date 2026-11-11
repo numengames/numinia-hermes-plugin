@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Starting and stopping the engine as a child, against a node-less stub (``stub_engine.py``)."""
 
 from __future__ import annotations

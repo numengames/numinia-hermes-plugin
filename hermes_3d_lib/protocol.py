@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Wire protocol of the local link between the Hermes plugin and the Numinia Engine "espejo" piece.
 
 Source of truth: the engine's own ``packages/server/src/enlace-espejo.ts`` (what is built wins over

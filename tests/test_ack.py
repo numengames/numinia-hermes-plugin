@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """P3-2: the engine's ``ack`` frame names the objects a lote left out; the bridge shows them (redacted)."""
 
 from __future__ import annotations

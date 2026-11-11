@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """Installed-plugins reader (C9): the plugins found in the ``plugins/`` folder of every Hermes profile.
 
 Source, per profile (the default home and every ``profiles/<name>``):

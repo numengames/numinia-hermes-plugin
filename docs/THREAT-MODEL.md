@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Numen Games S.L.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Threat model
 
 Assets: the bridge token, the link key, your Hermes data (read by `scan`), the ability to pause/resume cron

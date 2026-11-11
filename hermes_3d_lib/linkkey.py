@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Numen Games S.L.
+# SPDX-License-Identifier: MIT
+
 """The engine link key: where it comes from and how it is stored.
 
 Decision (documented in docs/ARCHITECTURE.md): the plugin never reads another program's credential file
